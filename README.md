@@ -6,17 +6,17 @@
   </p>
 
   <p align="center">
-    <a href="https://www.npmjs.com/package/@pontus-devoteam/adk">
-      <img src="https://img.shields.io/npm/v/@pontus-devoteam/adk" alt="npm version" />
+    <a href="https://www.npmjs.com/package/@iqai/adk">
+      <img src="https://img.shields.io/npm/v/@iqai/adk" alt="npm version" />
     </a>
-    <a href="https://www.npmjs.com/package/@pontus-devoteam/adk">
-      <img src="https://img.shields.io/npm/dm/@pontus-devoteam/adk" alt="npm downloads" />
+    <a href="https://www.npmjs.com/package/@iqai/adk">
+      <img src="https://img.shields.io/npm/dm/@iqai/adk" alt="npm downloads" />
     </a>
-    <a href="https://github.com/pontus-devoteam/adk-typescript/blob/main/LICENSE">
-      <img src="https://img.shields.io/npm/l/@pontus-devoteam/adk" alt="license" />
+    <a href="https://github.com/IQAIcom/adk-ts/blob/main/LICENSE">
+      <img src="https://img.shields.io/npm/l/@iqai/adk" alt="license" />
     </a>
-    <a href="https://github.com/pontus-devoteam/adk-typescript">
-      <img src="https://img.shields.io/github/stars/pontus-devoteam/adk-typescript?style=social" alt="github stars" />
+    <a href="https://github.com/IQAIcom/adk-ts">
+      <img src="https://img.shields.io/github/stars/IQAIcom/adk-ts?style=social" alt="github stars" />
     </a>
   </p>
   
@@ -42,13 +42,13 @@
 
 ```bash
 # Using npm
-npm install @pontus-devoteam/adk
+npm install @iqai/adk
 
 # Using yarn
-yarn add @pontus-devoteam/adk
+yarn add @iqai/adk
 
 # Using pnpm
-pnpm add @pontus-devoteam/adk
+pnpm add @iqai/adk
 ```
 
 ### 2. Configure Environment
@@ -64,7 +64,7 @@ GOOGLE_API_KEY=your_google_api_key_here
 ### 3. Create Your First Agent
 
 ```typescript
-import { Agent } from '@pontus-devoteam/adk';
+import { Agent } from '@iqai/adk';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -95,6 +95,7 @@ main().catch(console.error);
 **[View Full Documentation](https://pontus-devoteam.github.io/adk-typescript/)**
 
 Our comprehensive documentation includes:
+
 - Complete API reference
 - Architecture overview
 - Integration guides
@@ -112,6 +113,7 @@ This project is currently in early development and should be considered alpha so
 - Features that are still being stabilized
 
 Current development status:
+
 - ✅ Core agent framework
 - ✅ Basic OpenAI implementation
 - ✅ Initial Anthropic integration
@@ -126,14 +128,14 @@ Current development status:
 - ⬜ Performance optimizations
 - ⬜ Advanced streaming features
 
-We welcome feedback, bug reports, and contributions! Please check the [issues page](https://github.com/pontus-devoteam/adk-typescript/issues) for known issues or to report new ones.
+We welcome feedback, bug reports, and contributions! Please check the [issues page](https://github.com/IQAIcom/adk-ts/issues) for known issues or to report new ones.
 
 ## 📚 Usage Examples
 
 ### Agent with Tools
 
 ```typescript
-import { Agent, BaseTool } from '@pontus-devoteam/adk';
+import { Agent, BaseTool } from '@iqai/adk';
 
 // Create a custom calculator tool
 class CalculatorTool extends BaseTool {
@@ -193,7 +195,7 @@ const response = await agent.run({
 ### Agent with Memory
 
 ```typescript
-import { Agent, PersistentMemoryService } from '@pontus-devoteam/adk';
+import { Agent, PersistentMemoryService } from '@iqai/adk';
 import path from 'path';
 
 // Create a memory service
@@ -255,4 +257,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🌟 Show your support
 
-Give a ⭐️ if this project helped you! 
+Give a ⭐️ if this project helped you!

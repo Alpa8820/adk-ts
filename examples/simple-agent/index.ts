@@ -2,8 +2,7 @@ import dotenv from "dotenv";
 import { Agent } from "../../src/agents/specialized/Agent";
 import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
 import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
-import { RunConfig } from "../../src/models/config/RunConfig";
-import { Message, type MessageRole } from "../../src/models/request/LLMRequest";
+import type { MessageRole } from "../../src/models/request/LLMRequest";
 
 // Load environment variables from .env file if it exists
 dotenv.config();
