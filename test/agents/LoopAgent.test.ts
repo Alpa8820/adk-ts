@@ -1,31 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Agent } from "../../src/agents/specialized/Agent";
+import { BaseAgent } from "../../src/agents/base/BaseAgent";
 import { LoopAgent } from "../../src/agents/specialized/LoopAgent";
 import { LLMResponse } from "../../src/models/response/LLMResponse";
 
-// Mock Agent to avoid actual API calls during testing
-vi.mock("../../src/agents/specialized/Agent", () => {
-	const originalModule = vi.importActual("../../src/agents/specialized/Agent");
+// Create a proper mock BaseAgent for testing
+class MockBaseAgent extends BaseAgent {
+	private callCount = 0;
 
-	return {
-		...originalModule,
-		Agent: vi.fn().mockImplementation(() => {
-			let callCount = 0;
+	constructor() {
+		super({
+			name: "mock_agent",
+			description: "Mock agent for testing",
+		});
+	}
 
-			return {
-				name: "mock_agent",
-				description: "Mock agent for testing",
-				run: async () => {
-					callCount += 1;
-					return new LLMResponse({
-						role: "assistant",
-						content: `Mock response ${callCount}`,
-					});
-				},
-			};
-		}),
-	};
-});
+	async run() {
+		this.callCount += 1;
+		return new LLMResponse({
+			role: "assistant",
+			content: `Mock response ${this.callCount}`,
+		});
+	}
+
+	async *runStreaming() {
+		this.callCount += 1;
+		yield new LLMResponse({
+			role: "assistant",
+			content: `Mock response ${this.callCount}`,
+		});
+	}
+}
 
 describe("LoopAgent Class", () => {
 	beforeEach(() => {
@@ -33,11 +37,7 @@ describe("LoopAgent Class", () => {
 	});
 
 	it("should initialize with default configuration", () => {
-		const baseAgent = new Agent({
-			name: "base_agent",
-			model: "gpt-3.5-turbo",
-			description: "A base agent",
-		});
+		const baseAgent = new MockBaseAgent();
 
 		const loopAgent = new LoopAgent({
 			name: "test_loop_agent",
@@ -51,11 +51,7 @@ describe("LoopAgent Class", () => {
 	});
 
 	it("should run for the maximum number of iterations if no condition", async () => {
-		const baseAgent = new Agent({
-			name: "base_agent",
-			model: "gpt-3.5-turbo",
-			description: "A base agent",
-		});
+		const baseAgent = new MockBaseAgent();
 
 		const loopAgent = new LoopAgent({
 			name: "test_loop_agent",
@@ -73,11 +69,7 @@ describe("LoopAgent Class", () => {
 	});
 
 	it("should stop iterations when condition returns false", async () => {
-		const baseAgent = new Agent({
-			name: "base_agent",
-			model: "gpt-3.5-turbo",
-			description: "A base agent",
-		});
+		const baseAgent = new MockBaseAgent();
 
 		// Create a condition that returns false after the first iteration
 		let iterationCount = 0;
@@ -105,23 +97,20 @@ describe("LoopAgent Class", () => {
 
 	// Test for collecting responses without directly accessing private methods
 	it("should support iterative responses", async () => {
-		// Create a special mock agent for this test
-		const mockRunMethod = vi.fn();
-		let callCount = 0;
-		mockRunMethod.mockImplementation(async () => {
-			callCount += 1;
-			return new LLMResponse({
-				role: "assistant",
-				content: `Mock response ${callCount}`,
-			});
-		});
+		// Create a custom MockBaseAgent for this test
+		class CustomMockBaseAgent extends MockBaseAgent {
+			private customCallCount = 0;
 
-		// Mock agent with custom implementation
-		const baseAgent = {
-			name: "custom_mock_agent",
-			description: "Custom mock agent for testing",
-			run: mockRunMethod,
-		};
+			async run() {
+				this.customCallCount += 1;
+				return new LLMResponse({
+					role: "assistant",
+					content: `Mock response ${this.customCallCount}`,
+				});
+			}
+		}
+
+		const baseAgent = new CustomMockBaseAgent();
 
 		// Create LoopAgent with a custom implementation to inspect loop behavior
 		class TestableLoopAgent extends LoopAgent {
@@ -143,7 +132,7 @@ describe("LoopAgent Class", () => {
 		const loopAgent = new TestableLoopAgent({
 			name: "test_loop_agent",
 			description: "A test loop agent",
-			agent: baseAgent as any,
+			agent: baseAgent,
 			maxIterations: 3,
 		});
 

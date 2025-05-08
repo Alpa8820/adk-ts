@@ -195,7 +195,7 @@ export class LoopAgent extends BaseAgent {
 		}
 
 		// Get the agent to loop
-		const loopAgent = this.subAgents[0];
+		const subAgent = this.subAgents[0];
 
 		// Initialize loop variables
 		let iterationCount = 0;
@@ -214,7 +214,7 @@ export class LoopAgent extends BaseAgent {
 
 			try {
 				// Run the agent
-				const response = await loopAgent.run({
+				const response = await subAgent.run({
 					messages: currentMessages,
 					config: options.config,
 				});
