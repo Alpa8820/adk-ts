@@ -1,5 +1,5 @@
-import { AuthConfig } from "./AuthConfig";
-import { ApiKeyScheme, HttpScheme, OAuth2Scheme } from "./AuthScheme";
+import type { AuthConfig } from "./AuthConfig";
+import { type ApiKeyScheme, HttpScheme, OAuth2Scheme } from "./AuthScheme";
 
 /**
  * Types of authentication credentials
@@ -187,9 +187,7 @@ export class OAuth2Credential extends AuthCredential {
 	/**
 	 * Function to refresh the token
 	 */
-	private refreshFunction?: (
-		refreshToken: string,
-	) => Promise<{
+	private refreshFunction?: (refreshToken: string) => Promise<{
 		accessToken: string;
 		refreshToken?: string;
 		expiresIn?: number;
@@ -202,9 +200,7 @@ export class OAuth2Credential extends AuthCredential {
 		accessToken: string;
 		refreshToken?: string;
 		expiresIn?: number;
-		refreshFunction?: (
-			refreshToken: string,
-		) => Promise<{
+		refreshFunction?: (refreshToken: string) => Promise<{
 			accessToken: string;
 			refreshToken?: string;
 			expiresIn?: number;

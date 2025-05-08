@@ -1,11 +1,11 @@
-import { InvocationContext } from "./InvocationContext";
-import { AuthHandler } from "../auth/AuthHandler";
-import { Message } from "../request/LLMRequest";
-import { Session } from "../memory/Session";
-import {
+import type { AuthHandler } from "../auth/AuthHandler";
+import type {
 	SearchMemoryOptions,
 	SearchMemoryResponse,
 } from "../memory/MemoryService";
+import type { Session } from "../memory/Session";
+import type { Message } from "../request/LLMRequest";
+import type { InvocationContext } from "./InvocationContext";
 
 /**
  * Context for tool execution
@@ -59,12 +59,12 @@ export class ToolContext implements IToolContext {
 	/**
 	 * Tool name
 	 */
-	toolName: string = "";
+	toolName = "";
 
 	/**
 	 * Tool ID
 	 */
-	toolId: string = "";
+	toolId = "";
 
 	/**
 	 * Variables stored in the context

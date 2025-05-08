@@ -1,4 +1,4 @@
-import { BaseLLM } from "../BaseLLM";
+import type { BaseLLM } from "../BaseLLM";
 
 /**
  * Type for LLM constructor with static methods

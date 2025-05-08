@@ -1,11 +1,11 @@
 import fs from "fs";
 import path from "path";
-import {
+import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
 	SearchMemoryResponse,
 } from "../../models/memory/MemoryService";
-import { Session } from "../../models/memory/Session";
+import type { Session } from "../../models/memory/Session";
 import { InMemoryMemoryService } from "./InMemoryMemoryService";
 
 /**

@@ -1,4 +1,4 @@
-(function () {
+(() => {
 	addIcons();
 	function addIcons() {
 		if (document.readyState === "loading")

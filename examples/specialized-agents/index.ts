@@ -1,14 +1,14 @@
+import dotenv from "dotenv";
 import { Agent } from "../../src/agents/specialized/Agent";
-import { SequentialAgent } from "../../src/agents/specialized/SequentialAgent";
-import { ParallelAgent } from "../../src/agents/specialized/ParallelAgent";
-import { LoopAgent } from "../../src/agents/specialized/LoopAgent";
 import {
 	LangGraphAgent,
-	LangGraphNode,
+	type LangGraphNode,
 } from "../../src/agents/specialized/LangGraphAgent";
-import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
+import { LoopAgent } from "../../src/agents/specialized/LoopAgent";
+import { ParallelAgent } from "../../src/agents/specialized/ParallelAgent";
+import { SequentialAgent } from "../../src/agents/specialized/SequentialAgent";
 import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
-import dotenv from "dotenv";
+import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
 
 // Load environment variables from .env file if it exists
 dotenv.config();

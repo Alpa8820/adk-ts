@@ -1,6 +1,6 @@
-import { LLMRequest } from "../models/request/LLMRequest";
-import { LLMResponse } from "../models/response/LLMResponse";
-import { BaseLLMConnection } from "./BaseLLMConnection";
+import type { LLMRequest } from "../models/request/LLMRequest";
+import type { LLMResponse } from "../models/response/LLMResponse";
+import type { BaseLLMConnection } from "./BaseLLMConnection";
 
 /**
  * Base class for all LLM implementations

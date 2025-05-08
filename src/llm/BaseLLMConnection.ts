@@ -1,4 +1,4 @@
-import { LLMResponse } from "../models/response/LLMResponse";
+import type { LLMResponse } from "../models/response/LLMResponse";
 
 /**
  * Base class for LLM connections
@@ -7,7 +7,7 @@ export abstract class BaseLLMConnection {
 	/**
 	 * Whether the connection is active
 	 */
-	private _isActive: boolean = true;
+	private _isActive = true;
 
 	/**
 	 * Gets whether the connection is active

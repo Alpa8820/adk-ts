@@ -1,10 +1,10 @@
 import path from "path";
 import {
 	Agent,
-	PersistentMemoryService,
 	InMemorySessionService,
 	Message,
-	Session,
+	PersistentMemoryService,
+	type Session,
 	SessionState,
 } from "@pontus-devoteam/adk";
 

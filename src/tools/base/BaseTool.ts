@@ -1,5 +1,5 @@
-import { FunctionDeclaration } from "../../models/request/FunctionDeclaration";
-import { ToolContext } from "../../models/context/ToolContext";
+import type { ToolContext } from "../../models/context/ToolContext";
+import type { FunctionDeclaration } from "../../models/request/FunctionDeclaration";
 
 /**
  * Configuration for tool initialization
@@ -63,12 +63,12 @@ export abstract class BaseTool {
 	/**
 	 * Base delay for retry in ms (will be used with exponential backoff)
 	 */
-	baseRetryDelay: number = 1000;
+	baseRetryDelay = 1000;
 
 	/**
 	 * Maximum delay for retry in ms
 	 */
-	maxRetryDelay: number = 10000;
+	maxRetryDelay = 10000;
 
 	/**
 	 * Constructor for BaseTool

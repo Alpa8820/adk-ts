@@ -1,4 +1,3 @@
-"use strict";
 window.translations = {
 	copy: "Copy",
 	copied: "Copied!",
@@ -47,7 +46,7 @@ window.translations = {
 	);
 	var et = (t, e, n, r) => {
 		if ((e && typeof e == "object") || typeof e == "function")
-			for (let i of Ge(e))
+			for (const i of Ge(e))
 				!Ye.call(t, i) &&
 					i !== n &&
 					he(t, i, {
@@ -67,7 +66,7 @@ window.translations = {
 	);
 	var ye = Ze((me, ge) => {
 		(function () {
-			var t = function (e) {
+			var t = (e) => {
 				var n = new t.Builder();
 				return (
 					n.pipeline.add(t.trimmer, t.stopWordFilter, t.stemmer),
@@ -78,15 +77,11 @@ window.translations = {
 			};
 			t.version = "2.3.9";
 			(t.utils = {}),
-				(t.utils.warn = (function (e) {
-					return function (n) {
-						e.console && console.warn && console.warn(n);
-					};
+				(t.utils.warn = ((e) => (n) => {
+					e.console && console.warn && console.warn(n);
 				})(this)),
-				(t.utils.asString = function (e) {
-					return e == null ? "" : e.toString();
-				}),
-				(t.utils.clone = function (e) {
+				(t.utils.asString = (e) => (e == null ? "" : e.toString())),
+				(t.utils.clone = (e) => {
 					if (e == null) return e;
 					for (
 						var n = Object.create(null), r = Object.keys(e), i = 0;
@@ -117,7 +112,7 @@ window.translations = {
 					(this.docRef = e), (this.fieldName = n), (this._stringValue = r);
 				}),
 				(t.FieldRef.joiner = "/"),
-				(t.FieldRef.fromString = function (e) {
+				(t.FieldRef.fromString = (e) => {
 					var n = e.indexOf(t.FieldRef.joiner);
 					if (n === -1) throw "malformed field ref string";
 					var r = e.slice(0, n),
@@ -139,26 +134,18 @@ window.translations = {
 				} else this.length = 0;
 			}),
 				(t.Set.complete = {
-					intersect: function (e) {
-						return e;
-					},
+					intersect: (e) => e,
 					union: function () {
 						return this;
 					},
-					contains: function () {
-						return !0;
-					},
+					contains: () => !0,
 				}),
 				(t.Set.empty = {
 					intersect: function () {
 						return this;
 					},
-					union: function (e) {
-						return e;
-					},
-					contains: function () {
-						return !1;
-					},
+					union: (e) => e,
+					contains: () => !1,
 				}),
 				(t.Set.prototype.contains = function (e) {
 					return !!this.elements[e];
@@ -189,7 +176,7 @@ window.translations = {
 									Object.keys(this.elements).concat(Object.keys(e.elements)),
 								);
 				}),
-				(t.idf = function (e, n) {
+				(t.idf = (e, n) => {
 					var r = 0;
 					for (var i in e) i != "_index" && (r += Object.keys(e[i]).length);
 					var s = (n - r + 0.5) / (r + 0.5);
@@ -206,23 +193,17 @@ window.translations = {
 				}),
 				(t.Token.prototype.clone = function (e) {
 					return (
-						(e =
-							e ||
-							function (n) {
-								return n;
-							}),
+						(e = e || ((n) => n)),
 						new t.Token(e(this.str, this.metadata), this.metadata)
 					);
 				});
-			(t.tokenizer = function (e, n) {
+			(t.tokenizer = (e, n) => {
 				if (e == null || e == null) return [];
 				if (Array.isArray(e))
-					return e.map(function (f) {
-						return new t.Token(
-							t.utils.asString(f).toLowerCase(),
-							t.utils.clone(n),
-						);
-					});
+					return e.map(
+						(f) =>
+							new t.Token(t.utils.asString(f).toLowerCase(), t.utils.clone(n)),
+					);
 				for (
 					var r = e.toString().toLowerCase(),
 						i = r.length,
@@ -266,10 +247,10 @@ window.translations = {
 							e,
 						);
 				}),
-				(t.Pipeline.load = function (e) {
+				(t.Pipeline.load = (e) => {
 					var n = new t.Pipeline();
 					return (
-						e.forEach(function (r) {
+						e.forEach((r) => {
 							var i = t.Pipeline.registeredFunctions[r];
 							if (i) n.add(i);
 							else throw new Error("Cannot load unregistered function: " + r);
@@ -314,17 +295,15 @@ window.translations = {
 				}),
 				(t.Pipeline.prototype.runString = function (e, n) {
 					var r = new t.Token(e, n);
-					return this.run([r]).map(function (i) {
-						return i.toString();
-					});
+					return this.run([r]).map((i) => i.toString());
 				}),
 				(t.Pipeline.prototype.reset = function () {
 					this._stack = [];
 				}),
 				(t.Pipeline.prototype.toJSON = function () {
-					return this._stack.map(function (e) {
-						return t.Pipeline.warnIfFunctionNotRegistered(e), e.label;
-					});
+					return this._stack.map(
+						(e) => (t.Pipeline.warnIfFunctionNotRegistered(e), e.label),
+					);
 				});
 			(t.Vector = function (e) {
 				(this._magnitude = 0), (this.elements = e || []);
@@ -346,7 +325,7 @@ window.translations = {
 					if (o < e) return (s + 1) * 2;
 				}),
 				(t.Vector.prototype.insert = function (e, n) {
-					this.upsert(e, n, function () {
+					this.upsert(e, n, () => {
 						throw "duplicate index";
 					});
 				}),
@@ -402,7 +381,7 @@ window.translations = {
 				(t.Vector.prototype.toJSON = function () {
 					return this.elements;
 				});
-			(t.stemmer = (function () {
+			(t.stemmer = (() => {
 				var e = {
 						ational: "ate",
 						tional: "tion",
@@ -453,7 +432,7 @@ window.translations = {
 					T = /^(.+?)(ed|ing)$/,
 					L = /.$/,
 					C = /(at|bl|iz)$/,
-					M = new RegExp("([^aeiouylsz])\\1$"),
+					M = /([^aeiouylsz])\1$/,
 					j = new RegExp("^" + s + i + "[^aeiouwxy]$"),
 					N = /^(.+?[^aeiou])y$/,
 					q =
@@ -465,7 +444,7 @@ window.translations = {
 					_ = /^(.+?)e$/,
 					U = /ll$/,
 					J = new RegExp("^" + s + i + "[^aeiouwxy]$"),
-					V = function (u) {
+					V = (u) => {
 						var y, P, k, h, E, Q, H;
 						if (u.length < 3) return u;
 						if (
@@ -532,16 +511,12 @@ window.translations = {
 							u
 						);
 					};
-				return function (A) {
-					return A.update(V);
-				};
+				return (A) => A.update(V);
 			})()),
 				t.Pipeline.registerFunction(t.stemmer, "stemmer");
-			(t.generateStopWordFilter = function (e) {
-				var n = e.reduce(function (r, i) {
-					return (r[i] = i), r;
-				}, {});
-				return function (r) {
+			(t.generateStopWordFilter = (e) => {
+				var n = e.reduce((r, i) => ((r[i] = i), r), {});
+				return (r) => {
 					if (r && n[r.toString()] !== r.toString()) return r;
 				};
 			}),
@@ -667,11 +642,8 @@ window.translations = {
 					"your",
 				])),
 				t.Pipeline.registerFunction(t.stopWordFilter, "stopWordFilter");
-			(t.trimmer = function (e) {
-				return e.update(function (n) {
-					return n.replace(/^\W+/, "").replace(/\W+$/, "");
-				});
-			}),
+			(t.trimmer = (e) =>
+				e.update((n) => n.replace(/^\W+/, "").replace(/\W+$/, ""))),
 				t.Pipeline.registerFunction(t.trimmer, "trimmer");
 			(t.TokenSet = function () {
 				(this.final = !1),
@@ -680,7 +652,7 @@ window.translations = {
 					(t.TokenSet._nextId += 1);
 			}),
 				(t.TokenSet._nextId = 1),
-				(t.TokenSet.fromArray = function (e) {
+				(t.TokenSet.fromArray = (e) => {
 					for (
 						var n = new t.TokenSet.Builder(), r = 0, i = e.length;
 						r < i;
@@ -689,12 +661,11 @@ window.translations = {
 						n.insert(e[r]);
 					return n.finish(), n.root;
 				}),
-				(t.TokenSet.fromClause = function (e) {
-					return "editDistance" in e
+				(t.TokenSet.fromClause = (e) =>
+					"editDistance" in e
 						? t.TokenSet.fromFuzzyString(e.term, e.editDistance)
-						: t.TokenSet.fromString(e.term);
-				}),
-				(t.TokenSet.fromFuzzyString = function (e, n) {
+						: t.TokenSet.fromString(e.term)),
+				(t.TokenSet.fromFuzzyString = (e, n) => {
 					for (
 						var r = new t.TokenSet(),
 							i = [{ node: r, editsRemaining: n, str: e }];
@@ -766,7 +737,7 @@ window.translations = {
 					}
 					return r;
 				}),
-				(t.TokenSet.fromString = function (e) {
+				(t.TokenSet.fromString = (e) => {
 					for (
 						var n = new t.TokenSet(), r = n, i = 0, s = e.length;
 						i < s;
@@ -899,7 +870,7 @@ window.translations = {
 					(this.pipeline = e.pipeline);
 			}),
 				(t.Index.prototype.search = function (e) {
-					return this.query(function (n) {
+					return this.query((n) => {
 						var r = new t.QueryParser(e, n);
 						r.parse();
 					});
@@ -958,12 +929,7 @@ window.translations = {
 											(a[g] = a[g].union(W));
 										continue;
 									}
-									if (
-										(i[g].upsert(M, l.boost, function (ze, Ue) {
-											return ze + Ue;
-										}),
-										!s[q])
-									) {
+									if ((i[g].upsert(M, l.boost, (ze, Ue) => ze + Ue), !s[q])) {
 										for (var B = 0; B < N.length; B++) {
 											var z = N[B],
 												_ = new t.FieldRef(z, g),
@@ -1017,9 +983,7 @@ window.translations = {
 							}
 						}
 					}
-					return y.sort(function (qe, We) {
-						return We.score - qe.score;
-					});
+					return y.sort((qe, We) => We.score - qe.score);
 				}),
 				(t.Index.prototype.toJSON = function () {
 					var e = Object.keys(this.invertedIndex)
@@ -1038,7 +1002,7 @@ window.translations = {
 						pipeline: this.pipeline.toJSON(),
 					};
 				}),
-				(t.Index.load = function (e) {
+				(t.Index.load = (e) => {
 					var n = {},
 						r = {},
 						i = e.fieldVectors,
@@ -1410,15 +1374,13 @@ window.translations = {
 				(t.QueryLexer.EDIT_DISTANCE = "EDIT_DISTANCE"),
 				(t.QueryLexer.BOOST = "BOOST"),
 				(t.QueryLexer.PRESENCE = "PRESENCE"),
-				(t.QueryLexer.lexField = function (e) {
-					return (
-						e.backup(),
-						e.emit(t.QueryLexer.FIELD),
-						e.ignore(),
-						t.QueryLexer.lexText
-					);
-				}),
-				(t.QueryLexer.lexTerm = function (e) {
+				(t.QueryLexer.lexField = (e) => (
+					e.backup(),
+					e.emit(t.QueryLexer.FIELD),
+					e.ignore(),
+					t.QueryLexer.lexText
+				)),
+				(t.QueryLexer.lexTerm = (e) => {
 					if (
 						(e.width() > 1 && (e.backup(), e.emit(t.QueryLexer.TERM)),
 						e.ignore(),
@@ -1426,27 +1388,23 @@ window.translations = {
 					)
 						return t.QueryLexer.lexText;
 				}),
-				(t.QueryLexer.lexEditDistance = function (e) {
-					return (
-						e.ignore(),
-						e.acceptDigitRun(),
-						e.emit(t.QueryLexer.EDIT_DISTANCE),
-						t.QueryLexer.lexText
-					);
-				}),
-				(t.QueryLexer.lexBoost = function (e) {
-					return (
-						e.ignore(),
-						e.acceptDigitRun(),
-						e.emit(t.QueryLexer.BOOST),
-						t.QueryLexer.lexText
-					);
-				}),
-				(t.QueryLexer.lexEOS = function (e) {
+				(t.QueryLexer.lexEditDistance = (e) => (
+					e.ignore(),
+					e.acceptDigitRun(),
+					e.emit(t.QueryLexer.EDIT_DISTANCE),
+					t.QueryLexer.lexText
+				)),
+				(t.QueryLexer.lexBoost = (e) => (
+					e.ignore(),
+					e.acceptDigitRun(),
+					e.emit(t.QueryLexer.BOOST),
+					t.QueryLexer.lexText
+				)),
+				(t.QueryLexer.lexEOS = (e) => {
 					e.width() > 0 && e.emit(t.QueryLexer.TERM);
 				}),
 				(t.QueryLexer.termSeparator = t.tokenizer.separator),
-				(t.QueryLexer.lexText = function (e) {
+				(t.QueryLexer.lexText = (e) => {
 					for (;;) {
 						var n = e.next();
 						if (n == t.QueryLexer.EOS) return t.QueryLexer.lexEOS;
@@ -1495,7 +1453,7 @@ window.translations = {
 					var e = this.currentClause;
 					this.query.clause(e), (this.currentClause = {});
 				}),
-				(t.QueryParser.parseClause = function (e) {
+				(t.QueryParser.parseClause = (e) => {
 					var n = e.peekLexeme();
 					if (n != null)
 						switch (n.type) {
@@ -1513,7 +1471,7 @@ window.translations = {
 								);
 						}
 				}),
-				(t.QueryParser.parsePresence = function (e) {
+				(t.QueryParser.parsePresence = (e) => {
 					var n = e.consumeLexeme();
 					if (n != null) {
 						switch (n.str) {
@@ -1543,15 +1501,11 @@ window.translations = {
 						}
 					}
 				}),
-				(t.QueryParser.parseField = function (e) {
+				(t.QueryParser.parseField = (e) => {
 					var n = e.consumeLexeme();
 					if (n != null) {
 						if (e.query.allFields.indexOf(n.str) == -1) {
-							var r = e.query.allFields
-									.map(function (o) {
-										return "'" + o + "'";
-									})
-									.join(", "),
+							var r = e.query.allFields.map((o) => "'" + o + "'").join(", "),
 								i = "unrecognised field '" + n.str + "', possible fields: " + r;
 							throw new t.QueryParseError(i, n.start, n.end);
 						}
@@ -1570,7 +1524,7 @@ window.translations = {
 						}
 					}
 				}),
-				(t.QueryParser.parseTerm = function (e) {
+				(t.QueryParser.parseTerm = (e) => {
 					var n = e.consumeLexeme();
 					if (n != null) {
 						(e.currentClause.term = n.str.toLowerCase()),
@@ -1597,10 +1551,10 @@ window.translations = {
 						}
 					}
 				}),
-				(t.QueryParser.parseEditDistance = function (e) {
+				(t.QueryParser.parseEditDistance = (e) => {
 					var n = e.consumeLexeme();
 					if (n != null) {
-						var r = parseInt(n.str, 10);
+						var r = Number.parseInt(n.str, 10);
 						if (isNaN(r)) {
 							var i = "edit distance must be numeric";
 							throw new t.QueryParseError(i, n.start, n.end);
@@ -1628,10 +1582,10 @@ window.translations = {
 						}
 					}
 				}),
-				(t.QueryParser.parseBoost = function (e) {
+				(t.QueryParser.parseBoost = (e) => {
 					var n = e.consumeLexeme();
 					if (n != null) {
-						var r = parseInt(n.str, 10);
+						var r = Number.parseInt(n.str, 10);
 						if (isNaN(r)) {
 							var i = "boost must be numeric";
 							throw new t.QueryParseError(i, n.start, n.end);
@@ -1659,15 +1613,13 @@ window.translations = {
 						}
 					}
 				}),
-				(function (e, n) {
+				((e, n) => {
 					typeof define == "function" && define.amd
 						? define(n)
 						: typeof me == "object"
 							? (ge.exports = n())
 							: (e.lunr = n());
-				})(this, function () {
-					return t;
-				});
+				})(this, () => t);
 		})();
 	});
 	var O,
@@ -1781,7 +1733,7 @@ window.translations = {
 		}
 		scrollToHash() {
 			if (location.hash) {
-				let e = document.getElementById(location.hash.substring(1));
+				const e = document.getElementById(location.hash.substring(1));
 				if (!e) return;
 				e.scrollIntoView({ behavior: "instant", block: "start" });
 			}
@@ -1789,10 +1741,10 @@ window.translations = {
 		ensureActivePageVisible() {
 			let e = document.querySelector(".tsd-navigation .current"),
 				n = e?.parentElement;
-			for (; n && !n.classList.contains(".tsd-navigation"); )
+			while (n && !n.classList.contains(".tsd-navigation"))
 				n instanceof HTMLDetailsElement && (n.open = !0), (n = n.parentElement);
 			if (e && !nt(e)) {
-				let r =
+				const r =
 					e.getBoundingClientRect().top -
 					document.documentElement.clientHeight / 4;
 				(document.querySelector(".site-menu").scrollTop = r),
@@ -1800,12 +1752,12 @@ window.translations = {
 			}
 		}
 		updateIndexVisibility() {
-			let e = document.querySelector(".tsd-index-content"),
+			const e = document.querySelector(".tsd-index-content"),
 				n = e?.open;
 			e && (e.open = !0),
 				document.querySelectorAll(".tsd-index-section").forEach((r) => {
 					r.style.display = "block";
-					let i = Array.from(r.querySelectorAll(".tsd-index-link")).every(
+					const i = Array.from(r.querySelectorAll(".tsd-index-link")).every(
 						(s) => s.offsetParent == null,
 					);
 					r.style.display = i ? "none" : "block";
@@ -1821,18 +1773,18 @@ window.translations = {
 				!location.hash)
 			)
 				return;
-			let e = document.getElementById(location.hash.substring(1));
+			const e = document.getElementById(location.hash.substring(1));
 			if (!e) return;
 			let n = e.parentElement;
-			for (; n && n.tagName !== "SECTION"; ) n = n.parentElement;
+			while (n && n.tagName !== "SECTION") n = n.parentElement;
 			if (!n) return;
 			let r = n.offsetParent == null,
 				i = n;
-			for (; i !== document.body; )
+			while (i !== document.body)
 				i instanceof HTMLDetailsElement && (i.open = !0), (i = i.parentElement);
 			if (n.offsetParent == null) {
 				(this.alwaysVisibleMember = n), n.classList.add("always-visible");
-				let s = document.createElement("p");
+				const s = document.createElement("p");
 				s.classList.add("warning"),
 					(s.textContent = window.translations.normally_hidden),
 					n.prepend(s);
@@ -1861,7 +1813,7 @@ window.translations = {
 		}
 	};
 	function nt(t) {
-		let e = t.getBoundingClientRect(),
+		const e = t.getBoundingClientRect(),
 			n = Math.max(document.documentElement.clientHeight, window.innerHeight);
 		return !(e.bottom < 0 || e.top - n >= 0);
 	}
@@ -1873,7 +1825,7 @@ window.translations = {
 	};
 	var Ie = tt(ye(), 1);
 	async function R(t) {
-		let e = Uint8Array.from(atob(t), (s) => s.charCodeAt(0)),
+		const e = Uint8Array.from(atob(t), (s) => s.charCodeAt(0)),
 			r = new Blob([e])
 				.stream()
 				.pipeThrough(new DecompressionStream("deflate")),
@@ -1883,7 +1835,9 @@ window.translations = {
 	var Z = "closing",
 		ae = "tsd-overlay";
 	function rt() {
-		let t = Math.abs(window.innerWidth - document.documentElement.clientWidth);
+		const t = Math.abs(
+			window.innerWidth - document.documentElement.clientWidth,
+		);
 		(document.body.style.overflow = "hidden"),
 			(document.body.style.paddingRight = `${t}px`);
 	}
@@ -1913,7 +1867,7 @@ window.translations = {
 	}
 	function Ee(t) {
 		if (t.open) return;
-		let e = document.createElement("div");
+		const e = document.createElement("div");
 		(e.id = ae), document.body.appendChild(e), t.showModal(), rt();
 	}
 	function ve(t) {
@@ -1931,7 +1885,8 @@ window.translations = {
 	be.dataset.for = "filters";
 	var le = {};
 	function we(t) {
-		for (let e of t.split(/\s+/)) if (le.hasOwnProperty(e) && !le[e]) return !0;
+		for (const e of t.split(/\s+/))
+			if (le.hasOwnProperty(e) && !le[e]) return !0;
 		return !1;
 	}
 	var ee = class extends I {
@@ -1950,7 +1905,7 @@ window.translations = {
 				this.app.updateIndexVisibility();
 		}
 		fromLocalStorage() {
-			let e = S.getItem(this.key);
+			const e = S.getItem(this.key);
 			return e ? e === "true" : this.el.checked;
 		}
 		setLocalStorage(e) {
@@ -1969,11 +1924,11 @@ window.translations = {
 	var Le = 0;
 	async function Se(t, e) {
 		if (!window.searchData) return;
-		let n = await R(window.searchData);
+		const n = await R(window.searchData);
 		(t.data = n), (t.index = Ie.Index.load(n.index)), (e.innerHTML = "");
 	}
 	function _e() {
-		let t = document.getElementById("tsd-search-trigger"),
+		const t = document.getElementById("tsd-search-trigger"),
 			e = document.getElementById("tsd-search"),
 			n = document.getElementById("tsd-search-input"),
 			r = document.getElementById("tsd-search-results"),
@@ -1981,10 +1936,10 @@ window.translations = {
 			s = document.getElementById("tsd-search-status");
 		if (!(t && e && n && r && i && s))
 			throw new Error("Search controls missing");
-		let o = { base: document.documentElement.dataset.base };
+		const o = { base: document.documentElement.dataset.base };
 		o.base.endsWith("/") || (o.base += "/"),
 			i.addEventListener("error", () => {
-				let a = window.translations.search_index_not_available;
+				const a = window.translations.search_index_not_available;
 				Pe(s, a);
 			}),
 			i.addEventListener("load", () => {
@@ -1994,7 +1949,7 @@ window.translations = {
 			st({ trigger: t, searchEl: e, results: r, field: n, status: s }, o);
 	}
 	function st(t, e) {
-		let { field: n, results: r, searchEl: i, status: s, trigger: o } = t;
+		const { field: n, results: r, searchEl: i, status: s, trigger: o } = t;
 		xe(i, { closeOnClick: !0 });
 		function a() {
 			Ee(i), n.setSelectionRange(0, n.value.length);
@@ -2009,7 +1964,7 @@ window.translations = {
 			n.addEventListener("keydown", (l) => {
 				if (r.childElementCount === 0 || l.ctrlKey || l.metaKey || l.altKey)
 					return;
-				let d = n.getAttribute("aria-activedescendant"),
+				const d = n.getAttribute("aria-activedescendant"),
 					f = d ? document.getElementById(d) : null;
 				if (f) {
 					let p = !1,
@@ -2049,7 +2004,7 @@ window.translations = {
 			n.addEventListener("click", c),
 			document.body.addEventListener("keydown", (l) => {
 				if (l.altKey || l.metaKey || l.shiftKey) return;
-				let d = l.ctrlKey && l.key === "k",
+				const d = l.ctrlKey && l.key === "k",
 					f = !l.ctrlKey && !ct() && l.key === "/";
 				(d || f) && (l.preventDefault(), a());
 			});
@@ -2060,17 +2015,17 @@ window.translations = {
 		let i = e.value.trim(),
 			s;
 		if (i) {
-			let a = i
+			const a = i
 				.split(" ")
 				.map((c) => (c.length ? `*${c}*` : ""))
 				.join(" ");
 			s = r.index.search(a).filter(({ ref: c }) => {
-				let l = r.data.rows[Number(c)].classes;
+				const l = r.data.rows[Number(c)].classes;
 				return !l || !we(l);
 			});
 		} else s = [];
 		if (s.length === 0 && i) {
-			let a = window.translations.search_no_results_found_for_0.replace(
+			const a = window.translations.search_no_results_found_for_0.replace(
 				"{0}",
 				` "<strong>${te(i)}</strong>" `,
 			);
@@ -2086,7 +2041,7 @@ window.translations = {
 				(c.score *= d);
 		}
 		s.sort((a, c) => c.score - a.score);
-		let o = Math.min(10, s.length);
+		const o = Math.min(10, s.length);
 		for (let a = 0; a < o; a++) {
 			let c = r.data.rows[Number(s[a].ref)],
 				d = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="tsd-kind-icon" aria-label="${window.translations[`kind_${c.kind}`].replaceAll('"', "&quot;")}"><use href="#icon-${c.icon || c.kind}"></use></svg>`,
@@ -2096,12 +2051,12 @@ window.translations = {
 				c.parent &&
 					(f = `<span class="parent">
                 ${Ce(c.parent, i)}.</span>${f}`);
-			let p = document.createElement("li");
+			const p = document.createElement("li");
 			(p.id = `tsd-search:${Le}-${a}`),
 				(p.role = "option"),
 				(p.ariaSelected = "false"),
 				(p.classList.value = c.classes ?? "");
-			let v = document.createElement("a");
+			const v = document.createElement("a");
 			(v.tabIndex = -1),
 				(v.href = r.base + c.url),
 				(v.innerHTML = d + `<span class="text">${f}</span>`),
@@ -2128,7 +2083,7 @@ window.translations = {
 		}
 	}
 	function ke(t) {
-		let e = t.getAttribute("aria-activedescendant");
+		const e = t.getAttribute("aria-activedescendant");
 		(e ? document.getElementById(e) : null)?.setAttribute(
 			"aria-selected",
 			"false",
@@ -2142,7 +2097,7 @@ window.translations = {
 			i = [],
 			s = 0,
 			o = n.indexOf(r);
-		for (; o != -1; )
+		while (o != -1)
 			i.push(
 				te(t.substring(s, o)),
 				`<mark>${te(t.substring(o, o + r.length))}</mark>`,
@@ -2176,7 +2131,7 @@ window.translations = {
 		"submit",
 	];
 	function ct() {
-		let t = document.activeElement;
+		const t = document.activeElement;
 		return t
 			? t.isContentEditable ||
 				t.tagName === "TEXTAREA" ||
@@ -2202,12 +2157,12 @@ window.translations = {
 		((ut = !0), (D = "touchstart"), (Oe = "touchmove"), ($ = "touchend"));
 	document.addEventListener(D, (t) => {
 		(ce = !0), (F = !1);
-		let e = D == "touchstart" ? t.targetTouches[0] : t;
+		const e = D == "touchstart" ? t.targetTouches[0] : t;
 		(ne.y = e.pageY || 0), (ne.x = e.pageX || 0);
 	});
 	document.addEventListener(Oe, (t) => {
 		if (ce && !F) {
-			let e = D == "touchstart" ? t.targetTouches[0] : t,
+			const e = D == "touchstart" ? t.targetTouches[0] : t,
 				n = ne.x - (e.pageX || 0),
 				r = ne.y - (e.pageY || 0);
 			F = Math.sqrt(n * n + r * r) > 10;
@@ -2235,7 +2190,7 @@ window.translations = {
 			(this.active = e),
 				document.documentElement.classList.toggle("has-" + this.className, e),
 				this.el.classList.toggle("active", e);
-			let n = (this.active ? "to-has-" : "from-has-") + this.className;
+			const n = (this.active ? "to-has-" : "from-has-") + this.className;
 			document.documentElement.classList.add(n),
 				setTimeout(() => document.documentElement.classList.remove(n), 500);
 		}
@@ -2250,7 +2205,7 @@ window.translations = {
 		}
 		onDocumentPointerUp(e) {
 			if (!F && this.active && e.target.closest(".col-sidebar")) {
-				let n = e.target.closest("a");
+				const n = e.target.closest("a");
 				if (n) {
 					let r = window.location.href;
 					r.indexOf("#") != -1 && (r = r.substring(0, r.indexOf("#"))),
@@ -2276,14 +2231,14 @@ window.translations = {
 					});
 			}
 			toggle(e) {
-				for (let n of this.accordions) n.open = e;
+				for (const n of this.accordions) n.open = e;
 				S.setItem(this.key, e.toString());
 			}
 		},
 		ie = class extends I {
 			constructor(e) {
 				super(e);
-				let n = this.el.querySelector("summary"),
+				const n = this.el.querySelector("summary"),
 					r = n.querySelector("a");
 				r &&
 					r.addEventListener("click", () => {
@@ -2293,7 +2248,7 @@ window.translations = {
 					s;
 				if (ue.has(i)) s = ue.get(i);
 				else {
-					let o = S.getItem(i),
+					const o = S.getItem(i),
 						a = o ? o === "true" : this.el.open;
 					(s = new de(i, a)), ue.set(i, s);
 				}
@@ -2301,7 +2256,7 @@ window.translations = {
 			}
 		};
 	function He(t) {
-		let e = S.getItem("tsd-theme") || "os";
+		const e = S.getItem("tsd-theme") || "os";
 		(t.value = e),
 			Ae(e),
 			t.addEventListener("change", () => {
@@ -2313,43 +2268,43 @@ window.translations = {
 	}
 	var se;
 	function Fe() {
-		let t = document.getElementById("tsd-nav-script");
+		const t = document.getElementById("tsd-nav-script");
 		t && (t.addEventListener("load", Re), Re());
 	}
 	async function Re() {
-		let t = document.getElementById("tsd-nav-container");
+		const t = document.getElementById("tsd-nav-container");
 		if (!t || !window.navigationData) return;
-		let e = await R(window.navigationData);
+		const e = await R(window.navigationData);
 		(se = document.documentElement.dataset.base),
 			se.endsWith("/") || (se += "/"),
 			(t.innerHTML = "");
-		for (let n of e) Ne(n, t, []);
+		for (const n of e) Ne(n, t, []);
 		window.app.createComponents(t),
 			window.app.showPage(),
 			window.app.ensureActivePageVisible();
 	}
 	function Ne(t, e, n) {
-		let r = e.appendChild(document.createElement("li"));
+		const r = e.appendChild(document.createElement("li"));
 		if (t.children) {
-			let i = [...n, t.text],
+			const i = [...n, t.text],
 				s = r.appendChild(document.createElement("details"));
 			s.className = t.class ? `${t.class} tsd-accordion` : "tsd-accordion";
-			let o = s.appendChild(document.createElement("summary"));
+			const o = s.appendChild(document.createElement("summary"));
 			(o.className = "tsd-accordion-summary"),
 				(o.dataset.key = i.join("$")),
 				(o.innerHTML =
 					'<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><use href="#icon-chevronDown"></use></svg>'),
 				De(t, o);
-			let a = s.appendChild(document.createElement("div"));
+			const a = s.appendChild(document.createElement("div"));
 			a.className = "tsd-accordion-details";
-			let c = a.appendChild(document.createElement("ul"));
+			const c = a.appendChild(document.createElement("ul"));
 			c.className = "tsd-nested-navigation";
-			for (let l of t.children) Ne(l, c, i);
+			for (const l of t.children) Ne(l, c, i);
 		} else De(t, r, t.class);
 	}
 	function De(t, e, n) {
 		if (t.path) {
-			let r = e.appendChild(document.createElement("a"));
+			const r = e.appendChild(document.createElement("a"));
 			if (
 				((r.href = se + t.path),
 				n && (r.className = n),
@@ -2358,12 +2313,15 @@ window.translations = {
 					(r.classList.add("current"), (r.ariaCurrent = "page")),
 				t.kind)
 			) {
-				let i = window.translations[`kind_${t.kind}`].replaceAll('"', "&quot;");
+				const i = window.translations[`kind_${t.kind}`].replaceAll(
+					'"',
+					"&quot;",
+				);
 				r.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="tsd-kind-icon" aria-label="${i}"><use href="#icon-${t.icon || t.kind}"></use></svg>`;
 			}
 			r.appendChild(document.createElement("span")).textContent = t.text;
 		} else {
-			let r = e.appendChild(document.createElement("span")),
+			const r = e.appendChild(document.createElement("span")),
 				i = window.translations.folder.replaceAll('"', "&quot;");
 			(r.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="tsd-kind-icon" aria-label="${i}"><use href="#icon-folder"></use></svg>`),
 				(r.appendChild(document.createElement("span")).textContent = t.text);
@@ -2379,32 +2337,32 @@ window.translations = {
 	function dt() {
 		document.addEventListener("click", (r) => {
 			let i = r.target;
-			for (; i.parentElement && i.parentElement.tagName != "LI"; )
+			while (i.parentElement && i.parentElement.tagName != "LI")
 				i = i.parentElement;
 			i.dataset.dropdown &&
 				(i.dataset.dropdown = String(i.dataset.dropdown !== "true"));
 		});
-		let t = new Map(),
+		const t = new Map(),
 			e = new Set();
-		for (let r of document.querySelectorAll(
+		for (const r of document.querySelectorAll(
 			".tsd-full-hierarchy [data-refl]",
 		)) {
-			let i = r.querySelector("ul");
+			const i = r.querySelector("ul");
 			t.has(r.dataset.refl)
 				? e.add(r.dataset.refl)
 				: i && t.set(r.dataset.refl, i);
 		}
-		for (let r of e) n(r);
+		for (const r of e) n(r);
 		function n(r) {
-			let i = t.get(r).cloneNode(!0);
+			const i = t.get(r).cloneNode(!0);
 			i.querySelectorAll("[id]").forEach((s) => {
 				s.removeAttribute("id");
 			}),
 				i.querySelectorAll("[data-dropdown]").forEach((s) => {
 					s.dataset.dropdown = "false";
 				});
-			for (let s of document.querySelectorAll(`[data-refl="${r}"]`)) {
-				let o = mt(),
+			for (const s of document.querySelectorAll(`[data-refl="${r}"]`)) {
+				const o = mt(),
 					a = s.querySelector("ul");
 				s.insertBefore(o, a),
 					(o.dataset.dropdown = String(!!a)),
@@ -2413,13 +2371,13 @@ window.translations = {
 		}
 	}
 	function ht() {
-		let t = document.getElementById("tsd-hierarchy-script");
+		const t = document.getElementById("tsd-hierarchy-script");
 		t && (t.addEventListener("load", Be), Be());
 	}
 	async function Be() {
-		let t = document.querySelector(".tsd-panel.tsd-hierarchy:has(h4 a)");
+		const t = document.querySelector(".tsd-panel.tsd-hierarchy:has(h4 a)");
 		if (!t || !window.hierarchyData) return;
-		let e = +t.dataset.refl,
+		const e = +t.dataset.refl,
 			n = await R(window.hierarchyData),
 			r = t.querySelector("ul"),
 			i = document.createElement("ul");
@@ -2429,7 +2387,7 @@ window.translations = {
 			r.querySelectorAll("li").length == i.querySelectorAll("li").length)
 		)
 			return;
-		let s = document.createElement("span");
+		const s = document.createElement("span");
 		s.classList.add("tsd-hierarchy-toggle"),
 			(s.textContent = window.translations.hierarchy_expand),
 			t.querySelector("h4 a")?.insertAdjacentElement("afterend", s),
@@ -2445,36 +2403,36 @@ window.translations = {
 			});
 	}
 	function pt(t, e, n) {
-		let r = e.roots.filter((i) => ft(e, i, n));
-		for (let i of r) t.appendChild($e(e, i, n));
+		const r = e.roots.filter((i) => ft(e, i, n));
+		for (const i of r) t.appendChild($e(e, i, n));
 	}
 	function $e(t, e, n, r = new Set()) {
 		if (r.has(e)) return;
 		r.add(e);
-		let i = t.reflections[e],
+		const i = t.reflections[e],
 			s = document.createElement("li");
 		if ((s.classList.add("tsd-hierarchy-item"), e === n)) {
-			let o = s.appendChild(document.createElement("span"));
+			const o = s.appendChild(document.createElement("span"));
 			(o.textContent = i.name), o.classList.add("tsd-hierarchy-target");
 		} else {
-			for (let a of i.uniqueNameParents || []) {
-				let c = t.reflections[a],
+			for (const a of i.uniqueNameParents || []) {
+				const c = t.reflections[a],
 					l = s.appendChild(document.createElement("a"));
 				(l.textContent = c.name),
 					(l.href = oe + c.url),
 					(l.className = c.class + " tsd-signature-type"),
 					s.append(document.createTextNode("."));
 			}
-			let o = s.appendChild(document.createElement("a"));
+			const o = s.appendChild(document.createElement("a"));
 			(o.textContent = t.reflections[e].name),
 				(o.href = oe + i.url),
 				(o.className = i.class + " tsd-signature-type");
 		}
 		if (i.children) {
-			let o = s.appendChild(document.createElement("ul"));
+			const o = s.appendChild(document.createElement("ul"));
 			o.classList.add("tsd-hierarchy");
-			for (let a of i.children) {
-				let c = $e(t, a, n, r);
+			for (const a of i.children) {
+				const c = $e(t, a, n, r);
 				c && o.appendChild(c);
 			}
 		}
@@ -2482,13 +2440,13 @@ window.translations = {
 	}
 	function ft(t, e, n) {
 		if (e === n) return !0;
-		let r = new Set(),
+		const r = new Set(),
 			i = [t.reflections[e]];
-		for (; i.length; ) {
-			let s = i.pop();
+		while (i.length) {
+			const s = i.pop();
 			if (!r.has(s)) {
 				r.add(s);
-				for (let o of s.children || []) {
+				for (const o of s.children || []) {
 					if (o === n) return !0;
 					i.push(t.reflections[o]);
 				}
@@ -2497,7 +2455,7 @@ window.translations = {
 		return !1;
 	}
 	function mt() {
-		let t = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		const t = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 		return (
 			t.setAttribute("width", "20"),
 			t.setAttribute("height", "20"),

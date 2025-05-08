@@ -1,7 +1,7 @@
+import type { RunConfig } from "../../models/config/RunConfig";
+import type { Message, MessageRole } from "../../models/request/LLMRequest";
+import type { LLMResponse } from "../../models/response/LLMResponse";
 import { BaseAgent } from "../base/BaseAgent";
-import { Message, MessageRole } from "../../models/request/LLMRequest";
-import { LLMResponse } from "../../models/response/LLMResponse";
-import { RunConfig } from "../../models/config/RunConfig";
 
 /**
  * Configuration for LoopAgent

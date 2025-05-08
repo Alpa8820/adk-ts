@@ -1,12 +1,12 @@
+import type { ToolContext } from "../../src/models/context/ToolContext";
+import type { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
 import { BaseTool } from "../../src/tools/base/BaseTool";
-import { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
-import { ToolContext } from "../../src/models/context/ToolContext";
 
 // Define a concrete implementation of BaseTool for testing
 class TestTool extends BaseTool {
 	lastArgs: any = null;
-	shouldFail: boolean = false;
-	errorMessage: string = "Test error message";
+	shouldFail = false;
+	errorMessage = "Test error message";
 
 	constructor() {
 		super({

@@ -1,10 +1,10 @@
 import { Agent } from "../../src/agents/specialized/Agent";
+import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
+import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
+import type { ToolContext } from "../../src/models/context/ToolContext";
+import type { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
 import { LLMResponse } from "../../src/models/response/LLMResponse";
 import { BaseTool } from "../../src/tools/base/BaseTool";
-import { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
-import { ToolContext } from "../../src/models/context/ToolContext";
-import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
-import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
 
 // Mock these modules first
 jest.mock("../../src/llm/providers/openai/OpenAILLM");

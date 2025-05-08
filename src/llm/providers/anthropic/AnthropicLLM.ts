@@ -1,14 +1,17 @@
-import { BaseLLM } from "../../BaseLLM";
-import {
-	LLMRequest,
-	Message,
-	MessageRole,
-	MessageContent,
-} from "../../../models/request/LLMRequest";
-import { LLMResponse, ToolCall } from "../../../models/response/LLMResponse";
-import { BaseLLMConnection } from "../../BaseLLMConnection";
-import { AnthropicLLMConnection } from "./AnthropicLLMConnection";
 import axios, { AxiosInstance } from "axios";
+import {
+	type LLMRequest,
+	type Message,
+	MessageContent,
+	MessageRole,
+} from "../../../models/request/LLMRequest";
+import {
+	LLMResponse,
+	type ToolCall,
+} from "../../../models/response/LLMResponse";
+import { BaseLLM } from "../../BaseLLM";
+import type { BaseLLMConnection } from "../../BaseLLMConnection";
+import { AnthropicLLMConnection } from "./AnthropicLLMConnection";
 
 /**
  * Configuration for Anthropic LLM
@@ -319,10 +322,7 @@ export class AnthropicLLM extends BaseLLM {
 	/**
 	 * Make a direct API call to Anthropic
 	 */
-	private async callAnthropicAPI(
-		params: any,
-		stream: boolean = false,
-	): Promise<any> {
+	private async callAnthropicAPI(params: any, stream = false): Promise<any> {
 		try {
 			const response = await axios({
 				method: "POST",
@@ -362,7 +362,7 @@ export class AnthropicLLM extends BaseLLM {
 	 */
 	async *generateContentAsync(
 		llmRequest: LLMRequest,
-		stream: boolean = false,
+		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		try {
 			// Extract system message

@@ -1,7 +1,7 @@
-import { BaseLLMConnection } from "../../BaseLLMConnection";
-import { LLMRequest } from "../../../models/request/LLMRequest";
+import type OpenAI from "openai";
+import type { LLMRequest } from "../../../models/request/LLMRequest";
 import { LLMResponse } from "../../../models/response/LLMResponse";
-import OpenAI from "openai";
+import { BaseLLMConnection } from "../../BaseLLMConnection";
 
 /**
  * OpenAI LLM Connection

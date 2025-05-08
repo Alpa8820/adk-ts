@@ -1,6 +1,6 @@
 import {
-	Session,
-	ListSessionOptions,
+	type ListSessionOptions,
+	type Session,
 	SessionState,
 } from "../../models/memory/Session";
 

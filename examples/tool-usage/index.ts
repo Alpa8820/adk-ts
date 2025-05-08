@@ -1,9 +1,9 @@
-import { Agent, BaseTool, Message, MessageRole } from "../../src";
-import { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
-import { ToolContext } from "../../src/models/context/ToolContext";
+import * as dotenv from "dotenv";
+import { Agent, BaseTool, type Message, type MessageRole } from "../../src";
 import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
 import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
-import * as dotenv from "dotenv";
+import type { ToolContext } from "../../src/models/context/ToolContext";
+import type { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
 
 // Load environment variables from .env file
 dotenv.config();

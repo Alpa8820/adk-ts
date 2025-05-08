@@ -1,11 +1,11 @@
-import { BaseLLM } from "../../BaseLLM";
-import {
+import { type GenerativeModel, VertexAI } from "@google-cloud/vertexai";
+import type {
 	LLMRequest,
 	Message,
 	MessageRole,
 } from "../../../models/request/LLMRequest";
 import { LLMResponse } from "../../../models/response/LLMResponse";
-import { VertexAI, GenerativeModel } from "@google-cloud/vertexai";
+import { BaseLLM } from "../../BaseLLM";
 
 /**
  * Google Gemini LLM configuration
@@ -231,7 +231,7 @@ export class GoogleLLM extends BaseLLM {
 	 */
 	async *generateContentAsync(
 		llmRequest: LLMRequest,
-		stream: boolean = false,
+		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		try {
 			// Convert messages to Google format

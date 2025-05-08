@@ -1,13 +1,13 @@
-import { BaseLLM } from "../../BaseLLM";
-import { LLMRequest, Message } from "../../../models/request/LLMRequest";
-import {
-	LLMResponse,
-	FunctionCall,
-	ToolCall,
-} from "../../../models/response/LLMResponse";
-import { BaseLLMConnection } from "../../BaseLLMConnection";
-import { OpenAILLMConnection } from "./OpenAILLMConnection";
 import OpenAI from "openai";
+import type { LLMRequest, Message } from "../../../models/request/LLMRequest";
+import {
+	type FunctionCall,
+	LLMResponse,
+	type ToolCall,
+} from "../../../models/response/LLMResponse";
+import { BaseLLM } from "../../BaseLLM";
+import type { BaseLLMConnection } from "../../BaseLLMConnection";
+import { OpenAILLMConnection } from "./OpenAILLMConnection";
 
 /**
  * Configuration for OpenAI LLM
@@ -293,7 +293,7 @@ export class OpenAILLM extends BaseLLM {
 	 */
 	async *generateContentAsync(
 		llmRequest: LLMRequest,
-		stream: boolean = false,
+		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		// Prepare messages
 		const messages = llmRequest.messages.map((msg) => this.convertMessage(msg));

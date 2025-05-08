@@ -1,5 +1,5 @@
-import { LoopAgent } from "../../src/agents/specialized/LoopAgent";
 import { Agent } from "../../src/agents/specialized/Agent";
+import { LoopAgent } from "../../src/agents/specialized/LoopAgent";
 import { LLMResponse } from "../../src/models/response/LLMResponse";
 
 // Mock Agent to avoid actual API calls during testing

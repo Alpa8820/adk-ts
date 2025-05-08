@@ -1,6 +1,6 @@
+import type { RunConfig } from "../../models/config/RunConfig";
 import { InvocationContext } from "../../models/context/InvocationContext";
-import { LLMRequest, Message } from "../../models/request/LLMRequest";
-import { RunConfig } from "../../models/config/RunConfig";
+import { LLMRequest, type Message } from "../../models/request/LLMRequest";
 
 /**
  * Base class for all agents in the Agent Development Kit

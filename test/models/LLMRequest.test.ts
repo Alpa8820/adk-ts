@@ -1,13 +1,13 @@
-import {
-	LLMRequest,
-	Message,
-	MessageRole,
-	MessageContent,
-	LLMRequestConfig,
-	TextContent,
-	ImageContent,
-} from "../../src/models/request/LLMRequest";
 import { RunConfig } from "../../src/models/config/RunConfig";
+import {
+	type ImageContent,
+	LLMRequest,
+	type LLMRequestConfig,
+	type Message,
+	MessageContent,
+	type MessageRole,
+	type TextContent,
+} from "../../src/models/request/LLMRequest";
 
 describe("LLMRequest", () => {
 	it("should initialize with simple messages", () => {

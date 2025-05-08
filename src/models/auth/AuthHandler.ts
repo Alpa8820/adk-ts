@@ -1,5 +1,5 @@
-import { AuthConfig } from "./AuthConfig";
-import { AuthCredential } from "./AuthCredential";
+import type { AuthConfig } from "./AuthConfig";
+import type { AuthCredential } from "./AuthCredential";
 
 /**
  * Handler for authentication in tools

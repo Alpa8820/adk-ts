@@ -1,5 +1,5 @@
-import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
 import { BaseLLM } from "../../src/llm/BaseLLM";
+import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
 
 // Create a mock LLM class that extends BaseLLM
 class MockLLM extends BaseLLM {
