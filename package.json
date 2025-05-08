@@ -18,8 +18,8 @@
 		"predeploy": "npm run docs",
 		"deploy:docs": "gh-pages -d docs",
 		"example:simple": "ts-node examples/simple-agent/index.ts",
-		"example:multi": "ts-node examples/multi-provider/index.ts",
 		"example:tool": "ts-node examples/tool-usage/index.ts",
+		"example:specialized": "ts-node examples/specialized-agents/index.ts",
 		"example:memory": "ts-node examples/memory-usage/index.ts",
 		"example:anthropic": "ts-node examples/anthropic-tool/index.ts",
 		"test:watch": "vitest",
@@ -27,7 +27,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/pontus-devoteam/adk-typescript.git"
+		"url": "https://github.com/IQAIcom/adk-ts.git"
 	},
 	"keywords": [
 		"ai",
@@ -38,12 +38,13 @@
 		"gemini",
 		"typescript"
 	],
-	"author": "Pontus Espe",
+	"author": "iaqi",
 	"license": "MIT",
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.39.0",
 		"@google-cloud/vertexai": "^0.5.0",
 		"@google/generative-ai": "^0.1.3",
+		"@pontus-devoteam/adk": "^0.0.2",
 		"axios": "^1.6.2",
 		"dotenv": "^16.4.7",
 		"openai": "^4.93.0",

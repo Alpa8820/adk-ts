@@ -20,7 +20,7 @@
 		"external": false
 	},
 	"navigationLinks": {
-		"GitHub": "https://github.com/pontus-devoteam/adk-typescript",
-		"NPM": "https://www.npmjs.com/package/@pontus-devoteam/adk"
+		"GitHub": "https://github.com/IQAIcom/adk-ts",
+		"NPM": "https://www.npmjs.com/package/@iqai/adk"
 	}
 }

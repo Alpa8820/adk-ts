@@ -2,11 +2,13 @@ import path from "node:path";
 import {
 	Agent,
 	InMemorySessionService,
-	Message,
 	PersistentMemoryService,
 	type Session,
 	SessionState,
 } from "@pontus-devoteam/adk";
+import dotenv from "dotenv";
+// Load environment variables from .env file if it exists
+dotenv.config();
 
 /**
  * Maximum number of messages to keep in conversation history
