@@ -10,12 +10,27 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"sourceMap": true,
+		"types": [
+			"node",
+			"vitest/globals"
+		],
 		"baseUrl": ".",
 		"paths": {
-			"@adk/*": ["src/*"]
+			"@adk/*": [
+				"src/*"
+			]
 		},
-		"typeRoots": ["./node_modules/@types", "./src/types"]
+		"typeRoots": [
+			"./node_modules/@types",
+			"./src/types"
+		]
 	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "**/*.test.ts"]
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"**/*.test.ts"
+	]
 }
