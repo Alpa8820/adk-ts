@@ -11,7 +11,7 @@
 		"lint": "lint-staged --allow-empty",
 		"lint:all": "biome check . --write --organize-imports-enabled=true",
 		"clean": "rimraf dist",
-		"prepare": "npm run build",
+		"prepare": "pnpm run build",
 		"docs": "typedoc",
 		"docs:serve": "npx http-server docs",
 		"docs:markdown": "typedoc --plugin typedoc-plugin-markdown",
