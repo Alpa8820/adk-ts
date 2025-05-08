@@ -2,7 +2,7 @@ name: Generate and Deploy Documentation
 
 on:
   push:
-    branches: 
+    branches:
       - main
       - master
   workflow_dispatch:
@@ -12,7 +12,6 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -34,14 +33,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-        
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+          run_install: false
+
       - name: Install Dependencies
-        run: npm ci
-        
+        run: pnpm install
+
       - name: Generate Documentation
-        run: npm run docs
-        
+        run: pnpm docs
+
       - name: List Documentation Files
         run: |
           echo "Documentation files:"
@@ -51,12 +56,12 @@ jobs:
           else
             echo "❌ index.html missing"
           fi
-        
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs
-          
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
