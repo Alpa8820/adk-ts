@@ -1,10 +1,9 @@
-import { RunConfig } from "../../src/models/config/RunConfig";
+import { describe, expect, it } from "vitest";
 import {
 	type ImageContent,
 	LLMRequest,
 	type LLMRequestConfig,
 	type Message,
-	MessageContent,
 	type MessageRole,
 	type TextContent,
 } from "../../src/models/request/LLMRequest";

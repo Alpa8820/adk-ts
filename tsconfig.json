@@ -12,7 +12,6 @@
 		"sourceMap": true,
 		"types": [
 			"node",
-			"vitest/globals"
 		],
 		"baseUrl": ".",
 		"paths": {
@@ -22,15 +21,15 @@
 		},
 		"typeRoots": [
 			"./node_modules/@types",
-			"./src/types"
+			"./src/types",
 		]
 	},
 	"include": [
-		"src/**/*"
+		"src",
+		"test"
 	],
 	"exclude": [
 		"node_modules",
 		"dist",
-		"**/*.test.ts"
 	]
 }

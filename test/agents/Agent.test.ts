@@ -1,4 +1,13 @@
-import { type Mock, type MockedClass, vi } from "vitest";
+import {
+	type Mock,
+	type MockedClass,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import { Agent } from "../../src/agents/specialized/Agent";
 import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
 import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
