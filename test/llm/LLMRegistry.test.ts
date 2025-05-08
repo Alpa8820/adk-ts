@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import { BaseLLM } from "../../src/llm/BaseLLM";
 import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
 
@@ -78,7 +79,7 @@ describe("LLMRegistry", () => {
 		process.env.DEBUG = "true";
 
 		// Mock console.log
-		const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
 		// Register the mock LLM
 		LLMRegistry.registerLLM(MockLLM);
@@ -105,7 +106,7 @@ describe("LLMRegistry", () => {
 		process.env.DEBUG = "false";
 
 		// Mock console.log
-		const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+		const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
 		// Register the mock LLM
 		LLMRegistry.registerLLM(MockLLM);

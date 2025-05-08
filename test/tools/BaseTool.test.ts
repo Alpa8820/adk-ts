@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import type { ToolContext } from "../../src/models/context/ToolContext";
 import type { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
 import { BaseTool } from "../../src/tools/base/BaseTool";
@@ -55,13 +56,13 @@ describe("BaseTool", () => {
 		testTool.shouldFail = false;
 
 		// Mock console.log and console.error for DEBUG tests
-		jest.spyOn(console, "log").mockImplementation();
-		jest.spyOn(console, "error").mockImplementation();
+		vi.spyOn(console, "log").mockImplementation(() => {});
+		vi.spyOn(console, "error").mockImplementation(() => {});
 	});
 
 	afterEach(() => {
 		// Restore console mocks
-		jest.restoreAllMocks();
+		vi.restoreAllMocks();
 	});
 
 	it("should initialize with correct properties", () => {
@@ -110,7 +111,7 @@ describe("BaseTool", () => {
 		const invalidArgs = { wrongParam: "invalid value" };
 
 		// Spy on console.error
-		const consoleSpy = jest.spyOn(console, "error");
+		const consoleSpy = vi.spyOn(console, "error");
 
 		// Test with valid args
 		expect(testTool.validateArguments(validArgs)).toBe(true);

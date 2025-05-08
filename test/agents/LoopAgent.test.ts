@@ -1,16 +1,15 @@
+import { vi } from "vitest";
 import { Agent } from "../../src/agents/specialized/Agent";
 import { LoopAgent } from "../../src/agents/specialized/LoopAgent";
 import { LLMResponse } from "../../src/models/response/LLMResponse";
 
 // Mock Agent to avoid actual API calls during testing
-jest.mock("../../src/agents/specialized/Agent", () => {
-	const originalModule = jest.requireActual(
-		"../../src/agents/specialized/Agent",
-	);
+vi.mock("../../src/agents/specialized/Agent", () => {
+	const originalModule = vi.importActual("../../src/agents/specialized/Agent");
 
 	return {
 		...originalModule,
-		Agent: jest.fn().mockImplementation(() => {
+		Agent: vi.fn().mockImplementation(() => {
 			let callCount = 0;
 
 			return {
@@ -30,7 +29,7 @@ jest.mock("../../src/agents/specialized/Agent", () => {
 
 describe("LoopAgent Class", () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it("should initialize with default configuration", () => {
@@ -107,7 +106,7 @@ describe("LoopAgent Class", () => {
 	// Test for collecting responses without directly accessing private methods
 	it("should support iterative responses", async () => {
 		// Create a special mock agent for this test
-		const mockRunMethod = jest.fn();
+		const mockRunMethod = vi.fn();
 		let callCount = 0;
 		mockRunMethod.mockImplementation(async () => {
 			callCount += 1;

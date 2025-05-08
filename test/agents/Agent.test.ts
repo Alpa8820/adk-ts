@@ -1,3 +1,4 @@
+import { type Mock, type MockedClass, vi } from "vitest";
 import { Agent } from "../../src/agents/specialized/Agent";
 import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
 import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
@@ -7,11 +8,11 @@ import { LLMResponse } from "../../src/models/response/LLMResponse";
 import { BaseTool } from "../../src/tools/base/BaseTool";
 
 // Mock these modules first
-jest.mock("../../src/llm/providers/openai/OpenAILLM");
-jest.mock("../../src/llm/registry/LLMRegistry");
+vi.mock("../../src/llm/providers/openai/OpenAILLM");
+vi.mock("../../src/llm/registry/LLMRegistry");
 
 // Create mock implementation after mocking
-const mockGenerateContent = jest.fn().mockImplementation(async function* () {
+const mockGenerateContent = vi.fn().mockImplementation(async function* () {
 	yield new LLMResponse({
 		role: "assistant",
 		content: "This is a mock response",
@@ -21,7 +22,7 @@ const mockGenerateContent = jest.fn().mockImplementation(async function* () {
 // Setup mocks
 beforeAll(() => {
 	// Mock OpenAILLM implementation
-	(OpenAILLM as jest.MockedClass<typeof OpenAILLM>).mockImplementation(
+	(OpenAILLM as MockedClass<typeof OpenAILLM>).mockImplementation(
 		(model: string) => {
 			return {
 				model,
@@ -32,14 +33,14 @@ beforeAll(() => {
 	);
 
 	// Setup LLMRegistry mock
-	(LLMRegistry.resolve as jest.Mock).mockImplementation((model: string) => {
+	(LLMRegistry.resolve as Mock).mockImplementation((model: string) => {
 		if (model === "gpt-3.5-turbo" || model === "gpt-4") {
 			return OpenAILLM;
 		}
 		return null;
 	});
 
-	(LLMRegistry.newLLM as jest.Mock).mockImplementation((model: string) => {
+	(LLMRegistry.newLLM as Mock).mockImplementation((model: string) => {
 		return new OpenAILLM(model);
 	});
 });
@@ -77,7 +78,7 @@ class MockTool extends BaseTool {
 
 describe("Agent Class", () => {
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it("should initialize with default configuration", () => {
