@@ -1,127 +1,159 @@
-import { InvocationContext } from './InvocationContext';
-import { AuthHandler } from '../auth/AuthHandler';
-import { Message } from '../request/LLMRequest';
-import { Session } from '../memory/Session';
-import { SearchMemoryOptions, SearchMemoryResponse } from '../memory/MemoryService';
+import { InvocationContext } from "./InvocationContext";
+import { AuthHandler } from "../auth/AuthHandler";
+import { Message } from "../request/LLMRequest";
+import { Session } from "../memory/Session";
+import {
+	SearchMemoryOptions,
+	SearchMemoryResponse,
+} from "../memory/MemoryService";
 
 /**
  * Context for tool execution
  */
 export interface IToolContext {
-  /**
-   * Name of the tool being executed
-   */
-  toolName: string;
+	/**
+	 * Name of the tool being executed
+	 */
+	toolName: string;
 
-  /**
-   * ID of the tool call
-   */
-  toolId: string;
+	/**
+	 * ID of the tool call
+	 */
+	toolId: string;
 
-  /**
-   * Additional parameters for the tool
-   */
-  parameters: Record<string, any>;
+	/**
+	 * Additional parameters for the tool
+	 */
+	parameters: Record<string, any>;
 
-  /**
-   * Gets a parameter value
-   */
-  getParameter<T>(name: string, defaultValue?: T): T | undefined;
+	/**
+	 * Gets a parameter value
+	 */
+	getParameter<T>(name: string, defaultValue?: T): T | undefined;
 
-  /**
-   * Sets a parameter value
-   */
-  setParameter(name: string, value: any): void;
+	/**
+	 * Sets a parameter value
+	 */
+	setParameter(name: string, value: any): void;
 }
 
 /**
  * Context for tool execution
  */
 export class ToolContext implements IToolContext {
-  /**
-   * The parent invocation context
-   */
-  private invocationContext: InvocationContext;
-  
-  /**
-   * Authentication handler for the tool
-   */
-  auth?: AuthHandler;
-  
-  /**
-   * Additional parameters for the tool
-   */
-  parameters: Record<string, any>;
+	/**
+	 * The parent invocation context
+	 */
+	private invocationContext: InvocationContext;
 
-  /**
-   * Tool name
-   */
-  toolName: string = '';
+	/**
+	 * Authentication handler for the tool
+	 */
+	auth?: AuthHandler;
 
-  /**
-   * Tool ID
-   */
-  toolId: string = '';
+	/**
+	 * Additional parameters for the tool
+	 */
+	parameters: Record<string, any>;
 
-  /**
-   * Variables stored in the context
-   */
-  private _variables: Map<string, any>;
-  
-  /**
-   * Constructor for ToolContext
-   */
-  constructor(options: {
-    invocationContext: InvocationContext;
-    auth?: AuthHandler;
-    parameters?: Record<string, any>;
-  }) {
-    this.invocationContext = options.invocationContext;
-    this.auth = options.auth;
-    this.parameters = options.parameters || {};
-    this._variables = new Map<string, any>();
-  }
-  
-  /**
-   * Gets a parameter value
-   */
-  getParameter<T>(name: string, defaultValue?: T): T | undefined {
-    return (name in this.parameters)
-      ? this.parameters[name] as T
-      : defaultValue;
-  }
-  
-  /**
-   * Sets a parameter value
-   */
-  setParameter(name: string, value: any): void {
-    this.parameters[name] = value;
-  }
+	/**
+	 * Tool name
+	 */
+	toolName: string = "";
 
-  // Delegate to invocation context
-  get sessionId(): string { return this.invocationContext.sessionId; }
-  get messages() { return this.invocationContext.messages; }
-  get config() { return this.invocationContext.config; }
-  get userId() { return this.invocationContext.userId; }
-  get appName() { return this.invocationContext.appName; }
-  get memoryService() { return this.invocationContext.memoryService; }
-  get sessionService() { return this.invocationContext.sessionService; }
-  get metadata() { return this.invocationContext.metadata; }
+	/**
+	 * Tool ID
+	 */
+	toolId: string = "";
 
-  // Variable management
-  get variables(): Map<string, any> { return this._variables; }
-  setVariable(name: string, value: any): void { this._variables.set(name, value); }
-  getVariable<T>(name: string, defaultValue?: T): T | undefined {
-    return (this._variables.has(name)
-      ? this._variables.get(name)
-      : defaultValue) as T | undefined;
-  }
+	/**
+	 * Variables stored in the context
+	 */
+	private _variables: Map<string, any>;
 
-  // Delegate session operations
-  addMessage(message: Message): void { this.invocationContext.addMessage(message); }
-  async loadSession(): Promise<Session | undefined> { return this.invocationContext.loadSession(); }
-  async saveSession(): Promise<Session | undefined> { return this.invocationContext.saveSession(); }
-  async searchMemory(query: string, options?: SearchMemoryOptions): Promise<SearchMemoryResponse> {
-    return this.invocationContext.searchMemory(query, options);
-  }
-} 
+	/**
+	 * Constructor for ToolContext
+	 */
+	constructor(options: {
+		invocationContext: InvocationContext;
+		auth?: AuthHandler;
+		parameters?: Record<string, any>;
+	}) {
+		this.invocationContext = options.invocationContext;
+		this.auth = options.auth;
+		this.parameters = options.parameters || {};
+		this._variables = new Map<string, any>();
+	}
+
+	/**
+	 * Gets a parameter value
+	 */
+	getParameter<T>(name: string, defaultValue?: T): T | undefined {
+		return name in this.parameters
+			? (this.parameters[name] as T)
+			: defaultValue;
+	}
+
+	/**
+	 * Sets a parameter value
+	 */
+	setParameter(name: string, value: any): void {
+		this.parameters[name] = value;
+	}
+
+	// Delegate to invocation context
+	get sessionId(): string {
+		return this.invocationContext.sessionId;
+	}
+	get messages() {
+		return this.invocationContext.messages;
+	}
+	get config() {
+		return this.invocationContext.config;
+	}
+	get userId() {
+		return this.invocationContext.userId;
+	}
+	get appName() {
+		return this.invocationContext.appName;
+	}
+	get memoryService() {
+		return this.invocationContext.memoryService;
+	}
+	get sessionService() {
+		return this.invocationContext.sessionService;
+	}
+	get metadata() {
+		return this.invocationContext.metadata;
+	}
+
+	// Variable management
+	get variables(): Map<string, any> {
+		return this._variables;
+	}
+	setVariable(name: string, value: any): void {
+		this._variables.set(name, value);
+	}
+	getVariable<T>(name: string, defaultValue?: T): T | undefined {
+		return (
+			this._variables.has(name) ? this._variables.get(name) : defaultValue
+		) as T | undefined;
+	}
+
+	// Delegate session operations
+	addMessage(message: Message): void {
+		this.invocationContext.addMessage(message);
+	}
+	async loadSession(): Promise<Session | undefined> {
+		return this.invocationContext.loadSession();
+	}
+	async saveSession(): Promise<Session | undefined> {
+		return this.invocationContext.saveSession();
+	}
+	async searchMemory(
+		query: string,
+		options?: SearchMemoryOptions,
+	): Promise<SearchMemoryResponse> {
+		return this.invocationContext.searchMemory(query, options);
+	}
+}
