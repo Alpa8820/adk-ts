@@ -11,7 +11,7 @@ docs/
 .eslintrc*
 .prettierrc*
 tsconfig.json
-jest.config.js
+vitest.config.ts
 .editorconfig
 .travis.yml
 .circleci/
@@ -44,4 +44,4 @@ tsconfig.tsbuildinfo
 
 # Development tools
 nodemon.json
-.eslintcache 
+.eslintcache

@@ -9,9 +9,21 @@
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
-		"types": ["node", "jest"],
-		"lib": ["ES2020", "DOM"]
+		"types": [
+			"node",
+			"vitest/globals"
+		],
+		"lib": [
+			"ES2020",
+			"DOM"
+		]
 	},
-	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "**/*.test.ts"]
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist",
+		"**/*.test.ts"
+	]
 }
