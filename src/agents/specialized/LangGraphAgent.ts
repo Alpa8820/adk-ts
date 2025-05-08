@@ -1,10 +1,9 @@
 import type { RunConfig } from "../../models/config/RunConfig";
 import { InvocationContext } from "../../models/context/InvocationContext";
-import {
-	type Message,
-	type MessageContent,
-	MessageRole,
-	type TextContent,
+import type {
+	Message,
+	MessageContent,
+	TextContent,
 } from "../../models/request/LLMRequest";
 import type { LLMResponse } from "../../models/response/LLMResponse";
 import { BaseAgent } from "../base/BaseAgent";

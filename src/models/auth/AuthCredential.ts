@@ -1,5 +1,5 @@
 import type { AuthConfig } from "./AuthConfig";
-import { type ApiKeyScheme, HttpScheme, OAuth2Scheme } from "./AuthScheme";
+import type { ApiKeyScheme } from "./AuthScheme";
 
 /**
  * Types of authentication credentials
@@ -263,6 +263,10 @@ export class OAuth2Credential extends AuthCredential {
 		}
 
 		const result = await this.refreshFunction?.(this.refreshToken!);
+
+		if (!result) {
+			throw new Error("Failed to refresh token");
+		}
 
 		this.accessToken = result.accessToken;
 
