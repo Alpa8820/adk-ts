@@ -61,12 +61,12 @@ export class GoogleSearch extends BaseTool {
 			results: [
 				{
 					title: `Result 1 for ${args.query}`,
-					link: `https://example.com/1`,
+					link: "https://example.com/1",
 					snippet: `This is a sample result for the query "${args.query}".`,
 				},
 				{
 					title: `Result 2 for ${args.query}`,
-					link: `https://example.com/2`,
+					link: "https://example.com/2",
 					snippet: `Another sample result for "${args.query}".`,
 				},
 			],

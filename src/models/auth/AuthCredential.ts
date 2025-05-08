@@ -262,7 +262,7 @@ export class OAuth2Credential extends AuthCredential {
 			);
 		}
 
-		const result = await this.refreshFunction!(this.refreshToken!);
+		const result = await this.refreshFunction?.(this.refreshToken!);
 
 		this.accessToken = result.accessToken;
 

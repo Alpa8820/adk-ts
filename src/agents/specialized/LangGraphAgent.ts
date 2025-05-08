@@ -173,12 +173,14 @@ export class LangGraphAgent extends BaseAgent {
 
 		if (typeof content === "string") {
 			return content;
-		} else if (Array.isArray(content)) {
+		}
+		if (Array.isArray(content)) {
 			return content
 				.filter((item) => item.type === "text")
 				.map((item) => (item as TextContent).text)
 				.join(" ");
-		} else if (content.type === "text") {
+		}
+		if (content.type === "text") {
 			return content.text;
 		}
 

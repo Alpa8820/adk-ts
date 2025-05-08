@@ -3,10 +3,6 @@ import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
 
 // Create a mock LLM class that extends BaseLLM
 class MockLLM extends BaseLLM {
-	constructor(model: string) {
-		super(model);
-	}
-
 	static supportedModels(): string[] {
 		return ["mock-model-.*", "exact-mock-model"];
 	}

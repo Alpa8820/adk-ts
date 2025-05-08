@@ -67,8 +67,7 @@ export abstract class BaseAgent {
 	addSubAgent(agent: BaseAgent): BaseAgent {
 		if (agent.parentAgent) {
 			throw new Error(
-				`Agent ${agent.name} already has a parent agent ${agent.parentAgent.name}. ` +
-					"An agent can only be added as a sub-agent once.",
+				`Agent ${agent.name} already has a parent agent ${agent.parentAgent.name}. An agent can only be added as a sub-agent once.`,
 			);
 		}
 

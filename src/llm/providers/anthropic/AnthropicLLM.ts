@@ -200,7 +200,8 @@ export class AnthropicLLM extends BaseLLM {
 			if (typeof message.content === "string") {
 				// Simple text content
 				return { role, content: message.content };
-			} else if (Array.isArray(message.content)) {
+			}
+			if (Array.isArray(message.content)) {
 				// Convert multimodal content
 				const content: AnthropicContentBlock[] = message.content.map((item) => {
 					if (item.type === "text") {
@@ -208,7 +209,8 @@ export class AnthropicLLM extends BaseLLM {
 							type: "text" as const,
 							text: item.text,
 						};
-					} else if (item.type === "image") {
+					}
+					if (item.type === "image") {
 						return {
 							type: "image" as const,
 							source: {
@@ -222,10 +224,9 @@ export class AnthropicLLM extends BaseLLM {
 				});
 
 				return { role, content };
-			} else {
-				// Default to string for complex objects
-				return { role, content: JSON.stringify(message.content) };
 			}
+			// Default to string for complex objects
+			return { role, content: JSON.stringify(message.content) };
 		});
 	}
 
@@ -404,73 +405,72 @@ export class AnthropicLLM extends BaseLLM {
 			if (stream) {
 				// TODO: Implement streaming if needed
 				throw new Error("Streaming is not supported in this implementation");
-			} else {
-				// Make direct API call
-				const response = await this.callAnthropicAPI(params);
-
-				if (process.env.DEBUG === "true") {
-					console.log(
-						"Full Response Content:",
-						JSON.stringify(response.content, null, 2),
-					);
-				}
-
-				// Extract text content
-				let content = "";
-				for (const block of response.content) {
-					if (block.type === "text") {
-						content += block.text;
-					}
-				}
-
-				// Extract tool uses
-				const toolUses = this.extractToolUses(response.content);
-				const toolCalls = this.convertToolUses(toolUses);
-
-				if (process.env.DEBUG === "true") {
-					if (toolUses.length > 0) {
-						console.log(
-							"Extracted Tool Uses:",
-							JSON.stringify(toolUses, null, 2),
-						);
-						console.log(
-							"Converted Tool Calls:",
-							JSON.stringify(toolCalls, null, 2),
-						);
-					}
-				}
-
-				// Only yield a response with tool_calls if there are any
-				const llmResponse = new LLMResponse({
-					role: "assistant",
-					content,
-					tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
-					raw_response: response,
-				});
-
-				if (process.env.DEBUG === "true") {
-					console.log(
-						"Final LLMResponse object:",
-						JSON.stringify(
-							{
-								role: llmResponse.role,
-								content:
-									llmResponse.content?.substring(0, 50) +
-									(llmResponse.content && llmResponse.content.length > 50
-										? "..."
-										: ""),
-								tool_calls: llmResponse.tool_calls
-									? `[${llmResponse.tool_calls.length} calls]`
-									: "undefined",
-							},
-							null,
-							2,
-						),
-					);
-				}
-
-				yield llmResponse;
 			}
+			// Make direct API call
+			const response = await this.callAnthropicAPI(params);
+
+			if (process.env.DEBUG === "true") {
+				console.log(
+					"Full Response Content:",
+					JSON.stringify(response.content, null, 2),
+				);
+			}
+
+			// Extract text content
+			let content = "";
+			for (const block of response.content) {
+				if (block.type === "text") {
+					content += block.text;
+				}
+			}
+
+			// Extract tool uses
+			const toolUses = this.extractToolUses(response.content);
+			const toolCalls = this.convertToolUses(toolUses);
+
+			if (process.env.DEBUG === "true") {
+				if (toolUses.length > 0) {
+					console.log(
+						"Extracted Tool Uses:",
+						JSON.stringify(toolUses, null, 2),
+					);
+					console.log(
+						"Converted Tool Calls:",
+						JSON.stringify(toolCalls, null, 2),
+					);
+				}
+			}
+
+			// Only yield a response with tool_calls if there are any
+			const llmResponse = new LLMResponse({
+				role: "assistant",
+				content,
+				tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
+				raw_response: response,
+			});
+
+			if (process.env.DEBUG === "true") {
+				console.log(
+					"Final LLMResponse object:",
+					JSON.stringify(
+						{
+							role: llmResponse.role,
+							content:
+								llmResponse.content?.substring(0, 50) +
+								(llmResponse.content && llmResponse.content.length > 50
+									? "..."
+									: ""),
+							tool_calls: llmResponse.tool_calls
+								? `[${llmResponse.tool_calls.length} calls]`
+								: "undefined",
+						},
+						null,
+						2,
+					),
+				);
+			}
+
+			yield llmResponse;
 		} catch (error) {
 			if (process.env.DEBUG === "true") {
 				console.error("Error calling Anthropic:", error);

@@ -163,7 +163,7 @@ export class LoopAgent extends BaseAgent {
 				}
 				return shouldContinue;
 			} catch (error) {
-				console.error(`[LoopAgent] Error in condition agent:`, error);
+				console.error("[LoopAgent] Error in condition agent:", error);
 				return false;
 			}
 		}

@@ -160,7 +160,8 @@ export class AnthropicLLMConnection extends BaseLLMConnection {
 			if (typeof message.content === "string") {
 				// Simple text content
 				return { role, content: message.content };
-			} else if (Array.isArray(message.content)) {
+			}
+			if (Array.isArray(message.content)) {
 				// Convert multimodal content to Anthropic format
 				const content: AnthropicContentBlock[] = message.content.map((item) => {
 					if (item.type === "text") {
@@ -168,7 +169,8 @@ export class AnthropicLLMConnection extends BaseLLMConnection {
 							type: "text" as const,
 							text: item.text,
 						};
-					} else if (item.type === "image") {
+					}
+					if (item.type === "image") {
 						return {
 							type: "image" as const,
 							source: {
@@ -182,10 +184,9 @@ export class AnthropicLLMConnection extends BaseLLMConnection {
 				});
 
 				return { role, content };
-			} else {
-				// Default to string for complex objects
-				return { role, content: JSON.stringify(message.content) };
 			}
+			// Default to string for complex objects
+			return { role, content: JSON.stringify(message.content) };
 		});
 	}
 

@@ -71,7 +71,7 @@ export class InMemoryMemoryService implements BaseMemoryService {
 					// Extract text from content array
 					for (const part of message.content) {
 						if (part.type === "text") {
-							content += part.text + " ";
+							content += `${part.text} `;
 						}
 					}
 				} else if (message.content && message.content.type === "text") {

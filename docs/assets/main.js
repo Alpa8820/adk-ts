@@ -35,17 +35,17 @@ window.translations = {
 };
 ("use strict");
 (() => {
-	var Je = Object.create;
-	var he = Object.defineProperty;
-	var Ke = Object.getOwnPropertyDescriptor;
-	var Ge = Object.getOwnPropertyNames;
-	var Xe = Object.getPrototypeOf,
-		Ye = Object.prototype.hasOwnProperty;
-	var Ze = (t, e) => () => (
+	const Je = Object.create;
+	const he = Object.defineProperty;
+	const Ke = Object.getOwnPropertyDescriptor;
+	const Ge = Object.getOwnPropertyNames;
+	const Xe = Object.getPrototypeOf;
+	const Ye = Object.prototype.hasOwnProperty;
+	const Ze = (t, e) => () => (
 		e || t((e = { exports: {} }).exports, e), e.exports
 	);
-	var et = (t, e, n, r) => {
-		if ((e && typeof e == "object") || typeof e == "function")
+	const et = (t, e, n, r) => {
+		if ((e && typeof e === "object") || typeof e === "function")
 			for (const i of Ge(e))
 				!Ye.call(t, i) &&
 					i !== n &&
@@ -55,7 +55,7 @@ window.translations = {
 					});
 		return t;
 	};
-	var tt = (t, e, n) => (
+	const tt = (t, e, n) => (
 		(n = t != null ? Je(Xe(t)) : {}),
 		et(
 			e || !t || !t.__esModule
@@ -64,10 +64,10 @@ window.translations = {
 			t,
 		)
 	);
-	var ye = Ze((me, ge) => {
+	const ye = Ze((me, ge) => {
 		(function () {
-			var t = (e) => {
-				var n = new t.Builder();
+			const t = (e) => {
+				const n = new t.Builder();
 				return (
 					n.pipeline.add(t.trimmer, t.stopWordFilter, t.stemmer),
 					n.searchPipeline.add(t.stemmer),
@@ -84,20 +84,20 @@ window.translations = {
 				(t.utils.clone = (e) => {
 					if (e == null) return e;
 					for (
-						var n = Object.create(null), r = Object.keys(e), i = 0;
+						let n = Object.create(null), r = Object.keys(e), i = 0;
 						i < r.length;
 						i++
 					) {
-						var s = r[i],
-							o = e[s];
+						const s = r[i];
+						const o = e[s];
 						if (Array.isArray(o)) {
 							n[s] = o.slice();
 							continue;
 						}
 						if (
-							typeof o == "string" ||
-							typeof o == "number" ||
-							typeof o == "boolean"
+							typeof o === "string" ||
+							typeof o === "number" ||
+							typeof o === "boolean"
 						) {
 							n[s] = o;
 							continue;
@@ -113,10 +113,10 @@ window.translations = {
 				}),
 				(t.FieldRef.joiner = "/"),
 				(t.FieldRef.fromString = (e) => {
-					var n = e.indexOf(t.FieldRef.joiner);
+					const n = e.indexOf(t.FieldRef.joiner);
 					if (n === -1) throw "malformed field ref string";
-					var r = e.slice(0, n),
-						i = e.slice(n + 1);
+					const r = e.slice(0, n);
+					const i = e.slice(n + 1);
 					return new t.FieldRef(i, r, e);
 				}),
 				(t.FieldRef.prototype.toString = function () {
@@ -130,7 +130,7 @@ window.translations = {
 			(t.Set = function (e) {
 				if (((this.elements = Object.create(null)), e)) {
 					this.length = e.length;
-					for (var n = 0; n < this.length; n++) this.elements[e[n]] = !0;
+					for (let n = 0; n < this.length; n++) this.elements[e[n]] = !0;
 				} else this.length = 0;
 			}),
 				(t.Set.complete = {
@@ -151,18 +151,18 @@ window.translations = {
 					return !!this.elements[e];
 				}),
 				(t.Set.prototype.intersect = function (e) {
-					var n,
-						r,
-						i,
-						s = [];
+					let n;
+					let r;
+					let i;
+					const s = [];
 					if (e === t.Set.complete) return this;
 					if (e === t.Set.empty) return e;
 					this.length < e.length
 						? ((n = this), (r = e))
 						: ((n = e), (r = this)),
 						(i = Object.keys(n.elements));
-					for (var o = 0; o < i.length; o++) {
-						var a = i[o];
+					for (let o = 0; o < i.length; o++) {
+						const a = i[o];
 						a in r.elements && s.push(a);
 					}
 					return new t.Set(s);
@@ -177,9 +177,9 @@ window.translations = {
 								);
 				}),
 				(t.idf = (e, n) => {
-					var r = 0;
-					for (var i in e) i != "_index" && (r += Object.keys(e[i]).length);
-					var s = (n - r + 0.5) / (r + 0.5);
+					let r = 0;
+					for (const i in e) i !== "_index" && (r += Object.keys(e[i]).length);
+					const s = (n - r + 0.5) / (r + 0.5);
 					return Math.log(1 + Math.abs(s));
 				}),
 				(t.Token = function (e, n) {
@@ -205,7 +205,7 @@ window.translations = {
 							new t.Token(t.utils.asString(f).toLowerCase(), t.utils.clone(n)),
 					);
 				for (
-					var r = e.toString().toLowerCase(),
+					let r = e.toString().toLowerCase(),
 						i = r.length,
 						s = [],
 						o = 0,
@@ -213,11 +213,11 @@ window.translations = {
 					o <= i;
 					o++
 				) {
-					var c = r.charAt(o),
-						l = o - a;
-					if (c.match(t.tokenizer.separator) || o == i) {
+					const c = r.charAt(o);
+					const l = o - a;
+					if (c.match(t.tokenizer.separator) || o === i) {
 						if (l > 0) {
-							var d = t.utils.clone(n) || {};
+							const d = t.utils.clone(n) || {};
 							(d.position = [a, l]),
 								(d.index = s.length),
 								s.push(new t.Token(r.slice(a, o), d));
@@ -234,12 +234,12 @@ window.translations = {
 				(t.Pipeline.registeredFunctions = Object.create(null)),
 				(t.Pipeline.registerFunction = function (e, n) {
 					n in this.registeredFunctions &&
-						t.utils.warn("Overwriting existing registered function: " + n),
+						t.utils.warn(`Overwriting existing registered function: ${n}`),
 						(e.label = n),
 						(t.Pipeline.registeredFunctions[e.label] = e);
 				}),
 				(t.Pipeline.warnIfFunctionNotRegistered = function (e) {
-					var n = e.label && e.label in this.registeredFunctions;
+					const n = e.label && e.label in this.registeredFunctions;
 					n ||
 						t.utils.warn(
 							`Function is not registered with pipeline. This may cause problems when serialising the index.
@@ -248,45 +248,45 @@ window.translations = {
 						);
 				}),
 				(t.Pipeline.load = (e) => {
-					var n = new t.Pipeline();
+					const n = new t.Pipeline();
 					return (
 						e.forEach((r) => {
-							var i = t.Pipeline.registeredFunctions[r];
+							const i = t.Pipeline.registeredFunctions[r];
 							if (i) n.add(i);
-							else throw new Error("Cannot load unregistered function: " + r);
+							else throw new Error(`Cannot load unregistered function: ${r}`);
 						}),
 						n
 					);
 				}),
 				(t.Pipeline.prototype.add = function () {
-					var e = Array.prototype.slice.call(arguments);
+					const e = Array.prototype.slice.call(arguments);
 					e.forEach(function (n) {
 						t.Pipeline.warnIfFunctionNotRegistered(n), this._stack.push(n);
 					}, this);
 				}),
 				(t.Pipeline.prototype.after = function (e, n) {
 					t.Pipeline.warnIfFunctionNotRegistered(n);
-					var r = this._stack.indexOf(e);
-					if (r == -1) throw new Error("Cannot find existingFn");
+					let r = this._stack.indexOf(e);
+					if (r === -1) throw new Error("Cannot find existingFn");
 					(r = r + 1), this._stack.splice(r, 0, n);
 				}),
 				(t.Pipeline.prototype.before = function (e, n) {
 					t.Pipeline.warnIfFunctionNotRegistered(n);
-					var r = this._stack.indexOf(e);
-					if (r == -1) throw new Error("Cannot find existingFn");
+					const r = this._stack.indexOf(e);
+					if (r === -1) throw new Error("Cannot find existingFn");
 					this._stack.splice(r, 0, n);
 				}),
 				(t.Pipeline.prototype.remove = function (e) {
-					var n = this._stack.indexOf(e);
-					n != -1 && this._stack.splice(n, 1);
+					const n = this._stack.indexOf(e);
+					n !== -1 && this._stack.splice(n, 1);
 				}),
 				(t.Pipeline.prototype.run = function (e) {
-					for (var n = this._stack.length, r = 0; r < n; r++) {
-						for (var i = this._stack[r], s = [], o = 0; o < e.length; o++) {
-							var a = i(e[o], o, e);
+					for (let n = this._stack.length, r = 0; r < n; r++) {
+						for (let i = this._stack[r], s = [], o = 0; o < e.length; o++) {
+							const a = i(e[o], o, e);
 							if (!(a == null || a === ""))
 								if (Array.isArray(a))
-									for (var c = 0; c < a.length; c++) s.push(a[c]);
+									for (let c = 0; c < a.length; c++) s.push(a[c]);
 								else s.push(a);
 						}
 						e = s;
@@ -294,7 +294,7 @@ window.translations = {
 					return e;
 				}),
 				(t.Pipeline.prototype.runString = function (e, n) {
-					var r = new t.Token(e, n);
+					const r = new t.Token(e, n);
 					return this.run([r]).map((i) => i.toString());
 				}),
 				(t.Pipeline.prototype.reset = function () {
@@ -309,19 +309,19 @@ window.translations = {
 				(this._magnitude = 0), (this.elements = e || []);
 			}),
 				(t.Vector.prototype.positionForIndex = function (e) {
-					if (this.elements.length == 0) return 0;
+					if (this.elements.length === 0) return 0;
 					for (
-						var n = 0,
+						let n = 0,
 							r = this.elements.length / 2,
 							i = r - n,
 							s = Math.floor(i / 2),
 							o = this.elements[s * 2];
-						i > 1 && (o < e && (n = s), o > e && (r = s), o != e);
+						i > 1 && (o < e && (n = s), o > e && (r = s), o !== e);
 					)
 						(i = r - n),
 							(s = n + Math.floor(i / 2)),
 							(o = this.elements[s * 2]);
-					if (o == e || o > e) return s * 2;
+					if (o === e || o > e) return s * 2;
 					if (o < e) return (s + 1) * 2;
 				}),
 				(t.Vector.prototype.insert = function (e, n) {
@@ -331,22 +331,22 @@ window.translations = {
 				}),
 				(t.Vector.prototype.upsert = function (e, n, r) {
 					this._magnitude = 0;
-					var i = this.positionForIndex(e);
-					this.elements[i] == e
+					const i = this.positionForIndex(e);
+					this.elements[i] === e
 						? (this.elements[i + 1] = r(this.elements[i + 1], n))
 						: this.elements.splice(i, 0, e, n);
 				}),
 				(t.Vector.prototype.magnitude = function () {
 					if (this._magnitude) return this._magnitude;
-					for (var e = 0, n = this.elements.length, r = 1; r < n; r += 2) {
-						var i = this.elements[r];
+					for (let e = 0, n = this.elements.length, r = 1; r < n; r += 2) {
+						const i = this.elements[r];
 						e += i * i;
 					}
 					return (this._magnitude = Math.sqrt(e));
 				}),
 				(t.Vector.prototype.dot = function (e) {
 					for (
-						var n = 0,
+						let n = 0,
 							r = this.elements,
 							i = e.elements,
 							s = r.length,
@@ -363,7 +363,7 @@ window.translations = {
 								? (l += 2)
 								: a > c
 									? (d += 2)
-									: a == c && ((n += r[l + 1] * i[d + 1]), (l += 2), (d += 2));
+									: a === c && ((n += r[l + 1] * i[d + 1]), (l += 2), (d += 2));
 					return n;
 				}),
 				(t.Vector.prototype.similarity = function (e) {
@@ -371,7 +371,7 @@ window.translations = {
 				}),
 				(t.Vector.prototype.toArray = function () {
 					for (
-						var e = new Array(this.elements.length / 2), n = 1, r = 0;
+						let e = new Array(this.elements.length / 2), n = 1, r = 0;
 						n < this.elements.length;
 						n += 2, r++
 					)
@@ -382,7 +382,7 @@ window.translations = {
 					return this.elements;
 				});
 			(t.stemmer = (() => {
-				var e = {
+				const e = {
 						ational: "ate",
 						tional: "tion",
 						enci: "ence",
@@ -404,8 +404,8 @@ window.translations = {
 						iviti: "ive",
 						biliti: "ble",
 						logi: "log",
-					},
-					n = {
+					};
+				const n = {
 						icate: "ic",
 						ative: "",
 						alize: "al",
@@ -413,43 +413,49 @@ window.translations = {
 						ical: "ic",
 						ful: "",
 						ness: "",
-					},
-					r = "[^aeiou]",
-					i = "[aeiouy]",
-					s = r + "[^aeiouy]*",
-					o = i + "[aeiou]*",
-					a = "^(" + s + ")?" + o + s,
-					c = "^(" + s + ")?" + o + s + "(" + o + ")?$",
-					l = "^(" + s + ")?" + o + s + o + s,
-					d = "^(" + s + ")?" + i,
-					f = new RegExp(a),
-					p = new RegExp(l),
-					v = new RegExp(c),
-					x = new RegExp(d),
-					w = /^(.+?)(ss|i)es$/,
-					m = /^(.+?)([^s])s$/,
-					g = /^(.+?)eed$/,
-					T = /^(.+?)(ed|ing)$/,
-					L = /.$/,
-					C = /(at|bl|iz)$/,
-					M = /([^aeiouylsz])\1$/,
-					j = new RegExp("^" + s + i + "[^aeiouwxy]$"),
-					N = /^(.+?[^aeiou])y$/,
-					q =
-						/^(.+?)(ational|tional|enci|anci|izer|bli|alli|entli|eli|ousli|ization|ation|ator|alism|iveness|fulness|ousness|aliti|iviti|biliti|logi)$/,
-					W = /^(.+?)(icate|ative|alize|iciti|ical|ful|ness)$/,
-					B =
-						/^(.+?)(al|ance|ence|er|ic|able|ible|ant|ement|ment|ent|ou|ism|ate|iti|ous|ive|ize)$/,
-					z = /^(.+?)(s|t)(ion)$/,
-					_ = /^(.+?)e$/,
-					U = /ll$/,
-					J = new RegExp("^" + s + i + "[^aeiouwxy]$"),
-					V = (u) => {
-						var y, P, k, h, E, Q, H;
+					};
+				const r = "[^aeiou]";
+				const i = "[aeiouy]";
+				const s = `${r}[^aeiouy]*`;
+				const o = `${i}[aeiou]*`;
+				const a = `^(${s})?${o}${s}`;
+				const c = `^(${s})?${o}${s}(${o})?$`;
+				const l = `^(${s})?${o}${s}${o}${s}`;
+				const d = `^(${s})?${i}`;
+				const f = new RegExp(a);
+				const p = new RegExp(l);
+				const v = new RegExp(c);
+				const x = new RegExp(d);
+				const w = /^(.+?)(ss|i)es$/;
+				const m = /^(.+?)([^s])s$/;
+				const g = /^(.+?)eed$/;
+				const T = /^(.+?)(ed|ing)$/;
+				const L = /.$/;
+				const C = /(at|bl|iz)$/;
+				const M = /([^aeiouylsz])\1$/;
+				const j = new RegExp(`^${s}${i}[^aeiouwxy]$`);
+				const N = /^(.+?[^aeiou])y$/;
+				const q =
+						/^(.+?)(ational|tional|enci|anci|izer|bli|alli|entli|eli|ousli|ization|ation|ator|alism|iveness|fulness|ousness|aliti|iviti|biliti|logi)$/;
+				const W = /^(.+?)(icate|ative|alize|iciti|ical|ful|ness)$/;
+				const B =
+						/^(.+?)(al|ance|ence|er|ic|able|ible|ant|ement|ment|ent|ou|ism|ate|iti|ous|ive|ize)$/;
+				const z = /^(.+?)(s|t)(ion)$/;
+				const _ = /^(.+?)e$/;
+				const U = /ll$/;
+				const J = new RegExp(`^${s}${i}[^aeiouwxy]$`);
+				const V = (u) => {
+						let y;
+						let P;
+						let k;
+						let h;
+						let E;
+						let Q;
+						let H;
 						if (u.length < 3) return u;
 						if (
 							((k = u.substr(0, 1)),
-							k == "y" && (u = k.toUpperCase() + u.substr(1)),
+							k === "y" && (u = k.toUpperCase() + u.substr(1)),
 							(h = w),
 							(E = m),
 							h.test(u)
@@ -459,10 +465,10 @@ window.translations = {
 							(E = T),
 							h.test(u))
 						) {
-							var b = h.exec(u);
+							const b = h.exec(u);
 							(h = f), h.test(b[1]) && ((h = L), (u = u.replace(h, "")));
 						} else if (E.test(u)) {
-							var b = E.exec(u);
+							const b = E.exec(u);
 							(y = b[1]),
 								(E = x),
 								E.test(y) &&
@@ -471,32 +477,32 @@ window.translations = {
 									(Q = M),
 									(H = j),
 									E.test(u)
-										? (u = u + "e")
+										? (u = `${u}e`)
 										: Q.test(u)
 											? ((h = L), (u = u.replace(h, "")))
-											: H.test(u) && (u = u + "e"));
+											: H.test(u) && (u = `${u}e`));
 						}
 						if (((h = N), h.test(u))) {
-							var b = h.exec(u);
-							(y = b[1]), (u = y + "i");
+							const b = h.exec(u);
+							(y = b[1]), (u = `${y}i`);
 						}
 						if (((h = q), h.test(u))) {
-							var b = h.exec(u);
+							const b = h.exec(u);
 							(y = b[1]), (P = b[2]), (h = f), h.test(y) && (u = y + e[P]);
 						}
 						if (((h = W), h.test(u))) {
-							var b = h.exec(u);
+							const b = h.exec(u);
 							(y = b[1]), (P = b[2]), (h = f), h.test(y) && (u = y + n[P]);
 						}
 						if (((h = B), (E = z), h.test(u))) {
-							var b = h.exec(u);
+							const b = h.exec(u);
 							(y = b[1]), (h = p), h.test(y) && (u = y);
 						} else if (E.test(u)) {
-							var b = E.exec(u);
+							const b = E.exec(u);
 							(y = b[1] + b[2]), (E = p), E.test(y) && (u = y);
 						}
 						if (((h = _), h.test(u))) {
-							var b = h.exec(u);
+							const b = h.exec(u);
 							(y = b[1]),
 								(h = p),
 								(E = v),
@@ -507,7 +513,7 @@ window.translations = {
 							(h = U),
 							(E = p),
 							h.test(u) && E.test(u) && ((h = L), (u = u.replace(h, ""))),
-							k == "y" && (u = k.toLowerCase() + u.substr(1)),
+							k === "y" && (u = k.toLowerCase() + u.substr(1)),
 							u
 						);
 					};
@@ -515,7 +521,7 @@ window.translations = {
 			})()),
 				t.Pipeline.registerFunction(t.stemmer, "stemmer");
 			(t.generateStopWordFilter = (e) => {
-				var n = e.reduce((r, i) => ((r[i] = i), r), {});
+				const n = e.reduce((r, i) => ((r[i] = i), r), {});
 				return (r) => {
 					if (r && n[r.toString()] !== r.toString()) return r;
 				};
@@ -654,7 +660,7 @@ window.translations = {
 				(t.TokenSet._nextId = 1),
 				(t.TokenSet.fromArray = (e) => {
 					for (
-						var n = new t.TokenSet.Builder(), r = 0, i = e.length;
+						let n = new t.TokenSet.Builder(), r = 0, i = e.length;
 						r < i;
 						r++
 					)
@@ -667,32 +673,32 @@ window.translations = {
 						: t.TokenSet.fromString(e.term)),
 				(t.TokenSet.fromFuzzyString = (e, n) => {
 					for (
-						var r = new t.TokenSet(),
+						const r = new t.TokenSet(),
 							i = [{ node: r, editsRemaining: n, str: e }];
 						i.length;
 					) {
-						var s = i.pop();
+						const s = i.pop();
 						if (s.str.length > 0) {
-							var o = s.str.charAt(0),
-								a;
+							const o = s.str.charAt(0);
+							let a;
 							o in s.node.edges
 								? (a = s.node.edges[o])
 								: ((a = new t.TokenSet()), (s.node.edges[o] = a)),
-								s.str.length == 1 && (a.final = !0),
+								s.str.length === 1 && (a.final = !0),
 								i.push({
 									node: a,
 									editsRemaining: s.editsRemaining,
 									str: s.str.slice(1),
 								});
 						}
-						if (s.editsRemaining != 0) {
-							if ("*" in s.node.edges) var c = s.node.edges["*"];
+						if (s.editsRemaining !== 0) {
+							if ("*" in s.node.edges) const c = s.node.edges["*"];
 							else {
-								var c = new t.TokenSet();
+								const c = new t.TokenSet();
 								s.node.edges["*"] = c;
 							}
 							if (
-								(s.str.length == 0 && (c.final = !0),
+								(s.str.length === 0 && (c.final = !0),
 								i.push({
 									node: c,
 									editsRemaining: s.editsRemaining - 1,
@@ -704,15 +710,15 @@ window.translations = {
 										editsRemaining: s.editsRemaining - 1,
 										str: s.str.slice(1),
 									}),
-								s.str.length == 1 && (s.node.final = !0),
+								s.str.length === 1 && (s.node.final = !0),
 								s.str.length >= 1)
 							) {
-								if ("*" in s.node.edges) var l = s.node.edges["*"];
+								if ("*" in s.node.edges) const l = s.node.edges["*"];
 								else {
-									var l = new t.TokenSet();
+									const l = new t.TokenSet();
 									s.node.edges["*"] = l;
 								}
-								s.str.length == 1 && (l.final = !0),
+								s.str.length === 1 && (l.final = !0),
 									i.push({
 										node: l,
 										editsRemaining: s.editsRemaining - 1,
@@ -720,13 +726,13 @@ window.translations = {
 									});
 							}
 							if (s.str.length > 1) {
-								var d = s.str.charAt(0),
-									f = s.str.charAt(1),
-									p;
+								const d = s.str.charAt(0);
+								const f = s.str.charAt(1);
+								let p;
 								f in s.node.edges
 									? (p = s.node.edges[f])
 									: ((p = new t.TokenSet()), (s.node.edges[f] = p)),
-									s.str.length == 1 && (p.final = !0),
+									s.str.length === 1 && (p.final = !0),
 									i.push({
 										node: p,
 										editsRemaining: s.editsRemaining - 1,
@@ -739,28 +745,28 @@ window.translations = {
 				}),
 				(t.TokenSet.fromString = (e) => {
 					for (
-						var n = new t.TokenSet(), r = n, i = 0, s = e.length;
+						let n = new t.TokenSet(), r = n, i = 0, s = e.length;
 						i < s;
 						i++
 					) {
-						var o = e[i],
-							a = i == s - 1;
-						if (o == "*") (n.edges[o] = n), (n.final = a);
+						const o = e[i];
+						const a = i === s - 1;
+						if (o === "*") (n.edges[o] = n), (n.final = a);
 						else {
-							var c = new t.TokenSet();
+							const c = new t.TokenSet();
 							(c.final = a), (n.edges[o] = c), (n = c);
 						}
 					}
 					return r;
 				}),
 				(t.TokenSet.prototype.toArray = function () {
-					for (var e = [], n = [{ prefix: "", node: this }]; n.length; ) {
-						var r = n.pop(),
-							i = Object.keys(r.node.edges),
-							s = i.length;
+					for (const e = [], n = [{ prefix: "", node: this }]; n.length; ) {
+						const r = n.pop();
+						const i = Object.keys(r.node.edges);
+						const s = i.length;
 						r.node.final && (r.prefix.charAt(0), e.push(r.prefix));
-						for (var o = 0; o < s; o++) {
-							var a = i[o];
+						for (let o = 0; o < s; o++) {
+							const a = i[o];
 							n.push({ prefix: r.prefix.concat(a), node: r.node.edges[a] });
 						}
 					}
@@ -769,29 +775,29 @@ window.translations = {
 				(t.TokenSet.prototype.toString = function () {
 					if (this._str) return this._str;
 					for (
-						var e = this.final ? "1" : "0",
+						let e = this.final ? "1" : "0",
 							n = Object.keys(this.edges).sort(),
 							r = n.length,
 							i = 0;
 						i < r;
 						i++
 					) {
-						var s = n[i],
-							o = this.edges[s];
+						const s = n[i];
+						const o = this.edges[s];
 						e = e + s + o.id;
 					}
 					return e;
 				}),
 				(t.TokenSet.prototype.intersect = function (e) {
 					for (
-						var n = new t.TokenSet(),
+						let n = new t.TokenSet(),
 							r = void 0,
 							i = [{ qNode: e, output: n, node: this }];
 						i.length;
 					) {
 						r = i.pop();
 						for (
-							var s = Object.keys(r.qNode.edges),
+							let s = Object.keys(r.qNode.edges),
 								o = s.length,
 								a = Object.keys(r.node.edges),
 								c = a.length,
@@ -799,13 +805,13 @@ window.translations = {
 							l < o;
 							l++
 						)
-							for (var d = s[l], f = 0; f < c; f++) {
-								var p = a[f];
-								if (p == d || d == "*") {
-									var v = r.node.edges[p],
-										x = r.qNode.edges[d],
-										w = v.final && x.final,
-										m = void 0;
+							for (let d = s[l], f = 0; f < c; f++) {
+								const p = a[f];
+								if (p === d || d === "*") {
+									const v = r.node.edges[p];
+									const x = r.qNode.edges[d];
+									const w = v.final && x.final;
+									let m = void 0;
 									p in r.output.edges
 										? ((m = r.output.edges[p]), (m.final = m.final || w))
 										: ((m = new t.TokenSet()),
@@ -824,25 +830,25 @@ window.translations = {
 						(this.minimizedNodes = {});
 				}),
 				(t.TokenSet.Builder.prototype.insert = function (e) {
-					var n,
-						r = 0;
+					let n;
+					let r = 0;
 					if (e < this.previousWord)
 						throw new Error("Out of order word insertion");
 					for (
-						var i = 0;
+						let i = 0;
 						i < e.length &&
 						i < this.previousWord.length &&
-						e[i] == this.previousWord[i];
+						e[i] === this.previousWord[i];
 						i++
 					)
 						r++;
 					this.minimize(r),
-						this.uncheckedNodes.length == 0
+						this.uncheckedNodes.length === 0
 							? (n = this.root)
 							: (n = this.uncheckedNodes[this.uncheckedNodes.length - 1].child);
-					for (var i = r; i < e.length; i++) {
-						var s = new t.TokenSet(),
-							o = e[i];
+					for (let i = r; i < e.length; i++) {
+						const s = new t.TokenSet();
+						const o = e[i];
 						(n.edges[o] = s),
 							this.uncheckedNodes.push({ parent: n, char: o, child: s }),
 							(n = s);
@@ -853,9 +859,9 @@ window.translations = {
 					this.minimize(0);
 				}),
 				(t.TokenSet.Builder.prototype.minimize = function (e) {
-					for (var n = this.uncheckedNodes.length - 1; n >= e; n--) {
-						var r = this.uncheckedNodes[n],
-							i = r.child.toString();
+					for (let n = this.uncheckedNodes.length - 1; n >= e; n--) {
+						const r = this.uncheckedNodes[n];
+						const i = r.child.toString();
 						i in this.minimizedNodes
 							? (r.parent.edges[r.char] = this.minimizedNodes[i])
 							: ((r.child._str = i), (this.minimizedNodes[i] = r.child)),
@@ -871,13 +877,13 @@ window.translations = {
 			}),
 				(t.Index.prototype.search = function (e) {
 					return this.query((n) => {
-						var r = new t.QueryParser(e, n);
+						const r = new t.QueryParser(e, n);
 						r.parse();
 					});
 				}),
 				(t.Index.prototype.query = function (e) {
 					for (
-						var n = new t.Query(this.fields),
+						let n = new t.Query(this.fields),
 							r = Object.create(null),
 							i = Object.create(null),
 							s = Object.create(null),
@@ -889,52 +895,52 @@ window.translations = {
 					)
 						i[this.fields[c]] = new t.Vector();
 					e.call(n, n);
-					for (var c = 0; c < n.clauses.length; c++) {
-						var l = n.clauses[c],
-							d = null,
-							f = t.Set.empty;
+					for (let c = 0; c < n.clauses.length; c++) {
+						const l = n.clauses[c];
+						let d = null;
+						let f = t.Set.empty;
 						l.usePipeline
 							? (d = this.pipeline.runString(l.term, { fields: l.fields }))
 							: (d = [l.term]);
-						for (var p = 0; p < d.length; p++) {
-							var v = d[p];
+						for (let p = 0; p < d.length; p++) {
+							const v = d[p];
 							l.term = v;
-							var x = t.TokenSet.fromClause(l),
-								w = this.tokenSet.intersect(x).toArray();
+							const x = t.TokenSet.fromClause(l);
+							const w = this.tokenSet.intersect(x).toArray();
 							if (w.length === 0 && l.presence === t.Query.presence.REQUIRED) {
-								for (var m = 0; m < l.fields.length; m++) {
-									var g = l.fields[m];
+								for (let m = 0; m < l.fields.length; m++) {
+									const g = l.fields[m];
 									o[g] = t.Set.empty;
 								}
 								break;
 							}
-							for (var T = 0; T < w.length; T++)
+							for (let T = 0; T < w.length; T++)
 								for (
-									var L = w[T], C = this.invertedIndex[L], M = C._index, m = 0;
+									let L = w[T], C = this.invertedIndex[L], M = C._index, m = 0;
 									m < l.fields.length;
 									m++
 								) {
-									var g = l.fields[m],
-										j = C[g],
-										N = Object.keys(j),
-										q = L + "/" + g,
-										W = new t.Set(N);
+									const g = l.fields[m];
+									const j = C[g];
+									const N = Object.keys(j);
+									const q = `${L}/${g}`;
+									const W = new t.Set(N);
 									if (
-										(l.presence == t.Query.presence.REQUIRED &&
+										(l.presence === t.Query.presence.REQUIRED &&
 											((f = f.union(W)),
 											o[g] === void 0 && (o[g] = t.Set.complete)),
-										l.presence == t.Query.presence.PROHIBITED)
+										l.presence === t.Query.presence.PROHIBITED)
 									) {
 										a[g] === void 0 && (a[g] = t.Set.empty),
 											(a[g] = a[g].union(W));
 										continue;
 									}
 									if ((i[g].upsert(M, l.boost, (ze, Ue) => ze + Ue), !s[q])) {
-										for (var B = 0; B < N.length; B++) {
-											var z = N[B],
-												_ = new t.FieldRef(z, g),
-												U = j[z],
-												J;
+										for (let B = 0; B < N.length; B++) {
+											const z = N[B];
+											const _ = new t.FieldRef(z, g);
+											const U = j[z];
+											let J;
 											(J = r[_]) === void 0
 												? (r[_] = new t.MatchData(L, g, U))
 												: J.add(L, g, U);
@@ -944,41 +950,41 @@ window.translations = {
 								}
 						}
 						if (l.presence === t.Query.presence.REQUIRED)
-							for (var m = 0; m < l.fields.length; m++) {
-								var g = l.fields[m];
+							for (let m = 0; m < l.fields.length; m++) {
+								const g = l.fields[m];
 								o[g] = o[g].intersect(f);
 							}
 					}
 					for (
-						var V = t.Set.complete, A = t.Set.empty, c = 0;
+						let V = t.Set.complete, A = t.Set.empty, c = 0;
 						c < this.fields.length;
 						c++
 					) {
-						var g = this.fields[c];
+						const g = this.fields[c];
 						o[g] && (V = V.intersect(o[g])), a[g] && (A = A.union(a[g]));
 					}
-					var u = Object.keys(r),
-						y = [],
-						P = Object.create(null);
+					let u = Object.keys(r);
+					const y = [];
+					const P = Object.create(null);
 					if (n.isNegated()) {
 						u = Object.keys(this.fieldVectors);
-						for (var c = 0; c < u.length; c++) {
-							var _ = u[c],
-								k = t.FieldRef.fromString(_);
+						for (let c = 0; c < u.length; c++) {
+							const _ = u[c];
+							const k = t.FieldRef.fromString(_);
 							r[_] = new t.MatchData();
 						}
 					}
-					for (var c = 0; c < u.length; c++) {
-						var k = t.FieldRef.fromString(u[c]),
-							h = k.docRef;
+					for (let c = 0; c < u.length; c++) {
+						const k = t.FieldRef.fromString(u[c]);
+						const h = k.docRef;
 						if (V.contains(h) && !A.contains(h)) {
-							var E = this.fieldVectors[k],
-								Q = i[k.fieldName].similarity(E),
-								H;
+							const E = this.fieldVectors[k];
+							const Q = i[k.fieldName].similarity(E);
+							let H;
 							if ((H = P[h]) !== void 0)
 								(H.score += Q), H.matchData.combine(r[k]);
 							else {
-								var b = { ref: h, score: Q, matchData: r[k] };
+								const b = { ref: h, score: Q, matchData: r[k] };
 								(P[h] = b), y.push(b);
 							}
 						}
@@ -986,12 +992,12 @@ window.translations = {
 					return y.sort((qe, We) => We.score - qe.score);
 				}),
 				(t.Index.prototype.toJSON = function () {
-					var e = Object.keys(this.invertedIndex)
+					const e = Object.keys(this.invertedIndex)
 							.sort()
 							.map(function (r) {
 								return [r, this.invertedIndex[r]];
-							}, this),
-						n = Object.keys(this.fieldVectors).map(function (r) {
+							}, this);
+					const n = Object.keys(this.fieldVectors).map(function (r) {
 							return [r, this.fieldVectors[r].toJSON()];
 						}, this);
 					return {
@@ -1003,31 +1009,27 @@ window.translations = {
 					};
 				}),
 				(t.Index.load = (e) => {
-					var n = {},
-						r = {},
-						i = e.fieldVectors,
-						s = Object.create(null),
-						o = e.invertedIndex,
-						a = new t.TokenSet.Builder(),
-						c = t.Pipeline.load(e.pipeline);
-					e.version != t.version &&
+					const n = {};
+					const r = {};
+					const i = e.fieldVectors;
+					const s = Object.create(null);
+					const o = e.invertedIndex;
+					const a = new t.TokenSet.Builder();
+					const c = t.Pipeline.load(e.pipeline);
+					e.version !== t.version &&
 						t.utils.warn(
-							"Version mismatch when loading serialised index. Current version of lunr '" +
-								t.version +
-								"' does not match serialized index '" +
-								e.version +
-								"'",
+							`Version mismatch when loading serialised index. Current version of lunr '${t.version}' does not match serialized index '${e.version}'`,
 						);
-					for (var l = 0; l < i.length; l++) {
-						var d = i[l],
-							f = d[0],
-							p = d[1];
+					for (let l = 0; l < i.length; l++) {
+						const d = i[l];
+						const f = d[0];
+						const p = d[1];
 						r[f] = new t.Vector(p);
 					}
-					for (var l = 0; l < o.length; l++) {
-						var d = o[l],
-							v = d[0],
-							x = d[1];
+					for (let l = 0; l < o.length; l++) {
+						const d = o[l];
+						const v = d[0];
+						const x = d[1];
 						a.insert(v), (s[v] = x);
 					}
 					return (
@@ -1062,7 +1064,7 @@ window.translations = {
 				(t.Builder.prototype.field = function (e, n) {
 					if (/\//.test(e))
 						throw new RangeError(
-							"Field '" + e + "' contains illegal character '/'",
+							`Field '${e}' contains illegal character '/'`,
 						);
 					this._fields[e] = n || {};
 				}),
@@ -1073,38 +1075,38 @@ window.translations = {
 					this._k1 = e;
 				}),
 				(t.Builder.prototype.add = function (e, n) {
-					var r = e[this._ref],
-						i = Object.keys(this._fields);
+					const r = e[this._ref];
+					const i = Object.keys(this._fields);
 					(this._documents[r] = n || {}), (this.documentCount += 1);
-					for (var s = 0; s < i.length; s++) {
-						var o = i[s],
-							a = this._fields[o].extractor,
-							c = a ? a(e) : e[o],
-							l = this.tokenizer(c, { fields: [o] }),
-							d = this.pipeline.run(l),
-							f = new t.FieldRef(r, o),
-							p = Object.create(null);
+					for (let s = 0; s < i.length; s++) {
+						const o = i[s];
+						const a = this._fields[o].extractor;
+						const c = a ? a(e) : e[o];
+						const l = this.tokenizer(c, { fields: [o] });
+						const d = this.pipeline.run(l);
+						const f = new t.FieldRef(r, o);
+						const p = Object.create(null);
 						(this.fieldTermFrequencies[f] = p),
 							(this.fieldLengths[f] = 0),
 							(this.fieldLengths[f] += d.length);
-						for (var v = 0; v < d.length; v++) {
-							var x = d[v];
+						for (let v = 0; v < d.length; v++) {
+							const x = d[v];
 							if (
 								(p[x] == null && (p[x] = 0),
 								(p[x] += 1),
 								this.invertedIndex[x] == null)
 							) {
-								var w = Object.create(null);
+								const w = Object.create(null);
 								(w._index = this.termIndex), (this.termIndex += 1);
-								for (var m = 0; m < i.length; m++)
+								for (let m = 0; m < i.length; m++)
 									w[i[m]] = Object.create(null);
 								this.invertedIndex[x] = w;
 							}
 							this.invertedIndex[x][o][r] == null &&
 								(this.invertedIndex[x][o][r] = Object.create(null));
-							for (var g = 0; g < this.metadataWhitelist.length; g++) {
-								var T = this.metadataWhitelist[g],
-									L = x.metadata[T];
+							for (let g = 0; g < this.metadataWhitelist.length; g++) {
+								const T = this.metadataWhitelist[g];
+								const L = x.metadata[T];
 								this.invertedIndex[x][o][r][T] == null &&
 									(this.invertedIndex[x][o][r][T] = []),
 									this.invertedIndex[x][o][r][T].push(L);
@@ -1114,7 +1116,7 @@ window.translations = {
 				}),
 				(t.Builder.prototype.calculateAverageFieldLengths = function () {
 					for (
-						var e = Object.keys(this.fieldLengths),
+						let e = Object.keys(this.fieldLengths),
 							n = e.length,
 							r = {},
 							i = {},
@@ -1122,22 +1124,22 @@ window.translations = {
 						s < n;
 						s++
 					) {
-						var o = t.FieldRef.fromString(e[s]),
-							a = o.fieldName;
+						const o = t.FieldRef.fromString(e[s]);
+						const a = o.fieldName;
 						i[a] || (i[a] = 0),
 							(i[a] += 1),
 							r[a] || (r[a] = 0),
 							(r[a] += this.fieldLengths[o]);
 					}
-					for (var c = Object.keys(this._fields), s = 0; s < c.length; s++) {
-						var l = c[s];
+					for (let c = Object.keys(this._fields), s = 0; s < c.length; s++) {
+						const l = c[s];
 						r[l] = r[l] / i[l];
 					}
 					this.averageFieldLength = r;
 				}),
 				(t.Builder.prototype.createFieldVectors = function () {
 					for (
-						var e = {},
+						let e = {},
 							n = Object.keys(this.fieldTermFrequencies),
 							r = n.length,
 							i = Object.create(null),
@@ -1146,7 +1148,7 @@ window.translations = {
 						s++
 					) {
 						for (
-							var o = t.FieldRef.fromString(n[s]),
+							let o = t.FieldRef.fromString(n[s]),
 								a = o.fieldName,
 								c = this.fieldLengths[o],
 								l = new t.Vector(),
@@ -1159,12 +1161,12 @@ window.translations = {
 							w < p;
 							w++
 						) {
-							var m = f[w],
-								g = d[m],
-								T = this.invertedIndex[m]._index,
-								L,
-								C,
-								M;
+							const m = f[w];
+							const g = d[m];
+							const T = this.invertedIndex[m]._index;
+							let L;
+							let C;
+							let M;
 							i[m] === void 0
 								? ((L = t.idf(this.invertedIndex[m], this.documentCount)),
 									(i[m] = L))
@@ -1203,16 +1205,16 @@ window.translations = {
 					);
 				}),
 				(t.Builder.prototype.use = function (e) {
-					var n = Array.prototype.slice.call(arguments, 1);
+					const n = Array.prototype.slice.call(arguments, 1);
 					n.unshift(this), e.apply(this, n);
 				}),
 				(t.MatchData = function (e, n, r) {
 					for (
-						var i = Object.create(null), s = Object.keys(r || {}), o = 0;
+						let i = Object.create(null), s = Object.keys(r || {}), o = 0;
 						o < s.length;
 						o++
 					) {
-						var a = s[o];
+						const a = s[o];
 						i[a] = r[a].slice();
 					}
 					(this.metadata = Object.create(null)),
@@ -1221,18 +1223,18 @@ window.translations = {
 							(this.metadata[e][n] = i));
 				}),
 				(t.MatchData.prototype.combine = function (e) {
-					for (var n = Object.keys(e.metadata), r = 0; r < n.length; r++) {
-						var i = n[r],
-							s = Object.keys(e.metadata[i]);
+					for (let n = Object.keys(e.metadata), r = 0; r < n.length; r++) {
+						const i = n[r];
+						const s = Object.keys(e.metadata[i]);
 						this.metadata[i] == null &&
 							(this.metadata[i] = Object.create(null));
-						for (var o = 0; o < s.length; o++) {
-							var a = s[o],
-								c = Object.keys(e.metadata[i][a]);
+						for (let o = 0; o < s.length; o++) {
+							const a = s[o];
+							const c = Object.keys(e.metadata[i][a]);
 							this.metadata[i][a] == null &&
 								(this.metadata[i][a] = Object.create(null));
-							for (var l = 0; l < c.length; l++) {
-								var d = c[l];
+							for (let l = 0; l < c.length; l++) {
+								const d = c[l];
 								this.metadata[i][a][d] == null
 									? (this.metadata[i][a][d] = e.metadata[i][a][d])
 									: (this.metadata[i][a][d] = this.metadata[i][a][d].concat(
@@ -1251,8 +1253,8 @@ window.translations = {
 						this.metadata[e][n] = r;
 						return;
 					}
-					for (var i = Object.keys(r), s = 0; s < i.length; s++) {
-						var o = i[s];
+					for (let i = Object.keys(r), s = 0; s < i.length; s++) {
+						const o = i[s];
 						o in this.metadata[e][n]
 							? (this.metadata[e][n][o] = this.metadata[e][n][o].concat(r[o]))
 							: (this.metadata[e][n][o] = r[o]);
@@ -1273,19 +1275,19 @@ window.translations = {
 						"usePipeline" in e || (e.usePipeline = !0),
 						"wildcard" in e || (e.wildcard = t.Query.wildcard.NONE),
 						e.wildcard & t.Query.wildcard.LEADING &&
-							e.term.charAt(0) != t.Query.wildcard &&
-							(e.term = "*" + e.term),
+							e.term.charAt(0) !== t.Query.wildcard &&
+							(e.term = `*${e.term}`),
 						e.wildcard & t.Query.wildcard.TRAILING &&
-							e.term.slice(-1) != t.Query.wildcard &&
-							(e.term = "" + e.term + "*"),
+							e.term.slice(-1) !== t.Query.wildcard &&
+							(e.term = `${e.term}*`),
 						"presence" in e || (e.presence = t.Query.presence.OPTIONAL),
 						this.clauses.push(e),
 						this
 					);
 				}),
 				(t.Query.prototype.isNegated = function () {
-					for (var e = 0; e < this.clauses.length; e++)
-						if (this.clauses[e].presence != t.Query.presence.PROHIBITED)
+					for (let e = 0; e < this.clauses.length; e++)
+						if (this.clauses[e].presence !== t.Query.presence.PROHIBITED)
 							return !1;
 					return !0;
 				}),
@@ -1297,7 +1299,7 @@ window.translations = {
 							}, this),
 							this
 						);
-					var r = n || {};
+					const r = n || {};
 					return (r.term = e.toString()), this.clause(r), this;
 				}),
 				(t.QueryParseError = function (e, n, r) {
@@ -1316,11 +1318,11 @@ window.translations = {
 						(this.escapeCharPositions = []);
 				}),
 				(t.QueryLexer.prototype.run = function () {
-					for (var e = t.QueryLexer.lexText; e; ) e = e(this);
+					for (let e = t.QueryLexer.lexText; e; ) e = e(this);
 				}),
 				(t.QueryLexer.prototype.sliceString = function () {
 					for (
-						var e = [], n = this.start, r = this.pos, i = 0;
+						let e = [], n = this.start, r = this.pos, i = 0;
 						i < this.escapeCharPositions.length;
 						i++
 					)
@@ -1347,23 +1349,24 @@ window.translations = {
 				}),
 				(t.QueryLexer.prototype.next = function () {
 					if (this.pos >= this.length) return t.QueryLexer.EOS;
-					var e = this.str.charAt(this.pos);
+					const e = this.str.charAt(this.pos);
 					return (this.pos += 1), e;
 				}),
 				(t.QueryLexer.prototype.width = function () {
 					return this.pos - this.start;
 				}),
 				(t.QueryLexer.prototype.ignore = function () {
-					this.start == this.pos && (this.pos += 1), (this.start = this.pos);
+					this.start === this.pos && (this.pos += 1), (this.start = this.pos);
 				}),
 				(t.QueryLexer.prototype.backup = function () {
 					this.pos -= 1;
 				}),
 				(t.QueryLexer.prototype.acceptDigitRun = function () {
-					var e, n;
+					let e;
+					let n;
 					do (e = this.next()), (n = e.charCodeAt(0));
 					while (n > 47 && n < 58);
-					e != t.QueryLexer.EOS && this.backup();
+					e !== t.QueryLexer.EOS && this.backup();
 				}),
 				(t.QueryLexer.prototype.more = function () {
 					return this.pos < this.length;
@@ -1406,26 +1409,26 @@ window.translations = {
 				(t.QueryLexer.termSeparator = t.tokenizer.separator),
 				(t.QueryLexer.lexText = (e) => {
 					for (;;) {
-						var n = e.next();
-						if (n == t.QueryLexer.EOS) return t.QueryLexer.lexEOS;
-						if (n.charCodeAt(0) == 92) {
+						const n = e.next();
+						if (n === t.QueryLexer.EOS) return t.QueryLexer.lexEOS;
+						if (n.charCodeAt(0) === 92) {
 							e.escapeCharacter();
 							continue;
 						}
-						if (n == ":") return t.QueryLexer.lexField;
-						if (n == "~")
+						if (n === ":") return t.QueryLexer.lexField;
+						if (n === "~")
 							return (
 								e.backup(),
 								e.width() > 0 && e.emit(t.QueryLexer.TERM),
 								t.QueryLexer.lexEditDistance
 							);
-						if (n == "^")
+						if (n === "^")
 							return (
 								e.backup(),
 								e.width() > 0 && e.emit(t.QueryLexer.TERM),
 								t.QueryLexer.lexBoost
 							);
-						if ((n == "+" && e.width() === 1) || (n == "-" && e.width() === 1))
+						if ((n === "+" && e.width() === 1) || (n === "-" && e.width() === 1))
 							return e.emit(t.QueryLexer.PRESENCE), t.QueryLexer.lexText;
 						if (n.match(t.QueryLexer.termSeparator))
 							return t.QueryLexer.lexTerm;
@@ -1439,22 +1442,22 @@ window.translations = {
 				}),
 				(t.QueryParser.prototype.parse = function () {
 					this.lexer.run(), (this.lexemes = this.lexer.lexemes);
-					for (var e = t.QueryParser.parseClause; e; ) e = e(this);
+					for (let e = t.QueryParser.parseClause; e; ) e = e(this);
 					return this.query;
 				}),
 				(t.QueryParser.prototype.peekLexeme = function () {
 					return this.lexemes[this.lexemeIdx];
 				}),
 				(t.QueryParser.prototype.consumeLexeme = function () {
-					var e = this.peekLexeme();
+					const e = this.peekLexeme();
 					return (this.lexemeIdx += 1), e;
 				}),
 				(t.QueryParser.prototype.nextClause = function () {
-					var e = this.currentClause;
+					const e = this.currentClause;
 					this.query.clause(e), (this.currentClause = {});
 				}),
 				(t.QueryParser.parseClause = (e) => {
-					var n = e.peekLexeme();
+					const n = e.peekLexeme();
 					if (n != null)
 						switch (n.type) {
 							case t.QueryLexer.PRESENCE:
@@ -1463,16 +1466,17 @@ window.translations = {
 								return t.QueryParser.parseField;
 							case t.QueryLexer.TERM:
 								return t.QueryParser.parseTerm;
-							default:
-								var r = "expected either a field or a term, found " + n.type;
+							default: {
+								let r = `expected either a field or a term, found ${n.type}`;
 								throw (
-									(n.str.length >= 1 && (r += " with value '" + n.str + "'"),
+									(n.str.length >= 1 && (r += ` with value '${n.str}'`),
 									new t.QueryParseError(r, n.start, n.end))
 								);
+							}
 						}
 				}),
 				(t.QueryParser.parsePresence = (e) => {
-					var n = e.consumeLexeme();
+					const n = e.consumeLexeme();
 					if (n != null) {
 						switch (n.str) {
 							case "-":
@@ -1481,13 +1485,14 @@ window.translations = {
 							case "+":
 								e.currentClause.presence = t.Query.presence.REQUIRED;
 								break;
-							default:
-								var r = "unrecognised presence operator'" + n.str + "'";
+							default: {
+								const r = `unrecognised presence operator'${n.str}'`;
 								throw new t.QueryParseError(r, n.start, n.end);
+							}
 						}
-						var i = e.peekLexeme();
+						const i = e.peekLexeme();
 						if (i == null) {
-							var r = "expecting term or field, found nothing";
+							const r = "expecting term or field, found nothing";
 							throw new t.QueryParseError(r, n.start, n.end);
 						}
 						switch (i.type) {
@@ -1495,41 +1500,43 @@ window.translations = {
 								return t.QueryParser.parseField;
 							case t.QueryLexer.TERM:
 								return t.QueryParser.parseTerm;
-							default:
-								var r = "expecting term or field, found '" + i.type + "'";
+							default: {
+								const r = `expecting term or field, found '${i.type}'`;
 								throw new t.QueryParseError(r, i.start, i.end);
+							}
 						}
 					}
 				}),
 				(t.QueryParser.parseField = (e) => {
-					var n = e.consumeLexeme();
+					const n = e.consumeLexeme();
 					if (n != null) {
-						if (e.query.allFields.indexOf(n.str) == -1) {
-							var r = e.query.allFields.map((o) => "'" + o + "'").join(", "),
-								i = "unrecognised field '" + n.str + "', possible fields: " + r;
+						if (e.query.allFields.indexOf(n.str) === -1) {
+							const r = e.query.allFields.map((o) => `'${o}'`).join(", ");
+							const i = `unrecognised field '${n.str}', possible fields: ${r}`;
 							throw new t.QueryParseError(i, n.start, n.end);
 						}
 						e.currentClause.fields = [n.str];
-						var s = e.peekLexeme();
+						const s = e.peekLexeme();
 						if (s == null) {
-							var i = "expecting term, found nothing";
+							const i = "expecting term, found nothing";
 							throw new t.QueryParseError(i, n.start, n.end);
 						}
 						switch (s.type) {
 							case t.QueryLexer.TERM:
 								return t.QueryParser.parseTerm;
-							default:
-								var i = "expecting term, found '" + s.type + "'";
+							default: {
+								const i = `expecting term, found '${s.type}'`;
 								throw new t.QueryParseError(i, s.start, s.end);
+							}
 						}
 					}
 				}),
 				(t.QueryParser.parseTerm = (e) => {
-					var n = e.consumeLexeme();
+					const n = e.consumeLexeme();
 					if (n != null) {
 						(e.currentClause.term = n.str.toLowerCase()),
-							n.str.indexOf("*") != -1 && (e.currentClause.usePipeline = !1);
-						var r = e.peekLexeme();
+							n.str.indexOf("*") !== -1 && (e.currentClause.usePipeline = !1);
+						const r = e.peekLexeme();
 						if (r == null) {
 							e.nextClause();
 							return;
@@ -1545,22 +1552,23 @@ window.translations = {
 								return t.QueryParser.parseBoost;
 							case t.QueryLexer.PRESENCE:
 								return e.nextClause(), t.QueryParser.parsePresence;
-							default:
-								var i = "Unexpected lexeme type '" + r.type + "'";
+							default: {
+								const i = `Unexpected lexeme type '${r.type}'`;
 								throw new t.QueryParseError(i, r.start, r.end);
+							}
 						}
 					}
 				}),
 				(t.QueryParser.parseEditDistance = (e) => {
-					var n = e.consumeLexeme();
+					const n = e.consumeLexeme();
 					if (n != null) {
-						var r = Number.parseInt(n.str, 10);
-						if (isNaN(r)) {
-							var i = "edit distance must be numeric";
+						const r = Number.parseInt(n.str, 10);
+						if (Number.isNaN(r)) {
+							const i = "edit distance must be numeric";
 							throw new t.QueryParseError(i, n.start, n.end);
 						}
 						e.currentClause.editDistance = r;
-						var s = e.peekLexeme();
+						const s = e.peekLexeme();
 						if (s == null) {
 							e.nextClause();
 							return;
@@ -1576,22 +1584,23 @@ window.translations = {
 								return t.QueryParser.parseBoost;
 							case t.QueryLexer.PRESENCE:
 								return e.nextClause(), t.QueryParser.parsePresence;
-							default:
-								var i = "Unexpected lexeme type '" + s.type + "'";
+							default: {
+								const i = `Unexpected lexeme type '${s.type}'`;
 								throw new t.QueryParseError(i, s.start, s.end);
+							}
 						}
 					}
 				}),
 				(t.QueryParser.parseBoost = (e) => {
-					var n = e.consumeLexeme();
+					const n = e.consumeLexeme();
 					if (n != null) {
-						var r = Number.parseInt(n.str, 10);
-						if (isNaN(r)) {
-							var i = "boost must be numeric";
+						const r = Number.parseInt(n.str, 10);
+						if (Number.isNaN(r)) {
+							const i = "boost must be numeric";
 							throw new t.QueryParseError(i, n.start, n.end);
 						}
 						e.currentClause.boost = r;
-						var s = e.peekLexeme();
+						const s = e.peekLexeme();
 						if (s == null) {
 							e.nextClause();
 							return;
@@ -1607,35 +1616,36 @@ window.translations = {
 								return t.QueryParser.parseBoost;
 							case t.QueryLexer.PRESENCE:
 								return e.nextClause(), t.QueryParser.parsePresence;
-							default:
-								var i = "Unexpected lexeme type '" + s.type + "'";
+							default: {
+								const i = `Unexpected lexeme type '${s.type}'`;
 								throw new t.QueryParseError(i, s.start, s.end);
+							}
 						}
 					}
 				}),
 				((e, n) => {
-					typeof define == "function" && define.amd
+					typeof define === "function" && define.amd
 						? define(n)
-						: typeof me == "object"
+						: typeof me === "object"
 							? (ge.exports = n())
 							: (e.lunr = n());
 				})(this, () => t);
 		})();
 	});
-	var O,
-		G = {
+	let O;
+	const G = {
 			getItem() {
 				return null;
 			},
 			setItem() {},
-		},
-		K;
+		};
+	let K;
 	try {
 		(K = localStorage), (O = K);
 	} catch {
 		(K = G), (O = G);
 	}
-	var S = {
+	const S = {
 		getItem: (t) => O.getItem(t),
 		setItem: (t, e) => O.setItem(t, e),
 		disableWritingLocalStorage() {
@@ -1694,11 +1704,11 @@ window.translations = {
 		kind_4194304: "Reference",
 		kind_8388608: "Document",
 	};
-	var pe = [];
+	const pe = [];
 	function Y(t, e) {
 		pe.push({ selector: e, constructor: t });
 	}
-	var X = class {
+	const X = class {
 		alwaysVisibleMember = null;
 		constructor() {
 			this.createComponents(document.body),
@@ -1739,8 +1749,8 @@ window.translations = {
 			}
 		}
 		ensureActivePageVisible() {
-			let e = document.querySelector(".tsd-navigation .current"),
-				n = e?.parentElement;
+			const e = document.querySelector(".tsd-navigation .current");
+			let n = e?.parentElement;
 			while (n && !n.classList.contains(".tsd-navigation"))
 				n instanceof HTMLDetailsElement && (n.open = !0), (n = n.parentElement);
 			if (e && !nt(e)) {
@@ -1752,8 +1762,8 @@ window.translations = {
 			}
 		}
 		updateIndexVisibility() {
-			const e = document.querySelector(".tsd-index-content"),
-				n = e?.open;
+			const e = document.querySelector(".tsd-index-content");
+			const n = e?.open;
 			e && (e.open = !0),
 				document.querySelectorAll(".tsd-index-section").forEach((r) => {
 					r.style.display = "block";
@@ -1778,8 +1788,8 @@ window.translations = {
 			let n = e.parentElement;
 			while (n && n.tagName !== "SECTION") n = n.parentElement;
 			if (!n) return;
-			let r = n.offsetParent == null,
-				i = n;
+			const r = n.offsetParent == null;
+			let i = n;
 			while (i !== document.body)
 				i instanceof HTMLDetailsElement && (i.open = !0), (i = i.parentElement);
 			if (n.offsetParent == null) {
@@ -1813,27 +1823,27 @@ window.translations = {
 		}
 	};
 	function nt(t) {
-		const e = t.getBoundingClientRect(),
-			n = Math.max(document.documentElement.clientHeight, window.innerHeight);
+		const e = t.getBoundingClientRect();
+		const n = Math.max(document.documentElement.clientHeight, window.innerHeight);
 		return !(e.bottom < 0 || e.top - n >= 0);
 	}
-	var fe = (t, e = 100) => {
+	const fe = (t, e = 100) => {
 		let n;
 		return () => {
 			clearTimeout(n), (n = setTimeout(() => t(), e));
 		};
 	};
-	var Ie = tt(ye(), 1);
+	const Ie = tt(ye(), 1);
 	async function R(t) {
-		const e = Uint8Array.from(atob(t), (s) => s.charCodeAt(0)),
-			r = new Blob([e])
+		const e = Uint8Array.from(atob(t), (s) => s.charCodeAt(0));
+		const r = new Blob([e])
 				.stream()
-				.pipeThrough(new DecompressionStream("deflate")),
-			i = await new Response(r).text();
+				.pipeThrough(new DecompressionStream("deflate"));
+		const i = await new Response(r).text();
 		return JSON.parse(i);
 	}
-	var Z = "closing",
-		ae = "tsd-overlay";
+	const Z = "closing";
+	const ae = "tsd-overlay";
 	function rt() {
 		const t = Math.abs(
 			window.innerWidth - document.documentElement.clientWidth,
@@ -1874,22 +1884,22 @@ window.translations = {
 		if (!t.open) return;
 		document.getElementById(ae)?.classList.add(Z), t.classList.add(Z);
 	}
-	var I = class {
+	const I = class {
 		el;
 		app;
 		constructor(e) {
 			(this.el = e.el), (this.app = e.app);
 		}
 	};
-	var be = document.head.appendChild(document.createElement("style"));
+	const be = document.head.appendChild(document.createElement("style"));
 	be.dataset.for = "filters";
-	var le = {};
+	const le = {};
 	function we(t) {
 		for (const e of t.split(/\s+/))
 			if (le.hasOwnProperty(e) && !le[e]) return !0;
 		return !1;
 	}
-	var ee = class extends I {
+	const ee = class extends I {
 		key;
 		value;
 		constructor(e) {
@@ -1921,19 +1931,19 @@ window.translations = {
 				this.app.updateIndexVisibility();
 		}
 	};
-	var Le = 0;
+	let Le = 0;
 	async function Se(t, e) {
 		if (!window.searchData) return;
 		const n = await R(window.searchData);
 		(t.data = n), (t.index = Ie.Index.load(n.index)), (e.innerHTML = "");
 	}
 	function _e() {
-		const t = document.getElementById("tsd-search-trigger"),
-			e = document.getElementById("tsd-search"),
-			n = document.getElementById("tsd-search-input"),
-			r = document.getElementById("tsd-search-results"),
-			i = document.getElementById("tsd-search-script"),
-			s = document.getElementById("tsd-search-status");
+		const t = document.getElementById("tsd-search-trigger");
+		const e = document.getElementById("tsd-search");
+		const n = document.getElementById("tsd-search-input");
+		const r = document.getElementById("tsd-search-results");
+		const i = document.getElementById("tsd-search-script");
+		const s = document.getElementById("tsd-search-status");
 		if (!(t && e && n && r && i && s))
 			throw new Error("Search controls missing");
 		const o = { base: document.documentElement.dataset.base };
@@ -1964,11 +1974,11 @@ window.translations = {
 			n.addEventListener("keydown", (l) => {
 				if (r.childElementCount === 0 || l.ctrlKey || l.metaKey || l.altKey)
 					return;
-				const d = n.getAttribute("aria-activedescendant"),
-					f = d ? document.getElementById(d) : null;
+				const d = n.getAttribute("aria-activedescendant");
+				const f = d ? document.getElementById(d) : null;
 				if (f) {
-					let p = !1,
-						v = !1;
+					let p = !1;
+					let v = !1;
 					switch (l.key) {
 						case "Home":
 						case "End":
@@ -2004,16 +2014,16 @@ window.translations = {
 			n.addEventListener("click", c),
 			document.body.addEventListener("keydown", (l) => {
 				if (l.altKey || l.metaKey || l.shiftKey) return;
-				const d = l.ctrlKey && l.key === "k",
-					f = !l.ctrlKey && !ct() && l.key === "/";
+				const d = l.ctrlKey && l.key === "k";
+				const f = !l.ctrlKey && !ct() && l.key === "/";
 				(d || f) && (l.preventDefault(), a());
 			});
 	}
 	function ot(t, e, n, r) {
 		if (!r.index || !r.data) return;
 		(t.innerHTML = ""), (n.innerHTML = ""), (Le += 1);
-		let i = e.value.trim(),
-			s;
+		const i = e.value.trim();
+		let s;
 		if (i) {
 			const a = i
 				.split(" ")
@@ -2033,9 +2043,9 @@ window.translations = {
 			return;
 		}
 		for (let a = 0; a < s.length; a++) {
-			let c = s[a],
-				l = r.data.rows[Number(c.ref)],
-				d = 1;
+			const c = s[a];
+			const l = r.data.rows[Number(c.ref)];
+			let d = 1;
 			l.name.toLowerCase().startsWith(i.toLowerCase()) &&
 				(d *= 10 / (1 + Math.abs(l.name.length - i.length))),
 				(c.score *= d);
@@ -2043,9 +2053,9 @@ window.translations = {
 		s.sort((a, c) => c.score - a.score);
 		const o = Math.min(10, s.length);
 		for (let a = 0; a < o; a++) {
-			let c = r.data.rows[Number(s[a].ref)],
-				d = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="tsd-kind-icon" aria-label="${window.translations[`kind_${c.kind}`].replaceAll('"', "&quot;")}"><use href="#icon-${c.icon || c.kind}"></use></svg>`,
-				f = Ce(c.name, i);
+			const c = r.data.rows[Number(s[a].ref)];
+			const d = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="tsd-kind-icon" aria-label="${window.translations[`kind_${c.kind}`].replaceAll('"', "&quot;")}"><use href="#icon-${c.icon || c.kind}"></use></svg>`;
+			let f = Ce(c.name, i);
 			globalThis.DEBUG_SEARCH_WEIGHTS &&
 				(f += ` (score: ${s[a].score.toFixed(2)})`),
 				c.parent &&
@@ -2059,7 +2069,7 @@ window.translations = {
 			const v = document.createElement("a");
 			(v.tabIndex = -1),
 				(v.href = r.base + c.url),
-				(v.innerHTML = d + `<span class="text">${f}</span>`),
+				(v.innerHTML = `${d}<span class="text">${f}</span>`),
 				p.append(v),
 				t.appendChild(p);
 		}
@@ -2092,12 +2102,12 @@ window.translations = {
 	}
 	function Ce(t, e) {
 		if (e === "") return t;
-		let n = t.toLocaleLowerCase(),
-			r = e.toLocaleLowerCase(),
-			i = [],
-			s = 0,
-			o = n.indexOf(r);
-		while (o != -1)
+		const n = t.toLocaleLowerCase();
+		const r = e.toLocaleLowerCase();
+		const i = [];
+		let s = 0;
+		let o = n.indexOf(r);
+		while (o !== -1)
 			i.push(
 				te(t.substring(s, o)),
 				`<mark>${te(t.substring(o, o + r.length))}</mark>`,
@@ -2106,7 +2116,7 @@ window.translations = {
 				(o = n.indexOf(r, s));
 		return i.push(te(t.substring(s))), i.join("");
 	}
-	var at = {
+	const at = {
 		"&": "&amp;",
 		"<": "&lt;",
 		">": "&gt;",
@@ -2119,7 +2129,7 @@ window.translations = {
 	function Pe(t, e) {
 		t.innerHTML = e ? `<div>${e}</div>` : "";
 	}
-	var lt = [
+	const lt = [
 		"button",
 		"checkbox",
 		"file",
@@ -2140,15 +2150,15 @@ window.translations = {
 				: t.tagName === "INPUT" && !lt.includes(t.type)
 			: !1;
 	}
-	var D = "mousedown",
-		Oe = "mousemove",
-		$ = "mouseup",
-		ne = { x: 0, y: 0 },
-		Qe = !1,
-		ce = !1,
-		ut = !1,
-		F = !1,
-		Me = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+	let D = "mousedown";
+	let Oe = "mousemove";
+	let $ = "mouseup";
+	const ne = { x: 0, y: 0 };
+	let Qe = !1;
+	let ce = !1;
+	let ut = !1;
+	let F = !1;
+	const Me = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
 			navigator.userAgent,
 		);
 	document.documentElement.classList.add(Me ? "is-mobile" : "not-mobile");
@@ -2157,14 +2167,14 @@ window.translations = {
 		((ut = !0), (D = "touchstart"), (Oe = "touchmove"), ($ = "touchend"));
 	document.addEventListener(D, (t) => {
 		(ce = !0), (F = !1);
-		const e = D == "touchstart" ? t.targetTouches[0] : t;
+		const e = D === "touchstart" ? t.targetTouches[0] : t;
 		(ne.y = e.pageY || 0), (ne.x = e.pageX || 0);
 	});
 	document.addEventListener(Oe, (t) => {
 		if (ce && !F) {
-			const e = D == "touchstart" ? t.targetTouches[0] : t,
-				n = ne.x - (e.pageX || 0),
-				r = ne.y - (e.pageY || 0);
+			const e = D === "touchstart" ? t.targetTouches[0] : t;
+			const n = ne.x - (e.pageX || 0);
+			const r = ne.y - (e.pageY || 0);
 			F = Math.sqrt(n * n + r * r) > 10;
 		}
 	});
@@ -2174,7 +2184,7 @@ window.translations = {
 	document.addEventListener("click", (t) => {
 		Qe && (t.preventDefault(), t.stopImmediatePropagation(), (Qe = !1));
 	});
-	var re = class extends I {
+	const re = class extends I {
 		active;
 		className;
 		constructor(e) {
@@ -2186,9 +2196,9 @@ window.translations = {
 				document.addEventListener($, (n) => this.onDocumentPointerUp(n));
 		}
 		setActive(e) {
-			if (this.active == e) return;
+			if (this.active === e) return;
 			(this.active = e),
-				document.documentElement.classList.toggle("has-" + this.className, e),
+				document.documentElement.classList.toggle(`has-${this.className}`, e),
 				this.el.classList.toggle("active", e);
 			const n = (this.active ? "to-has-" : "from-has-") + this.className;
 			document.documentElement.classList.add(n),
@@ -2208,15 +2218,15 @@ window.translations = {
 				const n = e.target.closest("a");
 				if (n) {
 					let r = window.location.href;
-					r.indexOf("#") != -1 && (r = r.substring(0, r.indexOf("#"))),
-						n.href.substring(0, r.length) == r &&
+					r.indexOf("#") !== -1 && (r = r.substring(0, r.indexOf("#"))),
+						n.href.substring(0, r.length) === r &&
 							setTimeout(() => this.setActive(!1), 250);
 				}
 			}
 		}
 	};
-	var ue = new Map(),
-		de = class {
+	const ue = new Map();
+	const de = class {
 			open;
 			accordions = [];
 			key;
@@ -2234,22 +2244,21 @@ window.translations = {
 				for (const n of this.accordions) n.open = e;
 				S.setItem(this.key, e.toString());
 			}
-		},
-		ie = class extends I {
+		};
+	const ie = class extends I {
 			constructor(e) {
 				super(e);
-				const n = this.el.querySelector("summary"),
-					r = n.querySelector("a");
-				r &&
-					r.addEventListener("click", () => {
+				const n = this.el.querySelector("summary");
+				const r = n.querySelector("a");
+				r?.addEventListener("click", () => {
 						location.assign(r.href);
 					});
-				let i = `tsd-accordion-${n.dataset.key ?? n.textContent.trim().replace(/\s+/g, "-").toLowerCase()}`,
-					s;
+				const i = `tsd-accordion-${n.dataset.key ?? n.textContent.trim().replace(/\s+/g, "-").toLowerCase()}`;
+				let s;
 				if (ue.has(i)) s = ue.get(i);
 				else {
-					const o = S.getItem(i),
-						a = o ? o === "true" : this.el.open;
+					const o = S.getItem(i);
+					const a = o ? o === "true" : this.el.open;
 					(s = new de(i, a)), ue.set(i, s);
 				}
 				s.add(this.el);
@@ -2266,7 +2275,7 @@ window.translations = {
 	function Ae(t) {
 		document.documentElement.dataset.theme = t;
 	}
-	var se;
+	let se;
 	function Fe() {
 		const t = document.getElementById("tsd-nav-script");
 		t && (t.addEventListener("load", Re), Re());
@@ -2286,8 +2295,8 @@ window.translations = {
 	function Ne(t, e, n) {
 		const r = e.appendChild(document.createElement("li"));
 		if (t.children) {
-			const i = [...n, t.text],
-				s = r.appendChild(document.createElement("details"));
+			const i = [...n, t.text];
+			const s = r.appendChild(document.createElement("details"));
 			s.className = t.class ? `${t.class} tsd-accordion` : "tsd-accordion";
 			const o = s.appendChild(document.createElement("summary"));
 			(o.className = "tsd-accordion-summary"),
@@ -2321,13 +2330,13 @@ window.translations = {
 			}
 			r.appendChild(document.createElement("span")).textContent = t.text;
 		} else {
-			const r = e.appendChild(document.createElement("span")),
-				i = window.translations.folder.replaceAll('"', "&quot;");
+			const r = e.appendChild(document.createElement("span"));
+			const i = window.translations.folder.replaceAll('"', "&quot;");
 			(r.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="tsd-kind-icon" aria-label="${i}"><use href="#icon-folder"></use></svg>`),
 				(r.appendChild(document.createElement("span")).textContent = t.text);
 		}
 	}
-	var oe = document.documentElement.dataset.base;
+	let oe = document.documentElement.dataset.base;
 	oe.endsWith("/") || (oe += "/");
 	function Ve() {
 		document.querySelector(".tsd-full-hierarchy")
@@ -2337,13 +2346,13 @@ window.translations = {
 	function dt() {
 		document.addEventListener("click", (r) => {
 			let i = r.target;
-			while (i.parentElement && i.parentElement.tagName != "LI")
+			while (i.parentElement && i.parentElement.tagName !== "LI")
 				i = i.parentElement;
 			i.dataset.dropdown &&
 				(i.dataset.dropdown = String(i.dataset.dropdown !== "true"));
 		});
-		const t = new Map(),
-			e = new Set();
+		const t = new Map();
+		const e = new Set();
 		for (const r of document.querySelectorAll(
 			".tsd-full-hierarchy [data-refl]",
 		)) {
@@ -2362,8 +2371,8 @@ window.translations = {
 					s.dataset.dropdown = "false";
 				});
 			for (const s of document.querySelectorAll(`[data-refl="${r}"]`)) {
-				const o = mt(),
-					a = s.querySelector("ul");
+				const o = mt();
+				const a = s.querySelector("ul");
 				s.insertBefore(o, a),
 					(o.dataset.dropdown = String(!!a)),
 					a || s.appendChild(i.cloneNode(!0));
@@ -2377,14 +2386,14 @@ window.translations = {
 	async function Be() {
 		const t = document.querySelector(".tsd-panel.tsd-hierarchy:has(h4 a)");
 		if (!t || !window.hierarchyData) return;
-		const e = +t.dataset.refl,
-			n = await R(window.hierarchyData),
-			r = t.querySelector("ul"),
-			i = document.createElement("ul");
+		const e = +t.dataset.refl;
+		const n = await R(window.hierarchyData);
+		const r = t.querySelector("ul");
+		const i = document.createElement("ul");
 		if (
 			(i.classList.add("tsd-hierarchy"),
 			pt(i, n, e),
-			r.querySelectorAll("li").length == i.querySelectorAll("li").length)
+			r.querySelectorAll("li").length === i.querySelectorAll("li").length)
 		)
 			return;
 		const s = document.createElement("span");
@@ -2409,24 +2418,24 @@ window.translations = {
 	function $e(t, e, n, r = new Set()) {
 		if (r.has(e)) return;
 		r.add(e);
-		const i = t.reflections[e],
-			s = document.createElement("li");
+		const i = t.reflections[e];
+		const s = document.createElement("li");
 		if ((s.classList.add("tsd-hierarchy-item"), e === n)) {
 			const o = s.appendChild(document.createElement("span"));
 			(o.textContent = i.name), o.classList.add("tsd-hierarchy-target");
 		} else {
 			for (const a of i.uniqueNameParents || []) {
-				const c = t.reflections[a],
-					l = s.appendChild(document.createElement("a"));
+				const c = t.reflections[a];
+				const l = s.appendChild(document.createElement("a"));
 				(l.textContent = c.name),
 					(l.href = oe + c.url),
-					(l.className = c.class + " tsd-signature-type"),
+					(l.className = `${c.class} tsd-signature-type`),
 					s.append(document.createTextNode("."));
 			}
 			const o = s.appendChild(document.createElement("a"));
 			(o.textContent = t.reflections[e].name),
 				(o.href = oe + i.url),
-				(o.className = i.class + " tsd-signature-type");
+				(o.className = `${i.class} tsd-signature-type`);
 		}
 		if (i.children) {
 			const o = s.appendChild(document.createElement("ul"));
@@ -2440,8 +2449,8 @@ window.translations = {
 	}
 	function ft(t, e, n) {
 		if (e === n) return !0;
-		const r = new Set(),
-			i = [t.reflections[e]];
+		const r = new Set();
+		const i = [t.reflections[e]];
 		while (i.length) {
 			const s = i.pop();
 			if (!r.has(s)) {
@@ -2468,9 +2477,9 @@ window.translations = {
 	Y(re, "a[data-toggle]");
 	Y(ie, ".tsd-accordion");
 	Y(ee, ".tsd-filter-item input[type=checkbox]");
-	var je = document.getElementById("tsd-theme");
+	const je = document.getElementById("tsd-theme");
 	je && He(je);
-	var gt = new X();
+	const gt = new X();
 	Object.defineProperty(window, "app", { value: gt });
 	_e();
 	Fe();

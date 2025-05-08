@@ -173,7 +173,7 @@ export class InvocationContext {
 
 		// Save state variables
 		Object.entries(this.variables).forEach(([key, value]) => {
-			session!.state.set(key, value);
+			session?.state.set(key, value);
 		});
 
 		// Update the session

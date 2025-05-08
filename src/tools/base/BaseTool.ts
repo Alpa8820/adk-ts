@@ -175,8 +175,7 @@ export abstract class BaseTool {
 					}
 
 					const delay = Math.min(
-						this.baseRetryDelay * Math.pow(2, attempts - 1) +
-							Math.random() * 1000,
+						this.baseRetryDelay * 2 ** (attempts - 1) + Math.random() * 1000,
 						this.maxRetryDelay,
 					);
 

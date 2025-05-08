@@ -278,7 +278,7 @@ export class Agent extends BaseAgent {
 				// Extract text from content array
 				for (const part of lastUserMsg.content) {
 					if (part.type === "text") {
-						query += part.text + " ";
+						query += `${part.text} `;
 					}
 				}
 			} else if (lastUserMsg.content.type === "text") {
@@ -320,7 +320,7 @@ export class Agent extends BaseAgent {
 						// Extract text from content array
 						for (const part of event.content) {
 							if (part.type === "text") {
-								content += part.text + " ";
+								content += `${part.text} `;
 							}
 						}
 					} else if (event.content && event.content.type === "text") {
@@ -470,7 +470,7 @@ export class Agent extends BaseAgent {
 				) {
 					// The LLM wants to use tools
 					if (process.env.DEBUG === "true") {
-						console.log(`[Agent] Executing tools...`);
+						console.log("[Agent] Executing tools...");
 					}
 
 					// Add the assistant message with tool_calls to the conversation first
@@ -494,13 +494,10 @@ export class Agent extends BaseAgent {
 							content: result.result,
 						});
 					}
-
-					// Continue the conversation loop
-					continue;
 				} else {
 					// This is a final response without tool calls
 					if (process.env.DEBUG === "true") {
-						console.log(`[Agent] No tool calls, finishing...`);
+						console.log("[Agent] No tool calls, finishing...");
 					}
 
 					// Add the final assistant message to the conversation
@@ -612,13 +609,13 @@ export class Agent extends BaseAgent {
 			// If no tool calls, we're done
 			if (!hadToolCalls) {
 				if (process.env.DEBUG === "true") {
-					console.log(`[Agent] No tool calls, finishing...`);
+					console.log("[Agent] No tool calls, finishing...");
 				}
 				break;
 			}
 
 			if (process.env.DEBUG === "true") {
-				console.log(`[Agent] Executing tools...`);
+				console.log("[Agent] Executing tools...");
 			}
 			stepCount++;
 
