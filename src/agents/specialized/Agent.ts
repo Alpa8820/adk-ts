@@ -4,10 +4,11 @@ import type { SessionService } from "../../memory/services/SessionService";
 import type { RunConfig } from "../../models/config/RunConfig";
 import { InvocationContext } from "../../models/context/InvocationContext";
 import { ToolContext } from "../../models/context/ToolContext";
-import type { BaseMemoryService } from "../../models/memory/MemoryService";
-import type { SearchMemoryOptions } from "../../models/memory/MemoryService";
-import { type Message, MessageRole } from "../../models/request/LLMRequest";
-import { LLMRequest } from "../../models/request/LLMRequest";
+import type {
+	BaseMemoryService,
+	SearchMemoryOptions,
+} from "../../models/memory/MemoryService";
+import { LLMRequest, type Message } from "../../models/request/LLMRequest";
 import type { LLMResponse, ToolCall } from "../../models/response/LLMResponse";
 import type { BaseTool } from "../../tools/base/BaseTool";
 import { BaseAgent } from "../base/BaseAgent";
