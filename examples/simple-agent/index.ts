@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import { Agent } from "../../src/agents/specialized/Agent";
 import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
 import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";

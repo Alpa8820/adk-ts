@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import { Agent } from "../../src/agents/specialized/Agent";
 import {
 	LangGraphAgent,

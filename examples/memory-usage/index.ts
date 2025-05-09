@@ -1,4 +1,4 @@
-import path from "node:path";
+import * as path from "node:path";
 import {
 	Agent,
 	InMemorySessionService,
@@ -6,7 +6,8 @@ import {
 	type Session,
 	SessionState,
 } from "@pontus-devoteam/adk";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
+
 // Load environment variables from .env file if it exists
 dotenv.config();
 
