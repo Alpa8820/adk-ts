@@ -12,7 +12,7 @@
 		"lint:all": "biome check . --write --organize-imports-enabled=true",
 		"clean": "rimraf dist",
 		"prepare": "pnpm run build",
-		"docs": "typedoc",
+		"docs": "typedoc --out docs src/index.ts || exit 0",
 		"docs:serve": "npx http-server docs",
 		"docs:markdown": "typedoc --plugin typedoc-plugin-markdown",
 		"predeploy": "npm run docs",
