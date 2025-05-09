@@ -132,7 +132,7 @@ export class LangGraphAgent extends BaseAgent {
 	 */
 	private validateGraph(): void {
 		// Check all target nodes exist
-		for (const [nodeName, node] of this.nodes.entries()) {
+		for (const [nodeName, node] of Array.from(this.nodes)) {
 			if (node.targets) {
 				for (const target of node.targets) {
 					if (!this.nodes.has(target)) {
@@ -146,7 +146,6 @@ export class LangGraphAgent extends BaseAgent {
 
 		// TODO: Add cycle detection if needed
 	}
-
 	/**
 	 * Check if a value is an LLMResponse
 	 */
