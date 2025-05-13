@@ -100,7 +100,7 @@ export class GoogleLLM extends BaseLLM {
 	static supportedModels(): string[] {
 		return [
 			// Gemini models
-			"gemini-.*",
+			"gemini-*",
 		];
 	}
 

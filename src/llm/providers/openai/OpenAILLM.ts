@@ -103,6 +103,8 @@ export class OpenAILLM extends BaseLLM {
 		return [
 			// GPT-4 models
 			"gpt-4-.*",
+			// GPT-4o models
+			"gpt-4o-.*",
 			// GPT-3.5 models
 			"gpt-3.5-.*",
 			// Future-proofing
