@@ -9,25 +9,25 @@ import * as dotenv from "dotenv";
 import { Agent, type MessageRole } from "../../src";
 import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
 import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
-import { getMcpTools } from "../../src/tools/mcp";
+import { McpToolset, McpError } from "../../src/tools/mcp";
 import type { McpConfig } from "../../src/tools/mcp/types";
 
-// Load environment variables from .env file
 dotenv.config();
 
-// Register the OpenAI LLM
 LLMRegistry.registerLLM(OpenAILLM);
 
-// Enable debug mode for showing agent loop
 const DEBUG = true;
 
 // Specify the allowed path for file operations
-const ALLOWED_PATH = "path/to/your/desktop";
+const ALLOWED_PATH = "/Users/prudhvisuraaj/Desktop";
 
 /**
  * Demonstrates an agent using MCP filesystem tools
  */
 async function main() {
+	// Initialize toolset outside try block to enable cleanup in finally
+	let toolset: McpToolset | null = null;
+
 	try {
 		console.log("🚀 Starting MCP Filesystem Agent Example");
 
@@ -36,6 +36,13 @@ async function main() {
 			name: "Filesystem Client",
 			description: "Client for MCP Filesystem Server",
 			debug: true,
+			retryOptions: {
+				maxRetries: 2,
+				initialDelay: 100,
+			},
+			cacheConfig: {
+				enabled: true,
+			},
 			transport: {
 				mode: "stdio",
 				command: "npx",
@@ -43,9 +50,12 @@ async function main() {
 			},
 		};
 
-		// Get tools from the MCP server
+		// Create a toolset for the MCP server
 		console.log("Connecting to MCP filesystem server...");
-		const mcpTools = await getMcpTools(mcpConfig);
+		toolset = new McpToolset(mcpConfig);
+
+		// Get tools from the toolset
+		const mcpTools = await toolset.getTools();
 
 		console.log(`Retrieved ${mcpTools.length} tools from the MCP server:`);
 		mcpTools.forEach((tool) => {
@@ -55,7 +65,7 @@ async function main() {
 		// Create the agent with MCP filesystem tools
 		const agent = new Agent({
 			name: "filesystem_assistant",
-			model: process.env.LLM_MODEL || "gpt-4o-mini",
+			model: process.env.LLM_MODEL || "gpt-4-turbo",
 			description: "An assistant that can manipulate files",
 			instructions: `You are a helpful assistant that can manipulate files on the user's desktop.
 				You have access to tools that let you write, read, and manage files.
@@ -63,7 +73,7 @@ async function main() {
 				When asked to create a rhyme, be creative and write a short, original rhyme to a file.
 				When reading files, summarize the content appropriately.`,
 			tools: mcpTools,
-			maxToolExecutionSteps: 5, // Limit the tool execution steps
+			maxToolExecutionSteps: 5,
 		});
 
 		console.log("Agent initialized with MCP filesystem tools");
@@ -127,7 +137,6 @@ async function main() {
 		console.log("\nExample 3: Multi-step conversation");
 		console.log("-----------------------------------");
 
-		// Start a conversation
 		const conversation = [
 			{
 				role: "user" as MessageRole,
@@ -179,13 +188,33 @@ async function main() {
 		console.log("Assistant:", response.content);
 
 		console.log("\nMCP Filesystem Agent examples complete!");
-		process.exit(0);
 	} catch (error) {
-		console.error("Error:", error);
+		// Proper error handling with McpError
+		if (error instanceof McpError) {
+			console.error(`MCP Error (${error.type}): ${error.message}`);
+			if (error.originalError) {
+				console.error("Original error:", error.originalError);
+			}
+		} else {
+			console.error("Error:", error);
+		}
+	} finally {
+		// Ensure resources are cleaned up properly
+		if (toolset) {
+			console.log("Cleaning up MCP resources...");
+			await toolset
+				.close()
+				.catch((err) => console.error("Error during cleanup:", err));
+		}
+		process.exit(0);
 	}
 }
 
-// Run the example
 main().catch((error) => {
-	console.error("Error:", error);
+	if (error instanceof McpError) {
+		console.error(`Fatal MCP Error (${error.type}): ${error.message}`);
+	} else {
+		console.error("Fatal Error:", error);
+	}
+	process.exit(1);
 });

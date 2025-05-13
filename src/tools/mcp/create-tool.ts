@@ -1,11 +1,12 @@
 import type { Tool as McpTool } from "@modelcontextprotocol/sdk/types.js";
 import { BaseTool } from "../base/BaseTool";
 import type { ToolContext } from "../../models/context/ToolContext";
-import type {
-	FunctionDeclaration,
-	JSONSchema,
-} from "../../models/request/FunctionDeclaration";
+import type { FunctionDeclaration } from "../../models/request/FunctionDeclaration";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { withRetry } from "./utils";
+import type { McpClientService } from "./client";
+import { mcpSchemaToParameters } from "./schema-conversion";
+import { McpError, McpErrorType } from "./types";
 
 /**
  * Interface for the expected MCP tool metadata
@@ -24,7 +25,18 @@ export async function createTool(
 	mcpTool: McpTool,
 	client: Client,
 ): Promise<BaseTool> {
-	return new McpToolAdapter(mcpTool, client);
+	try {
+		return new McpToolAdapter(mcpTool, client);
+	} catch (error) {
+		if (!(error instanceof McpError)) {
+			throw new McpError(
+				`Failed to create tool from MCP tool: ${error instanceof Error ? error.message : String(error)}`,
+				McpErrorType.INVALID_SCHEMA_ERROR,
+				error instanceof Error ? error : undefined,
+			);
+		}
+		throw error;
+	}
 }
 
 /**
@@ -33,9 +45,9 @@ export async function createTool(
 class McpToolAdapter extends BaseTool {
 	private mcpTool: McpTool;
 	private client: Client;
+	private clientService: McpClientService | null = null;
 
 	constructor(mcpTool: McpTool, client: Client) {
-		// Cast metadata to our expected type to handle type checking
 		const metadata = (mcpTool.metadata || {}) as McpToolMetadata;
 
 		super({
@@ -47,40 +59,31 @@ class McpToolAdapter extends BaseTool {
 		});
 		this.mcpTool = mcpTool;
 		this.client = client;
+
+		if (
+			(client as any).reinitialize &&
+			typeof (client as any).reinitialize === "function"
+		) {
+			this.clientService = client as any as McpClientService;
+		}
 	}
 
 	getDeclaration(): FunctionDeclaration {
-		let parameters: JSONSchema;
+		try {
+			const parameters = mcpSchemaToParameters(this.mcpTool);
 
-		// Always create a valid JSONSchema
-		if (this.mcpTool.parameters) {
-			// First handle the case where we already have a JSONSchema with a type
-			if (
-				typeof this.mcpTool.parameters === "object" &&
-				"type" in this.mcpTool.parameters &&
-				typeof this.mcpTool.parameters.type === "string"
-			) {
-				parameters = this.mcpTool.parameters as JSONSchema;
-			} else {
-				// Otherwise wrap in a proper schema
-				parameters = {
-					type: "object",
-					properties: this.mcpTool.parameters as Record<string, any>,
-				};
-			}
-		} else {
-			// Default empty schema
-			parameters = {
-				type: "object",
-				properties: {},
+			return {
+				name: this.name,
+				description: this.description,
+				parameters,
 			};
+		} catch (error) {
+			throw new McpError(
+				`Failed to convert schema for tool ${this.name}: ${error instanceof Error ? error.message : String(error)}`,
+				McpErrorType.INVALID_SCHEMA_ERROR,
+				error instanceof Error ? error : undefined,
+			);
 		}
-
-		return {
-			name: this.name,
-			description: this.description,
-			parameters,
-		};
 	}
 
 	async runAsync(
@@ -92,13 +95,34 @@ class McpToolAdapter extends BaseTool {
 		}
 
 		try {
-			// If the MCP tool has a direct execute function
 			if (typeof this.mcpTool.execute === "function") {
 				return await this.mcpTool.execute(args);
 			}
 
-			// Use the stored client reference to execute the tool
+			if (this.clientService) {
+				return await this.clientService.callTool(this.name, args);
+			}
+
 			if (this.client && typeof this.client.callTool === "function") {
+				if (this.shouldRetryOnFailure) {
+					const executeWithRetry = withRetry(
+						async () => {
+							return await this.client.callTool({
+								name: this.name,
+								arguments: args,
+							});
+						},
+						this,
+						async () => {
+							console.warn(
+								`MCP tool ${this.name} encountered a closed resource, but cannot reinitialize client.`,
+							);
+						},
+						this.maxRetryAttempts,
+					);
+					return await executeWithRetry();
+				}
+
 				const result = await this.client.callTool({
 					name: this.name,
 					arguments: args,
@@ -106,11 +130,19 @@ class McpToolAdapter extends BaseTool {
 				return result;
 			}
 
-			throw new Error(
+			throw new McpError(
 				`Cannot execute MCP tool ${this.name}: No execution method found`,
+				McpErrorType.TOOL_EXECUTION_ERROR,
 			);
 		} catch (error) {
-			console.error(`Error executing MCP tool ${this.name}:`, error);
+			if (!(error instanceof McpError)) {
+				console.error(`Error executing MCP tool ${this.name}:`, error);
+				throw new McpError(
+					`Error executing MCP tool ${this.name}: ${error instanceof Error ? error.message : String(error)}`,
+					McpErrorType.TOOL_EXECUTION_ERROR,
+					error instanceof Error ? error : undefined,
+				);
+			}
 			throw error;
 		}
 	}
