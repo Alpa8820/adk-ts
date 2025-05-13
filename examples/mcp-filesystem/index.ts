@@ -19,7 +19,7 @@ LLMRegistry.registerLLM(OpenAILLM);
 const DEBUG = true;
 
 // Specify the allowed path for file operations
-const ALLOWED_PATH = "/Users/prudhvisuraaj/Desktop";
+const ALLOWED_PATH = "path/to/your/desktop";
 
 /**
  * Demonstrates an agent using MCP filesystem tools
