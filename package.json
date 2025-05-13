@@ -23,6 +23,7 @@
 		"example:memory": "ts-node examples/memory-usage/index.ts",
 		"example:anthropic": "ts-node examples/anthropic-tool/index.ts",
 		"example:mcp-filesystem": "ts-node examples/mcp-filesystem/index.ts",
+		"example:function-tool": "ts-node examples/function-tool-example.ts",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage"
 	},
