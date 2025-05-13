@@ -10,3 +10,4 @@ export type { ToolConfig } from "./base/BaseTool";
 export { GoogleSearch } from "./common/google-search";
 export { HttpRequestTool } from "./common/http-request-tool";
 export { FileOperationsTool } from "./common/file-operations-tool";
+export { UserInteractionTool } from "./common/user-interaction-tool";
