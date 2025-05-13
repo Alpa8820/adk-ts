@@ -36,7 +36,7 @@ export { AnthropicLLMConnection } from "./llm/providers/anthropic/AnthropicLLMCo
 import "./llm/registry/providers";
 
 // Ready-to-use Tools
-export { GoogleSearch } from "./tools/common/GoogleSearch";
+export { GoogleSearch } from "./tools/common/google-search";
 // Export additional common tools when available
 
 // Request/Response Models
