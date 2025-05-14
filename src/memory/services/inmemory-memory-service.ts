@@ -3,7 +3,7 @@ import type {
 	SearchMemoryOptions,
 	SearchMemoryResponse,
 } from "../../models/memory/memory-service";
-import type { Session } from "../../models/memory/x-session";
+import type { Session } from "../../models/memory/session";
 import type { Message } from "../../models/request/llm-request";
 
 /**

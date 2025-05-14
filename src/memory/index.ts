@@ -7,7 +7,7 @@ export {
 	Session,
 	SessionState,
 	ListSessionOptions,
-} from "../models/memory/x-session";
+} from "../models/memory/session";
 export {
 	BaseMemoryService,
 	MemoryResult,
