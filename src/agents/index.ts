@@ -3,12 +3,12 @@
  */
 
 // Base classes
-export { BaseAgent } from "./base/BaseAgent";
+export { BaseAgent } from "./base/base-agent";
 
 // Specialized agents
-export { Agent } from "./specialized/Agent";
-export type { AgentConfig } from "./specialized/Agent";
-export { SequentialAgent } from "./specialized/SequentialAgent";
-export { ParallelAgent } from "./specialized/ParallelAgent";
-export { LoopAgent } from "./specialized/LoopAgent";
-export { LangGraphAgent } from "./specialized/LangGraphAgent";
+export { Agent } from "./specialized/agent";
+export type { AgentConfig } from "./specialized/agent";
+export { SequentialAgent } from "./specialized/sequential-agent";
+export { ParallelAgent } from "./specialized/parallel-agent";
+export { LoopAgent } from "./specialized/loop-agent";
+export { LangGraphAgent } from "./specialized/lang-graph-agent";

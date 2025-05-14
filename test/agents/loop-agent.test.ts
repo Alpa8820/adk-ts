@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BaseAgent } from "../../src/agents/base/BaseAgent";
-import { LoopAgent } from "../../src/agents/specialized/LoopAgent";
-import { LLMResponse } from "../../src/models/response/LLMResponse";
+import { BaseAgent } from "../../src/agents/base/base-agent";
+import { LoopAgent } from "../../src/agents/specialized/loop-agent";
+import { LLMResponse } from "../../src/models/response/llm-response";
 
 // Create a proper mock BaseAgent for testing
 class MockBaseAgent extends BaseAgent {

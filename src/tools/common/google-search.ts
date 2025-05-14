@@ -1,6 +1,6 @@
-import type { ToolContext } from "../../models/context/ToolContext";
-import type { FunctionDeclaration } from "../../models/request/FunctionDeclaration";
-import { BaseTool } from "../base/BaseTool";
+import type { ToolContext } from "../../models/context/tool-context";
+import type { FunctionDeclaration } from "../../models/request/function-declaration";
+import { BaseTool } from "../base/base-tool";
 
 /**
  * Simple GoogleSearch tool implementation

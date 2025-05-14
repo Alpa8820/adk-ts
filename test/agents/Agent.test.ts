@@ -7,17 +7,17 @@ import {
 	it,
 	vi,
 } from "vitest";
-import { Agent } from "../../src/agents/specialized/Agent";
-import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
-import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
-import type { ToolContext } from "../../src/models/context/ToolContext";
-import type { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
-import { LLMResponse } from "../../src/models/response/LLMResponse";
-import { BaseTool } from "../../src/tools/base/BaseTool";
+import { Agent } from "../../src/agents/specialized/agent";
+import { OpenAILLM } from "../../src/llm/providers/openai/openai-llm";
+import { LLMRegistry } from "../../src/llm/registry/llm-registry";
+import type { ToolContext } from "../../src/models/context/tool-context";
+import type { FunctionDeclaration } from "../../src/models/request/function-declaration";
+import { LLMResponse } from "../../src/models/response/llm-response";
+import { BaseTool } from "../../src/tools/base/base-tool";
 
 // Mock these modules first
-vi.mock("../../src/llm/providers/openai/OpenAILLM");
-vi.mock("../../src/llm/registry/LLMRegistry");
+vi.mock("../../src/llm/providers/openai/openai-llm");
+vi.mock("../../src/llm/registry/llm-registry");
 
 // Create mock implementation after mocking
 const mockGenerateContent = vi.fn().mockImplementation(async function* () {

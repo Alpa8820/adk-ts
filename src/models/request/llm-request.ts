@@ -1,5 +1,5 @@
-import type { ToolCall } from "../response/LLMResponse";
-import type { FunctionDeclaration } from "./FunctionDeclaration";
+import type { ToolCall } from "../response/llm-response";
+import type { FunctionDeclaration } from "./function-declaration";
 
 /**
  * Message role types for conversation history

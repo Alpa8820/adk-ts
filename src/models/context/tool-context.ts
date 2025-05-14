@@ -1,11 +1,11 @@
-import type { AuthHandler } from "../auth/AuthHandler";
+import type { AuthHandler } from "../auth/auth-handler";
 import type {
 	SearchMemoryOptions,
 	SearchMemoryResponse,
-} from "../memory/MemoryService";
-import type { Session } from "../memory/Session";
-import type { Message } from "../request/LLMRequest";
-import type { InvocationContext } from "./InvocationContext";
+} from "../memory/memory-service";
+import type { Session } from "../memory/session";
+import type { Message } from "../request/llm-request";
+import type { InvocationContext } from "./invocation-context";
 
 /**
  * Context for tool execution

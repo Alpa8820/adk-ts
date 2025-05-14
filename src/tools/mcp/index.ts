@@ -2,9 +2,9 @@ import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
 import type { McpConfig } from "./types";
 import { McpError, McpErrorType } from "./types";
 import { McpClientService } from "./client";
-import type { BaseTool } from "../base/BaseTool";
+import type { BaseTool } from "../base/base-tool";
 import { createTool } from "./create-tool";
-import type { ToolContext } from "../../models/context/ToolContext";
+import type { ToolContext } from "../../models/context/tool-context";
 import {
 	adkToMcpToolType,
 	jsonSchemaToDeclaration,

@@ -2,9 +2,9 @@ import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
 	SearchMemoryResponse,
-} from "../../models/memory/MemoryService";
-import type { Session } from "../../models/memory/Session";
-import type { Message } from "../../models/request/LLMRequest";
+} from "../../models/memory/memory-service";
+import type { Session } from "../../models/memory/session";
+import type { Message } from "../../models/request/llm-request";
 
 /**
  * An in-memory memory service for development and testing

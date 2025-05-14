@@ -3,20 +3,20 @@
  */
 
 // Base classes
-export { BaseLLM } from "./BaseLLM";
-export { BaseLLMConnection } from "./BaseLLMConnection";
+export { BaseLLM } from "./base-llm";
+export { BaseLLMConnection } from "./base-llm-connection";
 
 // Registry
-export { LLMRegistry } from "./registry/LLMRegistry";
+export { LLMRegistry } from "./registry/llm-registry";
 
 // LLM Providers
-export { OpenAILLM } from "./providers/openai/OpenAILLM";
-export { AnthropicLLM } from "./providers/anthropic/AnthropicLLM";
-export { GoogleLLM } from "./providers/google/GoogleLLM";
+export { OpenAILLM } from "./providers/openai/openai-llm";
+export { AnthropicLLM } from "./providers/anthropic/anthropic-llm";
+export { GoogleLLM } from "./providers/google/google-llm";
 
 // LLM Connections
-export { OpenAILLMConnection } from "./providers/openai/OpenAILLMConnection";
-export { AnthropicLLMConnection } from "./providers/anthropic/AnthropicLLMConnection";
+export { OpenAILLMConnection } from "./providers/openai/openai-llm-connection";
+export { AnthropicLLMConnection } from "./providers/anthropic/anthropic-llm-connection";
 
 // Initialize providers
 import "./registry/providers";

@@ -1,7 +1,7 @@
-import type { ToolContext } from "../../models/context/ToolContext";
-import type { FunctionDeclaration } from "../../models/request/FunctionDeclaration";
-import { BaseTool } from "../base/BaseTool";
-import "../../models/context/ToolContextExtensions";
+import type { ToolContext } from "../../models/context/tool-context";
+import type { FunctionDeclaration } from "../../models/request/function-declaration";
+import { BaseTool } from "../base/base-tool";
+import "../../models/context/tool-context-extensions";
 
 /**
  * Tool that allows an agent to get a choice from the user

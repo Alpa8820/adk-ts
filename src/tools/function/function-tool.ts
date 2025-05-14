@@ -1,6 +1,6 @@
-import { BaseTool } from "../base/BaseTool";
-import type { FunctionDeclaration } from "../../models/request/FunctionDeclaration";
-import type { ToolContext } from "../../models/context/ToolContext";
+import { BaseTool } from "../base/base-tool";
+import type { FunctionDeclaration } from "../../models/request/function-declaration";
+import type { ToolContext } from "../../models/context/tool-context";
 import { buildFunctionDeclaration } from "./function-utils";
 
 /**

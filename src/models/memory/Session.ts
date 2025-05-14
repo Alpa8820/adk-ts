@@ -1,4 +1,4 @@
-import type { Message } from "../request/LLMRequest";
+import type { Message } from "../request/llm-request";
 
 /**
  * Represents the state of a session

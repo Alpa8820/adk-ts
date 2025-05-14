@@ -1,7 +1,7 @@
-import type { RunConfig } from "../../models/config/RunConfig";
-import type { Message } from "../../models/request/LLMRequest";
-import type { LLMResponse } from "../../models/response/LLMResponse";
-import { BaseAgent } from "../base/BaseAgent";
+import type { RunConfig } from "../../models/config/run-config";
+import type { Message } from "../../models/request/llm-request";
+import type { LLMResponse } from "../../models/response/llm-response";
+import { BaseAgent } from "../base/base-agent";
 
 /**
  * Configuration for SequentialAgent

@@ -1,5 +1,5 @@
-import type { AuthConfig } from "./AuthConfig";
-import type { ApiKeyScheme } from "./AuthScheme";
+import type { AuthConfig } from "./auth-config";
+import type { ApiKeyScheme } from "./auth-schema";
 
 /**
  * Types of authentication credentials

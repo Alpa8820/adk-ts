@@ -1,4 +1,4 @@
-import type { LLMResponse } from "../models/response/LLMResponse";
+import type { LLMResponse } from "../models/response/llm-response";
 
 /**
  * Base class for LLM connections

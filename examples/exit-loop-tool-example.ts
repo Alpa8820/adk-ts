@@ -1,5 +1,5 @@
-import { LLMRegistry } from "../src/llm/registry/LLMRegistry";
-import { OpenAILLM } from "../src/llm/providers/openai/OpenAILLM";
+import { LLMRegistry } from "../src/llm/registry/llm-registry";
+import { OpenAILLM } from "../src/llm/providers/openai/openai-llm";
 import { ExitLoopTool } from "../src/tools";
 import dotenv from "dotenv";
 import { Agent } from "../src/agents";

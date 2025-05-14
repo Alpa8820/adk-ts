@@ -1,7 +1,7 @@
 import type { Tool as McpTool } from "@modelcontextprotocol/sdk/types.js";
-import { BaseTool } from "../base/BaseTool";
-import type { ToolContext } from "../../models/context/ToolContext";
-import type { FunctionDeclaration } from "../../models/request/FunctionDeclaration";
+import { BaseTool } from "../base/base-tool";
+import type { ToolContext } from "../../models/context/tool-context";
+import type { FunctionDeclaration } from "../../models/request/function-declaration";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { withRetry } from "./utils";
 import type { McpClientService } from "./client";

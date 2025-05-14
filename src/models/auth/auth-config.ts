@@ -1,4 +1,4 @@
-import type { AuthScheme } from "./AuthScheme";
+import type { AuthScheme } from "./auth-schema";
 
 /**
  * Authentication configuration for tools

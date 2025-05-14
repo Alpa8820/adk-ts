@@ -1,7 +1,7 @@
-import type { ToolContext } from "./ToolContext";
+import type { ToolContext } from "./tool-context";
 
 // Extend the ToolContext interface to include the actions property
-declare module "./ToolContext" {
+declare module "./tool-context" {
 	interface ToolContext {
 		actions?: {
 			escalate?: boolean;

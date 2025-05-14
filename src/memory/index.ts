@@ -7,18 +7,18 @@ export {
 	Session,
 	SessionState,
 	ListSessionOptions,
-} from "../models/memory/Session";
+} from "../models/memory/session";
 export {
 	BaseMemoryService,
 	MemoryResult,
 	SearchMemoryResponse,
 	SearchMemoryOptions,
-} from "../models/memory/MemoryService";
+} from "../models/memory/memory-service";
 
 // Export memory service implementations
-export { InMemoryMemoryService } from "./services/InMemoryMemoryService";
-export { PersistentMemoryService } from "./services/PersistentMemoryService";
+export { InMemoryMemoryService } from "./services/inmemory-memory-service";
+export { PersistentMemoryService } from "./services/persistent-memory-service";
 export {
 	SessionService,
 	InMemorySessionService,
-} from "./services/SessionService";
+} from "./services/session-service";

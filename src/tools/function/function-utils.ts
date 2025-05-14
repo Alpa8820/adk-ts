@@ -1,7 +1,7 @@
 import type {
 	FunctionDeclaration,
 	JSONSchema,
-} from "../../models/request/FunctionDeclaration";
+} from "../../models/request/function-declaration";
 
 /**
  * Options for building a function declaration

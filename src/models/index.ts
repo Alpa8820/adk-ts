@@ -8,17 +8,20 @@ export {
 	Message,
 	MessageRole,
 	MessageContent,
-} from "./request/LLMRequest";
-export { LLMResponse, FunctionCall, ToolCall } from "./response/LLMResponse";
-export { FunctionDeclaration, JSONSchema } from "./request/FunctionDeclaration";
+} from "./request/llm-request";
+export { LLMResponse, FunctionCall, ToolCall } from "./response/llm-response";
+export {
+	FunctionDeclaration,
+	JSONSchema,
+} from "./request/function-declaration";
 
 // Context models
-export { InvocationContext } from "./context/InvocationContext";
-export { ToolContext } from "./context/ToolContext";
-export { RunConfig, StreamingMode } from "./config/RunConfig";
+export { InvocationContext } from "./context/invocation-context";
+export { ToolContext } from "./context/tool-context";
+export { RunConfig, StreamingMode } from "./config/run-config";
 
 // Auth models
-export { AuthConfig } from "./auth/AuthConfig";
+export { AuthConfig } from "./auth/auth-config";
 export {
 	AuthCredential,
 	AuthCredentialType,
@@ -26,7 +29,7 @@ export {
 	BasicAuthCredential,
 	BearerTokenCredential,
 	OAuth2Credential,
-} from "./auth/AuthCredential";
+} from "./auth/auth-credential";
 export {
 	AuthScheme,
 	AuthSchemeType,
@@ -34,5 +37,5 @@ export {
 	HttpScheme,
 	OAuth2Scheme,
 	OpenIdConnectScheme,
-} from "./auth/AuthScheme";
-export { AuthHandler } from "./auth/AuthHandler";
+} from "./auth/auth-schema";
+export { AuthHandler } from "./auth/auth-handler";

@@ -4,9 +4,9 @@ import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
 	SearchMemoryResponse,
-} from "../../models/memory/MemoryService";
-import type { Session } from "../../models/memory/Session";
-import { InMemoryMemoryService } from "./InMemoryMemoryService";
+} from "../../models/memory/memory-service";
+import type { Session } from "../../models/memory/session";
+import { InMemoryMemoryService } from "./inmemory-memory-service";
 
 /**
  * Configuration for PersistentMemoryService

@@ -4,33 +4,33 @@
  */
 
 // Agent Exports - Main entry point for most users
-export { Agent } from "./agents/specialized/Agent";
-export type { AgentConfig } from "./agents/specialized/Agent";
+export { Agent } from "./agents/specialized/agent";
+export type { AgentConfig } from "./agents/specialized/agent";
 
 // Specialized Agents
-export { SequentialAgent } from "./agents/specialized/SequentialAgent";
-export { ParallelAgent } from "./agents/specialized/ParallelAgent";
-export { LoopAgent } from "./agents/specialized/LoopAgent";
-export { LangGraphAgent } from "./agents/specialized/LangGraphAgent";
+export { SequentialAgent } from "./agents/specialized/sequential-agent";
+export { ParallelAgent } from "./agents/specialized/parallel-agent";
+export { LoopAgent } from "./agents/specialized/loop-agent";
+export { LangGraphAgent } from "./agents/specialized/lang-graph-agent";
 
 // Base Classes - For extending the framework
-export { BaseAgent } from "./agents/base/BaseAgent";
-export { BaseTool } from "./tools/base/BaseTool";
-export { BaseLLM } from "./llm/BaseLLM";
-export { BaseLLMConnection } from "./llm/BaseLLMConnection";
-export type { ToolConfig } from "./tools/base/BaseTool";
+export { BaseAgent } from "./agents/base/base-agent";
+export { BaseTool } from "./tools/base/base-tool";
+export { BaseLLM } from "./llm/base-llm";
+export { BaseLLMConnection } from "./llm/base-llm-connection";
+export type { ToolConfig } from "./tools/base/base-tool";
 
 // Core LLM Infrastructure
-export { LLMRegistry } from "./llm/registry/LLMRegistry";
+export { LLMRegistry } from "./llm/registry/llm-registry";
 
 // LLM Providers - Direct access to specific providers
-export { OpenAILLM } from "./llm/providers/openai/OpenAILLM";
-export { AnthropicLLM } from "./llm/providers/anthropic/AnthropicLLM";
-export { GoogleLLM } from "./llm/providers/google/GoogleLLM";
+export { OpenAILLM } from "./llm/providers/openai/openai-llm";
+export { AnthropicLLM } from "./llm/providers/anthropic/anthropic-llm";
+export { GoogleLLM } from "./llm/providers/google/google-llm";
 
 // LLM Connections
-export { OpenAILLMConnection } from "./llm/providers/openai/OpenAILLMConnection";
-export { AnthropicLLMConnection } from "./llm/providers/anthropic/AnthropicLLMConnection";
+export { OpenAILLMConnection } from "./llm/providers/openai/openai-llm-connection";
+export { AnthropicLLMConnection } from "./llm/providers/anthropic/anthropic-llm-connection";
 
 // Initialize providers - Automatically registers all LLMs
 import "./llm/registry/providers";
@@ -45,24 +45,24 @@ export {
 	Message,
 	MessageRole,
 	MessageContent,
-} from "./models/request/LLMRequest";
+} from "./models/request/llm-request";
 export {
 	LLMResponse,
 	FunctionCall,
 	ToolCall,
-} from "./models/response/LLMResponse";
+} from "./models/response/llm-response";
 export {
 	FunctionDeclaration,
 	JSONSchema,
-} from "./models/request/FunctionDeclaration";
+} from "./models/request/function-declaration";
 
 // Context Models - For advanced usage
-export { InvocationContext } from "./models/context/InvocationContext";
-export { ToolContext } from "./models/context/ToolContext";
-export { RunConfig, StreamingMode } from "./models/config/RunConfig";
+export { InvocationContext } from "./models/context/invocation-context";
+export { ToolContext } from "./models/context/tool-context";
+export { RunConfig, StreamingMode } from "./models/config/run-config";
 
 // Auth System - For API authentication
-export { AuthConfig } from "./models/auth/AuthConfig";
+export { AuthConfig } from "./models/auth/auth-config";
 export {
 	AuthCredential,
 	AuthCredentialType,
@@ -70,7 +70,7 @@ export {
 	BasicAuthCredential,
 	BearerTokenCredential,
 	OAuth2Credential,
-} from "./models/auth/AuthCredential";
+} from "./models/auth/auth-credential";
 export {
 	AuthScheme,
 	AuthSchemeType,
@@ -78,8 +78,8 @@ export {
 	HttpScheme,
 	OAuth2Scheme,
 	OpenIdConnectScheme,
-} from "./models/auth/AuthScheme";
-export { AuthHandler } from "./models/auth/AuthHandler";
+} from "./models/auth/auth-schema";
+export { AuthHandler } from "./models/auth/auth-handler";
 
 // Memory System - For persistent conversations
 export {

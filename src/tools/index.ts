@@ -3,8 +3,8 @@
  */
 
 // Base tool classes
-export { BaseTool } from "./base/BaseTool";
-export type { ToolConfig } from "./base/BaseTool";
+export { BaseTool } from "./base/base-tool";
+export type { ToolConfig } from "./base/base-tool";
 
 // Common tools
 export { GoogleSearch } from "./common/google-search";

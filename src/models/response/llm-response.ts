@@ -1,4 +1,4 @@
-import { MessageContent } from "../request/LLMRequest";
+import { MessageContent } from "../request/llm-request";
 
 /**
  * Function call result from LLM

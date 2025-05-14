@@ -4,14 +4,14 @@ import {
 	type Message,
 	MessageContent,
 	MessageRole,
-} from "../../../models/request/LLMRequest";
+} from "../../../models/request/llm-request";
 import {
 	LLMResponse,
 	type ToolCall,
-} from "../../../models/response/LLMResponse";
-import { BaseLLM } from "../../BaseLLM";
-import type { BaseLLMConnection } from "../../BaseLLMConnection";
-import { AnthropicLLMConnection } from "./AnthropicLLMConnection";
+} from "../../../models/response/llm-response";
+import { BaseLLM } from "../../base-llm";
+import type { BaseLLMConnection } from "../../base-llm-connection";
+import { AnthropicLLMConnection } from "./anthropic-llm-connection";
 
 /**
  * Configuration for Anthropic LLM

@@ -1,7 +1,7 @@
-import { AnthropicLLM } from "../providers/anthropic/AnthropicLLM";
-import { GoogleLLM } from "../providers/google/GoogleLLM";
-import { OpenAILLM } from "../providers/openai/OpenAILLM";
-import { LLMRegistry } from "./LLMRegistry";
+import { AnthropicLLM } from "../providers/anthropic/anthropic-llm";
+import { GoogleLLM } from "../providers/google/google-llm";
+import { OpenAILLM } from "../providers/openai/openai-llm";
+import { LLMRegistry } from "./llm-registry";
 
 /**
  * Register all LLM providers
