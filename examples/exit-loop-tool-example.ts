@@ -1,8 +1,8 @@
-import { LLMRegistry } from "../src/llm/registry/llm-registry";
-import { OpenAILLM } from "../src/llm/providers/openai/openai-llm";
-import { ExitLoopTool } from "../src/tools";
 import dotenv from "dotenv";
 import { Agent } from "../src/agents";
+import { OpenAILLM } from "../src/llm/providers/openai/openai-llm";
+import { LLMRegistry } from "../src/llm/registry/llm-registry";
+import { ExitLoopTool } from "../src/tools";
 
 dotenv.config();
 

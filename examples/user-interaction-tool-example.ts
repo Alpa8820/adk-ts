@@ -1,9 +1,9 @@
-import { LLMRegistry } from "../src/llm/registry/LLMRegistry";
-import { OpenAILLM } from "../src/llm/providers/openai/OpenAILLM";
-import { UserInteractionTool } from "../src/tools/common/user-interaction-tool";
 import dotenv from "dotenv";
 import { Agent } from "../src/agents";
+import { OpenAILLM } from "../src/llm/providers/openai/OpenAILLM";
+import { LLMRegistry } from "../src/llm/registry/LLMRegistry";
 import { RunConfig } from "../src/models/config/RunConfig";
+import { UserInteractionTool } from "../src/tools/common/user-interaction-tool";
 
 // Load environment variables
 dotenv.config();

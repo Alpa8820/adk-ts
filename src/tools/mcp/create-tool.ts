@@ -1,12 +1,12 @@
+import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Tool as McpTool } from "@modelcontextprotocol/sdk/types.js";
-import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../../models/context/tool-context";
 import type { FunctionDeclaration } from "../../models/request/function-declaration";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { withRetry } from "./utils";
+import { BaseTool } from "../base/base-tool";
 import type { McpClientService } from "./client";
 import { mcpSchemaToParameters } from "./schema-conversion";
 import { McpError, McpErrorType } from "./types";
+import { withRetry } from "./utils";
 
 /**
  * Interface for the expected MCP tool metadata
