@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { InMemoryMemoryService } from "../../src/memory/services/inmemory-memory-service";
-import { type Session, SessionState } from "../../src/models/memory/session";
+import { type Session, SessionState } from "../../src/models/memory/x-session";
 
 describe("InMemoryMemoryService", () => {
 	let memoryService: InMemoryMemoryService;

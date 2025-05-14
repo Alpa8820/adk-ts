@@ -5,7 +5,7 @@ import type {
 	SearchMemoryOptions,
 	SearchMemoryResponse,
 } from "../memory/memory-service";
-import type { Session } from "../memory/session";
+import type { Session } from "../memory/x-session";
 import type { Message } from "../request/llm-request";
 
 /**

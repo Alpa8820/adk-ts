@@ -2,7 +2,7 @@ import {
 	type ListSessionOptions,
 	type Session,
 	SessionState,
-} from "../../models/memory/session";
+} from "../../models/memory/x-session";
 
 /**
  * Service for managing sessions

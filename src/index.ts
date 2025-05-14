@@ -8,10 +8,10 @@ export { Agent } from "./agents/llm-agent";
 export type { AgentConfig } from "./agents/llm-agent";
 
 // Specialized Agents
-export { SequentialAgent } from "./agents/specialized/sequential-agent";
-export { ParallelAgent } from "./agents/specialized/parallel-agent";
-export { LoopAgent } from "./agents/specialized/loop-agent";
-export { LangGraphAgent } from "./agents/specialized/lang-graph-agent";
+export { SequentialAgent } from "./agents/sequential-agent";
+export { ParallelAgent } from "./agents/parallel-agent";
+export { LoopAgent } from "./agents/loop-agent";
+export { LangGraphAgent } from "./agents/lang-graph-agent";
 
 // Base Classes - For extending the framework
 export { BaseAgent } from "./agents/base-agent";
