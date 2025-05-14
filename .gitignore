@@ -60,4 +60,5 @@ logs/
 
 # parcel-bundler cache
 .cache
-.parcel-cache 
+.parcel-cache
+adk-python/*
