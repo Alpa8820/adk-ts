@@ -29,6 +29,7 @@
 		"example:user-interaction-tool": "ts-node examples/user-interaction-tool-example.ts",
 		"example:exit-loop-tool": "ts-node examples/exit-loop-tool-example.ts",
 		"example:get-user-choice-tool": "ts-node examples/get-user-choice-tool-example.ts",
+		"example:transfer-to-agent-tool": "ts-node examples/transfer-to-agent-tool-example.ts",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage"
 	},
