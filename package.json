@@ -30,6 +30,7 @@
 		"example:exit-loop-tool": "ts-node examples/exit-loop-tool-example.ts",
 		"example:get-user-choice-tool": "ts-node examples/get-user-choice-tool-example.ts",
 		"example:transfer-to-agent-tool": "ts-node examples/transfer-to-agent-tool-example.ts",
+		"example:load-memory-tool": "ts-node examples/load-memory-tool-example.ts",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage"
 	},
