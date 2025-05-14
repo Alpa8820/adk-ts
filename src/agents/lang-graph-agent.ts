@@ -1,12 +1,12 @@
-import type { RunConfig } from "../../models/config/run-config";
-import { InvocationContext } from "../../models/context/invocation-context";
+import type { RunConfig } from "../models/config/run-config";
+import { InvocationContext } from "../models/context/invocation-context";
 import type {
 	Message,
 	MessageContent,
 	TextContent,
-} from "../../models/request/llm-request";
-import type { LLMResponse } from "../../models/response/llm-response";
-import { BaseAgent } from "../base/base-agent";
+} from "../models/request/llm-request";
+import type { LLMResponse } from "../models/response/llm-response";
+import { BaseAgent } from "./base-agent";
 
 /**
  * Represents a node in a LangGraph workflow

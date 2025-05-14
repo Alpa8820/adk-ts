@@ -1,17 +1,17 @@
-import type { BaseLLM } from "../../llm/base-llm";
-import { LLMRegistry } from "../../llm/registry/llm-registry";
-import type { SessionService } from "../../memory/services/session-service";
-import type { RunConfig } from "../../models/config/run-config";
-import { InvocationContext } from "../../models/context/invocation-context";
-import { ToolContext } from "../../models/context/tool-context";
+import type { BaseLLM } from "../llm/base-llm";
+import { LLMRegistry } from "../llm/registry/llm-registry";
+import type { SessionService } from "../memory/services/session-service";
+import type { RunConfig } from "../models/config/run-config";
+import { InvocationContext } from "../models/context/invocation-context";
+import { ToolContext } from "../models/context/tool-context";
 import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
-} from "../../models/memory/memory-service";
-import { LLMRequest, type Message } from "../../models/request/llm-request";
-import type { LLMResponse, ToolCall } from "../../models/response/llm-response";
-import type { BaseTool } from "../../tools/base/base-tool";
-import { BaseAgent } from "../base/base-agent";
+} from "../models/memory/memory-service";
+import { LLMRequest, type Message } from "../models/request/llm-request";
+import type { LLMResponse, ToolCall } from "../models/response/llm-response";
+import type { BaseTool } from "../tools/base/base-tool";
+import { BaseAgent } from "./base-agent";
 
 /**
  * Configuration for Agent

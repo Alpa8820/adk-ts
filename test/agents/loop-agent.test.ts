@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BaseAgent } from "../../src/agents/base/base-agent";
+import { BaseAgent } from "../../src/agents/base-agent";
 import { LoopAgent } from "../../src/agents/specialized/loop-agent";
 import { LLMResponse } from "../../src/models/response/llm-response";
 

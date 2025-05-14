@@ -1,14 +1,6 @@
-/**
- * Agent module exports
- */
-
-// Base classes
-export { BaseAgent } from "./base/base-agent";
-
-// Specialized agents
-export { Agent } from "./specialized/agent";
-export type { AgentConfig } from "./specialized/agent";
-export { SequentialAgent } from "./specialized/sequential-agent";
-export { ParallelAgent } from "./specialized/parallel-agent";
-export { LoopAgent } from "./specialized/loop-agent";
-export { LangGraphAgent } from "./specialized/lang-graph-agent";
+export * from "./base-agent";
+export * from "./llm-agent";
+export * from "./sequential-agent";
+export * from "./parallel-agent";
+export * from "./loop-agent";
+export * from "./lang-graph-agent";

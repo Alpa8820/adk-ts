@@ -7,7 +7,7 @@ import {
 	it,
 	vi,
 } from "vitest";
-import { Agent } from "../../src/agents/specialized/agent";
+import { Agent } from "../../src/agents/llm-agent";
 import { OpenAILLM } from "../../src/llm/providers/openai/openai-llm";
 import { LLMRegistry } from "../../src/llm/registry/llm-registry";
 import type { ToolContext } from "../../src/models/context/tool-context";
