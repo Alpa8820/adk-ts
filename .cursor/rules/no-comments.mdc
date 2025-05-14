@@ -1,0 +1,7 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+- Do not use excessive comments, Only use comments for case of documentation.
+- No unecessary comments above each code line, or comments explaining the code. rather have comments placed above the method in case of complex logic explanation.
