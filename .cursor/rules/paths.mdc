@@ -1,0 +1,6 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+You can find the path of the adk-python at the root : adk-python/

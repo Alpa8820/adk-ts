@@ -1,7 +1,39 @@
 ---
 description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---
-- Do not use excessive comments, Only use comments for case of documentation.
-- No unecessary comments above each code line, or comments explaining the code. rather have comments placed above the method in case of complex logic explanation.
+# Code Documentation Guidelines
+
+## Commenting Philosophy
+
+This project follows a minimalist approach to code comments, focusing on clarity through well-structured, self-documenting code.
+
+## Comment Guidelines
+
+1. **Documentation Comments Only**: Add comments only when they provide documentation value. The code itself should be clear enough to understand without excessive comments.
+
+2. **No Line-by-Line Comments**: Avoid explaining each line of code with a comment. This creates maintenance overhead and often becomes outdated.
+
+3. **Method-Level Documentation**: Place concise documentation comments above methods/functions to explain:
+   - Purpose of the method
+   - Complex logic that may not be immediately obvious
+   - Any important side effects
+
+4. **Class-Level Documentation**: Document classes with a brief description of their purpose and responsibility.
+
+5. **Interface Documentation**: Document interfaces with clear descriptions of their intent and contract.
+
+## When to Use Comments
+
+✅ **Good Use of Comments**:
+- Explaining "why" something is done a certain way
+- Documenting complex algorithms
+- Flagging future enhancements (TODO comments)
+- Documenting API interfaces
+
+❌ **Avoid Comments For**:
+- Explaining obvious code
+- Duplicating what the code already clearly states
+- Commenting out unused code (delete it instead)
+- Line-by-line explanations

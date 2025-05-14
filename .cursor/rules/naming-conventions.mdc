@@ -1,0 +1,42 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# File Naming Conventions
+
+## Kebab Case for File Names
+
+All files in this project should use kebab-case for naming. This means:
+
+- All lowercase letters
+- Words separated by hyphens
+- No spaces or underscores
+- No PascalCase or camelCase
+
+### Examples:
+
+✅ Good:
+- `base-tool.ts`
+- `google-search-tool.ts`
+- `exit-loop-tool.ts`
+- `llm-agent.ts`
+- `memory-service.ts`
+
+❌ Bad:
+- `BaseTool.ts`
+- `GoogleSearchTool.ts`
+- `exit_loop_tool.ts`
+- `LlmAgent.ts`
+- `memoryService.ts`
+
+## Class and Interface Naming
+
+While files use kebab-case, TypeScript classes and interfaces should still follow standard conventions:
+
+- Classes and Interfaces: PascalCase (e.g., `class BaseTool`, `interface ToolConfig`)
+- Methods and Properties: camelCase (e.g., `runAsync()`, `getDeclaration()`)
+
+## Implementation Note
+
+This standardization helps maintain consistency across the codebase and aligns with common TypeScript ecosystem practices.
