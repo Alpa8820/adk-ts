@@ -1,5 +1,5 @@
 import type { ListToolsResult } from "@modelcontextprotocol/sdk/types.js";
-import type { ToolContext } from "../../models/context/tool-context";
+import type { ToolContext } from "../tool-context";
 import type { BaseTool } from "../base/base-tool";
 import { McpClientService } from "./client";
 import { createTool } from "./create-tool";

@@ -1,4 +1,4 @@
-import type { ToolContext } from "../../models/context/tool-context";
+import type { ToolContext } from "../tool-context";
 import type { FunctionDeclaration } from "../../models/request/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import { buildFunctionDeclaration } from "./function-utils";

@@ -10,7 +10,7 @@ import {
 import { Agent } from "../../src/agents/llm-agent";
 import { OpenAILLM } from "../../src/llm/providers/openai/openai-llm";
 import { LLMRegistry } from "../../src/llm/registry/llm-registry";
-import type { ToolContext } from "../../src/models/context/tool-context";
+import type { ToolContext } from "../../src/tools/tool-context";
 import type { FunctionDeclaration } from "../../src/models/request/function-declaration";
 import { LLMResponse } from "../../src/models/response/llm-response";
 import { BaseTool } from "../../src/tools/base/base-tool";

@@ -1,5 +1,5 @@
-import type { RunConfig } from "../models/config/run-config";
-import { InvocationContext } from "../models/context/invocation-context";
+import type { RunConfig } from "./run-config";
+import { InvocationContext } from "./invocation-context";
 import type {
 	Message,
 	MessageContent,

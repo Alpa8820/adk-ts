@@ -1,12 +1,12 @@
-import type { SessionService } from "../../memory/services/session-service";
-import { RunConfig } from "../config/run-config";
+import type { SessionService } from "../memory/services/session-service";
+import { RunConfig } from "./run-config";
 import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
 	SearchMemoryResponse,
-} from "../memory/memory-service";
-import type { Session } from "../memory/session";
-import type { Message } from "../request/llm-request";
+} from "../models/memory/memory-service";
+import type { Session } from "../models/memory/session";
+import type { Message } from "../models/request/llm-request";
 
 /**
  * Contextual data for a specific agent invocation

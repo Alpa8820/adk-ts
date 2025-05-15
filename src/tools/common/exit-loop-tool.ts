@@ -1,7 +1,7 @@
-import type { ToolContext } from "../../models/context/tool-context";
+import type { ToolContext } from "../tool-context";
 import type { FunctionDeclaration } from "../../models/request/function-declaration";
 import { BaseTool } from "../base/base-tool";
-import "../../models/context/tool-context-extensions";
+import "../tool-context-extensions";
 
 /**
  * Tool that allows an agent to exit the current execution loop

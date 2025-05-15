@@ -1,4 +1,4 @@
-import type { RunConfig } from "../models/config/run-config";
+import type { RunConfig } from "./run-config";
 import type { Message } from "../models/request/llm-request";
 
 /**
