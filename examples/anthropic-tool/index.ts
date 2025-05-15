@@ -1,7 +1,12 @@
 import * as dotenv from "dotenv";
-import { Agent, BaseTool, type Message, type MessageRole } from "../../src";
-import type { ToolContext } from "../../src/models/context/ToolContext";
-import type { FunctionDeclaration } from "../../src/models/request/FunctionDeclaration";
+import {
+	Agent,
+	BaseTool,
+	type FunctionDeclaration,
+	type Message,
+	type MessageRole,
+	type ToolContext,
+} from "../../src";
 
 // Load environment variables from .env file
 dotenv.config();
