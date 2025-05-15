@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BaseLLM } from "../../src/llm/base-llm";
-import { LLMRegistry } from "../../src/llm/registry/llm-registry";
+import { BaseLLM } from "../../src/models/base-llm";
+import { LLMRegistry } from "../../src/models/llm-registry";
 
 // Create a mock LLM class that extends BaseLLM
 class MockLLM extends BaseLLM {

@@ -6,7 +6,7 @@ import {
 	type Message,
 	type MessageRole,
 	type TextContent,
-} from "../../src/models/request/llm-request";
+} from "../../src/models/llm-request";
 
 describe("LLMRequest", () => {
 	it("should initialize with simple messages", () => {

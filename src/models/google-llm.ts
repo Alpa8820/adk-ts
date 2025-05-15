@@ -3,9 +3,9 @@ import type {
 	LLMRequest,
 	Message,
 	MessageRole,
-} from "../../../models/llm-request";
-import { LLMResponse } from "../../../models/llm-response";
-import { BaseLLM } from "../../base-llm";
+} from "./llm-request";
+import { LLMResponse } from "./llm-response";
+import { BaseLLM } from "./base-llm";
 
 /**
  * Google Gemini LLM configuration

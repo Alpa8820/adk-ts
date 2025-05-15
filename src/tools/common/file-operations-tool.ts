@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { ToolContext } from "../tool-context";
-import type { FunctionDeclaration } from "../../models/request/function-declaration";
+import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 
 interface FileOperationResult {

@@ -1,4 +1,4 @@
-import type { Message } from "../models/request/llm-request";
+import type { Message } from "../models/llm-request";
 import { SessionState } from "./state";
 
 /**

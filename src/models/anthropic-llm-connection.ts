@@ -1,10 +1,10 @@
 import axios, { type AxiosInstance } from "axios";
-import type { LLMRequest, Message } from "../../../models/llm-request";
+import type { LLMRequest, Message } from "./llm-request";
 import {
 	LLMResponse,
 	type ToolCall,
-} from "../../../models/llm-response";
-import { BaseLLMConnection } from "../../../models/base-llm-connection";
+} from "./llm-response";
+import { BaseLLMConnection } from "./base-llm-connection";
 
 // Helper types for the Anthropic API
 interface AnthropicApiMessage {

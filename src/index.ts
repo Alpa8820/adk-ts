@@ -16,24 +16,24 @@ export { LangGraphAgent } from "./agents/lang-graph-agent";
 // Base Classes - For extending the framework
 export { BaseAgent } from "./agents/base-agent";
 export { BaseTool } from "./tools/base/base-tool";
-export { BaseLLM } from "./llm/base-llm";
-export { BaseLLMConnection } from "./llm/base-llm-connection";
+export { BaseLLM } from "./models/base-llm";
+export { BaseLLMConnection } from "./models/base-llm-connection";
 export type { ToolConfig } from "./tools/base/base-tool";
 
 // Core LLM Infrastructure
-export { LLMRegistry } from "./llm/registry/llm-registry";
+export { LLMRegistry } from "./models/llm-registry";
 
 // LLM Providers - Direct access to specific providers
-export { OpenAILLM } from "./llm/providers/openai/openai-llm";
-export { AnthropicLLM } from "./llm/providers/anthropic/anthropic-llm";
-export { GoogleLLM } from "./llm/providers/google/google-llm";
+export { OpenAILLM } from "./models/openai-llm";
+export { AnthropicLLM } from "./models/anthropic-llm";
+export { GoogleLLM } from "./models/google-llm";
 
 // LLM Connections
-export { OpenAILLMConnection } from "./llm/providers/openai/openai-llm-connection";
-export { AnthropicLLMConnection } from "./llm/providers/anthropic/anthropic-llm-connection";
+export { OpenAILLMConnection } from "./models/openai-llm-connection";
+export { AnthropicLLMConnection } from "./models/anthropic-llm-connection";
 
 // Initialize providers - Automatically registers all LLMs
-import "./llm/registry/providers";
+import "./models/registry";
 
 // Ready-to-use Tools
 export { GoogleSearch } from "./tools/common/google-search";
@@ -45,24 +45,24 @@ export {
 	Message,
 	MessageRole,
 	MessageContent,
-} from "./models/request/llm-request";
+} from "./models/llm-request";
 export {
 	LLMResponse,
 	FunctionCall,
 	ToolCall,
-} from "./models/response/llm-response";
+} from "./models/llm-response";
 export {
 	FunctionDeclaration,
 	JSONSchema,
-} from "./models/request/function-declaration";
+} from "./models/function-declaration";
 
 // Context Models - For advanced usage
-export { InvocationContext } from "./models/context/invocation-context";
-export { ToolContext } from "./models/context/tool-context";
-export { RunConfig, StreamingMode } from "./models/config/run-config";
+export { InvocationContext } from "./agents/invocation-context";
+export { ToolContext } from "./tools/tool-context";
+export { RunConfig, StreamingMode } from "./agents/run-config";
 
 // Auth System - For API authentication
-export { AuthConfig } from "./models/auth/auth-config";
+export { AuthConfig } from "./auth/auth-config";
 export {
 	AuthCredential,
 	AuthCredentialType,
@@ -70,7 +70,7 @@ export {
 	BasicAuthCredential,
 	BearerTokenCredential,
 	OAuth2Credential,
-} from "./models/auth/auth-credential";
+} from "./auth/auth-credential";
 export {
 	AuthScheme,
 	AuthSchemeType,
@@ -78,30 +78,31 @@ export {
 	HttpScheme,
 	OAuth2Scheme,
 	OpenIdConnectScheme,
-} from "./models/auth/auth-schema";
-export { AuthHandler } from "./models/auth/auth-handler";
+} from "./auth/auth-schemes";
+export { AuthHandler } from "./auth/auth-handler";
 
 // Memory System - For persistent conversations
 export {
 	Session,
-	SessionState,
 	ListSessionOptions,
+} from "./sessions/session";
+export { SessionState } from "./sessions/state";
+
+export {
 	BaseMemoryService,
 	MemoryResult,
 	SearchMemoryResponse,
 	SearchMemoryOptions,
-} from "./memory";
+} from "./memory/memory-service";
 
-export {
-	InMemoryMemoryService,
-	PersistentMemoryService,
-	SessionService,
-	InMemorySessionService,
-} from "./memory";
+export { InMemoryMemoryService } from "./memory/services/inmemory-memory-service";
+export { PersistentMemoryService } from "./memory/services/persistent-memory-service";
+export { SessionService } from "./memory/services/session-service";
+export { InMemorySessionService } from "./memory/services/session-service";
 
 // Namespaced exports for cleaner imports
 export * as Agents from "./agents";
-export * as LLMs from "./llm";
+export * as LLMs from "./llm"; // LLM implementations are re-exported from models
 export * as Tools from "./tools";
 export * as Models from "./models";
 export * as Memory from "./memory";

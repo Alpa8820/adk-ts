@@ -1,5 +1,5 @@
-import type { LLMRequest } from "../models/llm-request";
-import type { LLMResponse } from "../models/llm-response";
+import type { LLMRequest } from "./llm-request";
+import type { LLMResponse } from "./llm-response";
 import type { BaseLLMConnection } from "./base-llm-connection";
 
 /**

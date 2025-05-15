@@ -8,16 +8,16 @@ import {
 	vi,
 } from "vitest";
 import { Agent } from "../../src/agents/llm-agent";
-import { OpenAILLM } from "../../src/llm/providers/openai/openai-llm";
-import { LLMRegistry } from "../../src/llm/registry/llm-registry";
+import { OpenAILLM } from "../../src/models/openai-llm";
+import { LLMRegistry } from "../../src/models/llm-registry";
 import type { ToolContext } from "../../src/tools/tool-context";
-import type { FunctionDeclaration } from "../../src/models/request/function-declaration";
-import { LLMResponse } from "../../src/models/response/llm-response";
+import type { FunctionDeclaration } from "../../src/models/function-declaration";
+import { LLMResponse } from "../../src/models/llm-response";
 import { BaseTool } from "../../src/tools/base/base-tool";
 
 // Mock these modules first
-vi.mock("../../src/llm/providers/openai/openai-llm");
-vi.mock("../../src/llm/registry/llm-registry");
+vi.mock("../../src/models/openai-llm");
+vi.mock("../../src/models/llm-registry");
 
 // Create mock implementation after mocking
 const mockGenerateContent = vi.fn().mockImplementation(async function* () {
@@ -40,20 +40,18 @@ const createMockLLM = (model: string) => {
 // Setup mocks
 beforeAll(() => {
 	// Mock OpenAILLM implementation using a more direct approach
-	vi.mocked(OpenAILLM).mockImplementation((model: string) => {
-		return createMockLLM(model) as unknown as OpenAILLM;
-	});
+	vi.spyOn(OpenAILLM.prototype, 'generateContentAsync').mockImplementation(mockGenerateContent);
 
 	// Setup LLMRegistry mock
-	(LLMRegistry.resolve as Mock).mockImplementation((model: string) => {
+	vi.spyOn(LLMRegistry, 'resolve').mockImplementation((model: string) => {
 		if (model === "gpt-3.5-turbo" || model === "gpt-4") {
 			return OpenAILLM;
 		}
 		return null;
 	});
 
-	(LLMRegistry.newLLM as Mock).mockImplementation((model: string) => {
-		return createMockLLM(model) as unknown as OpenAILLM;
+	vi.spyOn(LLMRegistry, 'newLLM').mockImplementation((model: string) => {
+		return new OpenAILLM(model);
 	});
 });
 

@@ -4,8 +4,8 @@ import type {
 	Message,
 	MessageContent,
 	TextContent,
-} from "../models/request/llm-request";
-import type { LLMResponse } from "../models/response/llm-response";
+} from "../models/llm-request";
+import type { LLMResponse } from "../models/llm-response";
 import { BaseAgent } from "./base-agent";
 
 /**

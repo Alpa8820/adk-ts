@@ -1,12 +1,12 @@
 import OpenAI from "openai";
-import type { LLMRequest, Message } from "../../../models/llm-request";
+import type { LLMRequest, Message } from "./llm-request";
 import {
 	type FunctionCall,
 	LLMResponse,
 	type ToolCall,
-} from "../../../models/llm-response";
-import { BaseLLM } from "../../base-llm";
-import type { BaseLLMConnection } from "../../base-llm-connection";
+} from "./llm-response";
+import { BaseLLM } from "./base-llm";
+import type { BaseLLMConnection } from "./base-llm-connection";
 import { OpenAILLMConnection } from "./openai-llm-connection";
 
 /**

@@ -1,8 +1,8 @@
 import {
 	type ListSessionOptions,
 	type Session,
-	SessionState,
-} from "../../models/memory/session";
+} from "../../sessions/session";
+import { SessionState } from "../../sessions/state";
 
 /**
  * Service for managing sessions

@@ -1,22 +1,22 @@
 /**
- * LLM module exports
+ * Re-exports from models directory for backward compatibility
+ *
+ * The LLM implementations have been moved to the models directory
+ * to match the Python structure. This file provides re-exports
+ * to maintain compatibility with existing code.
  */
 
-// Base classes
-export { BaseLLM } from "./base-llm";
-export { BaseLLMConnection } from "./base-llm-connection";
+export {
+  BaseLLM,
+  BaseLLMConnection,
+  AnthropicLLM,
+  GoogleLLM,
+  OpenAILLM,
+  LLMRegistry,
+} from "../models";
 
-// Registry
-export { LLMRegistry } from "./registry/llm-registry";
+// Re-export LiteLLM placeholder
+export { default as LiteLLM } from "./providers/litellm/lite-llm";
 
-// LLM Providers
-export { OpenAILLM } from "./providers/openai/openai-llm";
-export { AnthropicLLM } from "./providers/anthropic/anthropic-llm";
-export { GoogleLLM } from "./providers/google/google-llm";
-
-// LLM Connections
-export { OpenAILLMConnection } from "./providers/openai/openai-llm-connection";
-export { AnthropicLLMConnection } from "./providers/anthropic/anthropic-llm-connection";
-
-// Initialize providers
-import "./registry/providers";
+// Re-export registry for convenience
+export * from "../models/llm-registry";

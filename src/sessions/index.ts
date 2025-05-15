@@ -1,4 +1,16 @@
-// Sessions module for ADK
-// Port from Python's sessions/ module
+/**
+ * Sessions module exports
+ */
 
-export {};
+// Export session model types
+export { Session, ListSessionOptions } from './session';
+export { SessionState } from './state';
+
+// Export session services and implementations
+export { 
+  SessionService,
+  InMemorySessionService 
+} from '../memory/services/session-service';
+
+// Include session utils
+export * from './session-util';

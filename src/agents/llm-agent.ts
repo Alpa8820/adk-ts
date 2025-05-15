@@ -1,5 +1,5 @@
-import type { BaseLLM } from "../llm/base-llm";
-import { LLMRegistry } from "../llm/registry/llm-registry";
+import type { BaseLLM } from "../models/base-llm";
+import { LLMRegistry } from "../models/llm-registry";
 import type { SessionService } from "../memory/services/session-service";
 import type { RunConfig } from "./run-config";
 import { InvocationContext } from "./invocation-context";
@@ -7,9 +7,9 @@ import { ToolContext } from "../tools/tool-context";
 import type {
   BaseMemoryService,
   SearchMemoryOptions,
-} from "../models/memory/memory-service";
-import { LLMRequest, type Message } from "../models/request/llm-request";
-import type { LLMResponse, ToolCall } from "../models/response/llm-response";
+} from "../memory/memory-service";
+import { LLMRequest, type Message } from "../models/llm-request";
+import type { LLMResponse, ToolCall } from "../models/llm-response";
 import type { BaseTool } from "../tools/base/base-tool";
 import { BaseAgent } from "./base-agent";
 

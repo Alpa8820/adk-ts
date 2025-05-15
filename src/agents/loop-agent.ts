@@ -1,6 +1,6 @@
 import type { RunConfig } from "./run-config";
-import type { Message, MessageRole } from "../models/request/llm-request";
-import type { LLMResponse } from "../models/response/llm-response";
+import type { Message, MessageRole } from "../models/llm-request";
+import type { LLMResponse } from "../models/llm-response";
 import { BaseAgent } from "./base-agent";
 
 /**
