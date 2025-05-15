@@ -2,8 +2,8 @@ import dotenv from "dotenv";
 import { InMemoryMemoryService } from "../src/memory/services/inmemory-memory-service";
 import { InvocationContext } from "../src/agents/invocation-context";
 import { ToolContext } from "../src/tools/tool-context";
-import type { Session } from "../src/models/memory/session";
-import { SessionState } from "../src/models/memory/session";
+import type { Session } from "../src/sessions/session";
+import { SessionState } from "../src/sessions/state";
 import { LoadMemoryTool } from "../src/tools";
 
 // Load environment variables

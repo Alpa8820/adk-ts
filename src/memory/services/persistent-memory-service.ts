@@ -4,8 +4,8 @@ import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
 	SearchMemoryResponse,
-} from "../../models/memory/memory-service";
-import type { Session } from "../../models/memory/session";
+} from "../memory-service";
+import type { Session } from "../../sessions/session";
 import { InMemoryMemoryService } from "./inmemory-memory-service";
 
 /**
