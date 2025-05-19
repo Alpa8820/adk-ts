@@ -3,9 +3,5 @@
  */
 
 // Export memory service implementations
-export { InMemoryMemoryService } from "./services/inmemory-memory-service";
-export { PersistentMemoryService } from "./services/persistent-memory-service";
-export {
-	SessionService,
-	InMemorySessionService,
-} from "./services/session-service";
+export { InMemoryMemoryService } from "./in-memory-memory-service";
+export { PersistentMemoryService } from "./persistent-memory-service";

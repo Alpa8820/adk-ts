@@ -93,18 +93,17 @@ export {
 	MemoryResult,
 	SearchMemoryResponse,
 	SearchMemoryOptions,
-} from "./memory/memory-service";
+} from "./memory/base-memory-service";
 
-export { InMemoryMemoryService } from "./memory/services/inmemory-memory-service";
-export { PersistentMemoryService } from "./memory/services/persistent-memory-service";
-export { SessionService } from "./memory/services/session-service";
-export { InMemorySessionService } from "./memory/services/session-service";
+export { InMemoryMemoryService } from "./memory/in-memory-memory-service";
+export { PersistentMemoryService } from "./memory/persistent-memory-service";
 
 // Namespaced exports for cleaner imports
 export * as Agents from "./agents";
 export * as Tools from "./tools";
 export * as Models from "./models";
 export * as Memory from "./memory";
+export * as Sessions from "./sessions";
 
 // Version
 export const version = "0.1.0";

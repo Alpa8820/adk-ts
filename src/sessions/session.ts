@@ -1,5 +1,5 @@
 import type { Message } from "../models/llm-request";
-import { SessionState } from "./state";
+import type { SessionState } from "./state";
 
 /**
  * Represents a conversation session
