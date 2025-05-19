@@ -57,6 +57,7 @@
 		"@pontus-devoteam/adk": "^0.0.2",
 		"axios": "^1.6.2",
 		"dotenv": "^16.4.7",
+		"drizzle-orm": "^0.43.1",
 		"openai": "^4.93.0",
 		"zod": "^3.22.4"
 	},
