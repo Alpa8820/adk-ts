@@ -1,14 +1,6 @@
-import axios, { AxiosInstance } from "axios";
-import {
-	type LLMRequest,
-	type Message,
-	MessageContent,
-	MessageRole,
-} from "./llm-request";
-import {
-	LLMResponse,
-	type ToolCall,
-} from "./llm-response";
+import axios from "axios";
+import type { LLMRequest, Message } from "./llm-request";
+import { LLMResponse, type ToolCall } from "./llm-response";
 import { BaseLLM } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import { AnthropicLLMConnection } from "./anthropic-llm-connection";
