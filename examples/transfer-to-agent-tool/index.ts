@@ -1,5 +1,5 @@
+import { TransferToAgentTool } from "@adk";
 import * as dotenv from "dotenv";
-import { TransferToAgentTool } from "../src";
 
 // Load environment variables
 dotenv.config();
