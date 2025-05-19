@@ -1,6 +1,6 @@
-import path from "node:path";
-import dotenv from "dotenv";
-import { Agent, OpenAILLM, LLMRegistry, FileOperationsTool } from "../src";
+import * as path from "node:path";
+import * as dotenv from "dotenv";
+import { Agent, FileOperationsTool, LLMRegistry, OpenAILLM } from "../src";
 
 // Load environment variables
 dotenv.config();

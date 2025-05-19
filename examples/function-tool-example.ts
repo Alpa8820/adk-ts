@@ -1,5 +1,5 @@
-import dotenv from "dotenv";
-import { Agent, OpenAILLM, LLMRegistry, FunctionTool } from "../src";
+import * as dotenv from "dotenv";
+import { Agent, FunctionTool, LLMRegistry, OpenAILLM } from "../src";
 
 // Load environment variables
 dotenv.config();

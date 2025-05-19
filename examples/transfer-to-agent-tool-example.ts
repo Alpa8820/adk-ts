@@ -1,4 +1,4 @@
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import { TransferToAgentTool } from "../src";
 
 // Load environment variables

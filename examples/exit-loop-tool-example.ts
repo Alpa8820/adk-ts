@@ -1,5 +1,5 @@
-import dotenv from "dotenv";
-import { Agent, OpenAILLM, LLMRegistry, ExitLoopTool } from "../src";
+import * as dotenv from "dotenv";
+import { Agent, ExitLoopTool, LLMRegistry, OpenAILLM } from "../src";
 
 dotenv.config();
 
