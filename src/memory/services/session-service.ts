@@ -1,7 +1,4 @@
-import {
-	type ListSessionOptions,
-	type Session,
-} from "../../sessions/session";
+import type { ListSessionOptions, Session } from "../../sessions/session";
 import { SessionState } from "../../sessions/state";
 
 /**
