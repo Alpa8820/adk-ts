@@ -1,12 +1,12 @@
-import * as dotenv from "dotenv";
 import {
 	InMemoryMemoryService,
 	InvocationContext,
 	LoadMemoryTool,
 	SessionState,
 	ToolContext,
-} from "../src";
-import type { Session } from "../src";
+} from "@adk";
+import type { Session } from "@adk";
+import * as dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();

@@ -1,7 +1,7 @@
+import { InMemoryMemoryService } from "@adk/memory/in-memory-memory-service";
 import type { Session } from "@adk/sessions";
+import { SessionState } from "@adk/sessions/state";
 import { beforeEach, describe, expect, it } from "vitest";
-import { InMemoryMemoryService } from "../../src/memory/in-memory-memory-service";
-import { SessionState } from "../../src/sessions/state";
 
 describe("InMemoryMemoryService", () => {
 	let memoryService: InMemoryMemoryService;

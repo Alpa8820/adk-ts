@@ -1,11 +1,11 @@
-import * as dotenv from "dotenv";
 import {
 	Agent,
 	LLMRegistry,
 	type Message,
 	type MessageRole,
 	OpenAILLM,
-} from "../../src";
+} from "@adk";
+import * as dotenv from "dotenv";
 import { CalculatorTool } from "./calculator";
 import { WeatherTool } from "./weather";
 // Load environment variables from .env file

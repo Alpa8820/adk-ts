@@ -1,3 +1,10 @@
+import { Agent } from "@adk/agents/llm-agent";
+import type { FunctionDeclaration } from "@adk/models/function-declaration";
+import { LLMRegistry } from "@adk/models/llm-registry";
+import { LLMResponse } from "@adk/models/llm-response";
+import { OpenAILLM } from "@adk/models/openai-llm";
+import { BaseTool } from "@adk/tools/base/base-tool";
+import type { ToolContext } from "@adk/tools/tool-context";
 import {
 	type Mock,
 	beforeAll,
@@ -7,17 +14,10 @@ import {
 	it,
 	vi,
 } from "vitest";
-import { Agent } from "../../src/agents/llm-agent";
-import type { FunctionDeclaration } from "../../src/models/function-declaration";
-import { LLMRegistry } from "../../src/models/llm-registry";
-import { LLMResponse } from "../../src/models/llm-response";
-import { OpenAILLM } from "../../src/models/openai-llm";
-import { BaseTool } from "../../src/tools/base/base-tool";
-import type { ToolContext } from "../../src/tools/tool-context";
 
 // Mock these modules first
-vi.mock("../../src/models/openai-llm");
-vi.mock("../../src/models/llm-registry");
+vi.mock("@adk/models/openai-llm");
+vi.mock("@adk/models/llm-registry");
 
 // Create mock implementation after mocking
 const mockGenerateContent = vi.fn().mockImplementation(async function* () {

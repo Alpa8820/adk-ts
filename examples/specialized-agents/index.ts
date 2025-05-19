@@ -1,4 +1,3 @@
-import * as dotenv from "dotenv";
 import {
 	Agent,
 	LLMRegistry,
@@ -8,7 +7,8 @@ import {
 	OpenAILLM,
 	ParallelAgent,
 	SequentialAgent,
-} from "../../src";
+} from "@adk";
+import * as dotenv from "dotenv";
 
 // Load environment variables from .env file if it exists
 dotenv.config();

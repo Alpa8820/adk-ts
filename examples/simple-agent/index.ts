@@ -1,5 +1,5 @@
+import { Agent, LLMRegistry, type MessageRole, OpenAILLM } from "@adk";
 import * as dotenv from "dotenv";
-import { Agent, LLMRegistry, type MessageRole, OpenAILLM } from "../../src";
 
 // Load environment variables from .env file if it exists
 dotenv.config();

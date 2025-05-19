@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import {
 	type ImageContent,
 	LLMRequest,
@@ -6,7 +5,8 @@ import {
 	type Message,
 	type MessageRole,
 	type TextContent,
-} from "../../src/models/llm-request";
+} from "@adk/models/llm-request";
+import { describe, expect, it } from "vitest";
 
 describe("LLMRequest", () => {
 	it("should initialize with simple messages", () => {

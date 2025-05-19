@@ -1,11 +1,11 @@
-import * as dotenv from "dotenv";
 import {
 	Agent,
 	LLMRegistry,
 	OpenAILLM,
 	RunConfig,
 	UserInteractionTool,
-} from "../src";
+} from "@adk";
+import * as dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();

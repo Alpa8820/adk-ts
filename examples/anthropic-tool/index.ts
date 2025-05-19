@@ -1,4 +1,3 @@
-import * as dotenv from "dotenv";
 import {
 	Agent,
 	BaseTool,
@@ -6,7 +5,8 @@ import {
 	type Message,
 	type MessageRole,
 	type ToolContext,
-} from "../../src";
+} from "@adk";
+import * as dotenv from "dotenv";
 
 // Load environment variables from .env file
 dotenv.config();

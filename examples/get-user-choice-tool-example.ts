@@ -1,5 +1,5 @@
+import { GetUserChoiceTool } from "@adk";
 import * as dotenv from "dotenv";
-import { GetUserChoiceTool } from "../src";
 
 dotenv.config();
 

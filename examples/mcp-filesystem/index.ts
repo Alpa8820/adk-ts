@@ -5,12 +5,10 @@
  * to create, write, and read files through MCP tools.
  */
 
+import { Agent, LLMRegistry, type MessageRole, OpenAILLM } from "@adk";
+import { McpError, McpToolset } from "@adk/tools/mcp";
+import type { McpConfig } from "@adk/tools/mcp/types";
 import * as dotenv from "dotenv";
-import { Agent, type MessageRole } from "../../src";
-import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
-import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
-import { McpError, McpToolset } from "../../src/tools/mcp";
-import type { McpConfig } from "../../src/tools/mcp/types";
 
 dotenv.config();
 

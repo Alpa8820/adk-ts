@@ -1,12 +1,12 @@
 import * as path from "node:path";
-import * as dotenv from "dotenv";
 import {
 	Agent,
 	InMemorySessionService,
 	PersistentMemoryService,
 	type Session,
 	SessionState,
-} from "../../src";
+} from "@adk";
+import * as dotenv from "dotenv";
 
 // Load environment variables from .env file if it exists
 dotenv.config();
