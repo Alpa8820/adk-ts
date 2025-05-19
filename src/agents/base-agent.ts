@@ -1,5 +1,5 @@
-import type { RunConfig } from "./run-config";
 import type { Message } from "../models/llm-request";
+import type { RunConfig } from "./run-config";
 
 /**
  * Base class for all agents in the Agent Development Kit

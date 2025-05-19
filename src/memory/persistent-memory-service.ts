@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
+import type { Session } from "../sessions/session";
 import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
 	SearchMemoryResponse,
 } from "./base-memory-service";
-import type { Session } from "../sessions/session";
 import { InMemoryMemoryService } from "./in-memory-memory-service";
 
 /**

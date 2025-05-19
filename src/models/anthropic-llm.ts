@@ -1,9 +1,9 @@
 import axios from "axios";
-import type { LLMRequest, Message } from "./llm-request";
-import { LLMResponse, type ToolCall } from "./llm-response";
+import { AnthropicLLMConnection } from "./anthropic-llm-connection";
 import { BaseLLM } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
-import { AnthropicLLMConnection } from "./anthropic-llm-connection";
+import type { LLMRequest, Message } from "./llm-request";
+import { LLMResponse, type ToolCall } from "./llm-response";
 
 /**
  * Configuration for Anthropic LLM

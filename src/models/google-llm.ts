@@ -1,11 +1,7 @@
 import { type GenerativeModel, VertexAI } from "@google-cloud/vertexai";
-import type {
-	LLMRequest,
-	Message,
-	MessageRole,
-} from "./llm-request";
-import { LLMResponse } from "./llm-response";
 import { BaseLLM } from "./base-llm";
+import type { LLMRequest, Message, MessageRole } from "./llm-request";
+import { LLMResponse } from "./llm-response";
 
 /**
  * Google Gemini LLM configuration

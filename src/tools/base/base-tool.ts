@@ -1,5 +1,5 @@
-import type { ToolContext } from "../tool-context";
 import type { FunctionDeclaration } from "../../models/function-declaration";
+import type { ToolContext } from "../tool-context";
 
 /**
  * Configuration for tool initialization

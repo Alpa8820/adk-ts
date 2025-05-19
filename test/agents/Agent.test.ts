@@ -8,12 +8,12 @@ import {
 	vi,
 } from "vitest";
 import { Agent } from "../../src/agents/llm-agent";
-import { OpenAILLM } from "../../src/models/openai-llm";
-import { LLMRegistry } from "../../src/models/llm-registry";
-import type { ToolContext } from "../../src/tools/tool-context";
 import type { FunctionDeclaration } from "../../src/models/function-declaration";
+import { LLMRegistry } from "../../src/models/llm-registry";
 import { LLMResponse } from "../../src/models/llm-response";
+import { OpenAILLM } from "../../src/models/openai-llm";
 import { BaseTool } from "../../src/tools/base/base-tool";
+import type { ToolContext } from "../../src/tools/tool-context";
 
 // Mock these modules first
 vi.mock("../../src/models/openai-llm");
@@ -40,17 +40,19 @@ const createMockLLM = (model: string) => {
 // Setup mocks
 beforeAll(() => {
 	// Mock OpenAILLM implementation using a more direct approach
-	vi.spyOn(OpenAILLM.prototype, 'generateContentAsync').mockImplementation(mockGenerateContent);
+	vi.spyOn(OpenAILLM.prototype, "generateContentAsync").mockImplementation(
+		mockGenerateContent,
+	);
 
 	// Setup LLMRegistry mock
-	vi.spyOn(LLMRegistry, 'resolve').mockImplementation((model: string) => {
+	vi.spyOn(LLMRegistry, "resolve").mockImplementation((model: string) => {
 		if (model === "gpt-3.5-turbo" || model === "gpt-4") {
 			return OpenAILLM;
 		}
 		return null;
 	});
 
-	vi.spyOn(LLMRegistry, 'newLLM').mockImplementation((model: string) => {
+	vi.spyOn(LLMRegistry, "newLLM").mockImplementation((model: string) => {
 		return new OpenAILLM(model);
 	});
 });

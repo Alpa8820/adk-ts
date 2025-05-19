@@ -1,6 +1,6 @@
+import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LLMRequest } from "./llm-request";
 import type { LLMResponse } from "./llm-response";
-import type { BaseLLMConnection } from "./base-llm-connection";
 
 /**
  * Base class for all LLM implementations

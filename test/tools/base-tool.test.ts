@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { ToolContext } from "../../src/tools/tool-context";
 import type { FunctionDeclaration } from "../../src/models/function-declaration";
 import { BaseTool } from "../../src/tools/base/base-tool";
+import type { ToolContext } from "../../src/tools/tool-context";
 
 // Define a concrete implementation of BaseTool for testing
 class TestTool extends BaseTool {
