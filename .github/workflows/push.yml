@@ -34,4 +34,4 @@ jobs:
       - name: Biome Lint Check
         run: pnpm lint-staged
       - name: unit tests
-        run: pnpm test:plugins
+        run: pnpm test
