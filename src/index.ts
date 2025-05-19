@@ -102,7 +102,6 @@ export { InMemorySessionService } from "./memory/services/session-service";
 
 // Namespaced exports for cleaner imports
 export * as Agents from "./agents";
-export * as LLMs from "./llm"; // LLM implementations are re-exported from models
 export * as Tools from "./tools";
 export * as Models from "./models";
 export * as Memory from "./memory";
