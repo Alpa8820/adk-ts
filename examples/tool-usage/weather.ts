@@ -1,4 +1,8 @@
-import { BaseTool, type FunctionDeclaration, type ToolContext } from "../../src";
+import {
+	BaseTool,
+	type FunctionDeclaration,
+	type ToolContext,
+} from "../../src";
 
 /**
  * Weather Tool (Mock Implementation)

@@ -1,11 +1,11 @@
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { pgTable, varchar, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { eq } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
+import type { Message } from "../models/llm-request";
 import type { SessionService } from "./base-session-service";
 import type { ListSessionOptions, Session } from "./session";
 import { SessionState } from "./state";
-import type { Message } from "../models/llm-request";
 
 // Define Drizzle schema for sessions
 // Adjust column types based on your specific DB and needs

@@ -1,13 +1,13 @@
 import * as dotenv from "dotenv";
-import { 
-	Agent, 
+import {
+	Agent,
+	LLMRegistry,
 	LangGraphAgent,
-	type LangGraphNode, 
-	LoopAgent, 
-	ParallelAgent, 
-	SequentialAgent, 
-	OpenAILLM, 
-	LLMRegistry 
+	type LangGraphNode,
+	LoopAgent,
+	OpenAILLM,
+	ParallelAgent,
+	SequentialAgent,
 } from "../../src";
 
 // Load environment variables from .env file if it exists
