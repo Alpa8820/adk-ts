@@ -1,85 +1,74 @@
 {
-	"name": "@iqai/adk",
-	"version": "0.0.1",
-	"description": "Agent Development Kit for TypeScript with multi-provider LLM support",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"scripts": {
-		"build": "tsc",
-		"test": "vitest run",
-		"format": "biome format . --write",
-		"lint": "lint-staged --allow-empty",
-		"lint:all": "biome check . --write --organize-imports-enabled=true",
-		"clean": "rimraf dist",
-		"prepare": "pnpm run build",
-		"docs": "typedoc --out docs src/index.ts || exit 0",
-		"docs:serve": "npx http-server docs",
-		"docs:markdown": "typedoc --plugin typedoc-plugin-markdown",
-		"predeploy": "npm run docs",
-		"deploy:docs": "gh-pages -d docs",
-		"example:simple": "ts-node examples/simple-agent/index.ts",
-		"example:tool": "ts-node examples/tool-usage/index.ts",
-		"example:specialized": "ts-node examples/specialized-agents/index.ts",
-		"example:memory": "ts-node examples/memory-usage/index.ts",
-		"example:anthropic": "ts-node examples/anthropic-tool/index.ts",
-		"example:mcp-filesystem": "ts-node examples/mcp-filesystem/index.ts",
-		"example:function-tool": "ts-node examples/function-tool-example.ts",
-		"example:http-request-tool": "ts-node examples/http-request-tool-example.ts",
-		"example:file-operations-tool": "ts-node examples/file-operations-tool-example.ts",
-		"example:user-interaction-tool": "ts-node examples/user-interaction-tool-example.ts",
-		"example:exit-loop-tool": "ts-node examples/exit-loop-tool-example.ts",
-		"example:get-user-choice-tool": "ts-node examples/get-user-choice-tool-example.ts",
-		"example:transfer-to-agent-tool": "ts-node examples/transfer-to-agent-tool-example.ts",
-		"example:load-memory-tool": "ts-node examples/load-memory-tool-example.ts",
-		"test:watch": "vitest",
-		"test:coverage": "vitest run --coverage"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/IQAIcom/adk-ts.git"
-	},
-	"keywords": [
-		"ai",
-		"llm",
-		"agent",
-		"openai",
-		"anthropic",
-		"gemini",
-		"typescript"
-	],
-	"author": "IQAI",
-	"license": "MIT",
-	"dependencies": {
-		"@anthropic-ai/sdk": "^0.39.0",
-		"@google-cloud/vertexai": "^0.5.0",
-		"@google/generative-ai": "^0.1.3",
-		"@modelcontextprotocol/sdk": "^1.11.1",
-		"axios": "^1.6.2",
-		"dotenv": "^16.4.7",
-		"drizzle-orm": "^0.43.1",
-		"openai": "^4.93.0",
-		"zod": "^3.22.4"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "1.9.4",
-		"@types/node": "^20.17.30",
-		"gh-pages": "^6.3.0",
-		"lint-staged": "^15.5.2",
-		"prettier": "^3.1.0",
-		"rimraf": "^5.0.5",
-		"ts-node": "^10.9.1",
-		"typedoc": "^0.28.2",
-		"typedoc-plugin-markdown": "^4.6.2",
-		"typescript": "^5.3.2",
-		"vitest": "^3.1.3"
-	},
-	"packageManager": "pnpm@9.0.0",
-	"engines": {
-		"node": ">=22.0"
-	},
-	"lint-staged": {
-		"*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
-			"biome check --write --organize-imports-enabled=false --no-errors-on-unmatched"
-		]
-	}
+  "name": "@iqai/adk",
+  "version": "0.0.1",
+  "description": "Agent Development Kit for TypeScript with multi-provider LLM support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "format": "biome format . --write",
+    "lint": "lint-staged --allow-empty",
+    "lint:all": "biome check . --write --organize-imports-enabled=true",
+    "clean": "rimraf dist",
+    "prepare": "pnpm run build",
+    "docs": "typedoc --out docs src/index.ts || exit 0",
+    "docs:serve": "npx http-server docs",
+    "docs:markdown": "typedoc --plugin typedoc-plugin-markdown",
+    "predeploy": "npm run docs",
+    "deploy:docs": "gh-pages -d docs",
+    "example": "ts-node -r tsconfig-paths/register examples/index.ts",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IQAIcom/adk-ts.git"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "agent",
+    "openai",
+    "anthropic",
+    "gemini",
+    "typescript"
+  ],
+  "author": "IQAI",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "@google-cloud/vertexai": "^0.5.0",
+    "@google/generative-ai": "^0.1.3",
+    "@modelcontextprotocol/sdk": "^1.11.1",
+    "axios": "^1.6.2",
+    "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.43.1",
+    "inquirer": "^12.6.1",
+    "openai": "^4.93.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@types/node": "^20.17.30",
+    "gh-pages": "^6.3.0",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.1.0",
+    "rimraf": "^5.0.5",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typedoc": "^0.28.2",
+    "typedoc-plugin-markdown": "^4.6.2",
+    "typescript": "^5.3.2",
+    "vitest": "^3.1.3"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=22.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome check --write --organize-imports-enabled=false --no-errors-on-unmatched"
+    ]
+  }
 }
