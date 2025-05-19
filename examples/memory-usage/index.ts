@@ -1,12 +1,12 @@
 import * as path from "node:path";
+import * as dotenv from "dotenv";
 import {
 	Agent,
 	InMemorySessionService,
 	PersistentMemoryService,
 	type Session,
 	SessionState,
-} from "@pontus-devoteam/adk";
-import * as dotenv from "dotenv";
+} from "../../src";
 
 // Load environment variables from .env file if it exists
 dotenv.config();
