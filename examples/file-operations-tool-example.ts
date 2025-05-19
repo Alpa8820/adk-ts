@@ -1,9 +1,6 @@
 import path from "node:path";
 import dotenv from "dotenv";
-import { Agent } from "../src/agents";
-import { OpenAILLM } from "../src/llm/providers/openai/OpenAILLM";
-import { LLMRegistry } from "../src/llm/registry/LLMRegistry";
-import { FileOperationsTool } from "../src/tools/common/file-operations-tool";
+import { Agent, OpenAILLM, LLMRegistry, FileOperationsTool } from "../src";
 
 // Load environment variables
 dotenv.config();

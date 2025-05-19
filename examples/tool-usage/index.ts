@@ -1,7 +1,5 @@
 import * as dotenv from "dotenv";
-import { Agent, type Message, type MessageRole } from "../../src";
-import { OpenAILLM } from "../../src/llm/providers/openai/OpenAILLM";
-import { LLMRegistry } from "../../src/llm/registry/LLMRegistry";
+import { Agent, type Message, type MessageRole, OpenAILLM, LLMRegistry } from "../../src";
 import { CalculatorTool } from "./calculator";
 import { WeatherTool } from "./weather";
 // Load environment variables from .env file

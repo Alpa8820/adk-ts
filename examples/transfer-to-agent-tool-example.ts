@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { TransferToAgentTool } from "../src/tools";
+import { TransferToAgentTool } from "../src";
 
 // Load environment variables
 dotenv.config();

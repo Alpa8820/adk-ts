@@ -1,8 +1,5 @@
 import * as dotenv from "dotenv";
-import { Agent } from "../../src/agents/llm-agent";
-import { OpenAILLM } from "../../src/llm/providers/openai/openai-llm";
-import { LLMRegistry } from "../../src/llm/registry/llm-registry";
-import type { MessageRole } from "../../src/models/llm-request";
+import { Agent, LLMRegistry, type MessageRole, OpenAILLM } from "../../src";
 
 // Load environment variables from .env file if it exists
 dotenv.config();

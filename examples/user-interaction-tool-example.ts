@@ -1,9 +1,5 @@
 import dotenv from "dotenv";
-import { Agent } from "../src/agents";
-
-import { LLMRegistry, OpenAILLM } from "../src";
-import { RunConfig } from "../src/agents/run-config";
-import { UserInteractionTool } from "../src/tools/common/user-interaction-tool";
+import { Agent, LLMRegistry, OpenAILLM, RunConfig, UserInteractionTool } from "../src";
 
 // Load environment variables
 dotenv.config();

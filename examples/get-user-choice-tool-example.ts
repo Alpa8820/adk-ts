@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { GetUserChoiceTool } from "../src/tools";
+import { GetUserChoiceTool } from "../src";
 
 dotenv.config();
 

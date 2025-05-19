@@ -1,8 +1,5 @@
 import dotenv from "dotenv";
-import { Agent } from "../src/agents";
-import { OpenAILLM } from "../src/llm/providers/openai/OpenAILLM";
-import { LLMRegistry } from "../src/llm/registry/LLMRegistry";
-import { HttpRequestTool } from "../src/tools/common/http-request-tool";
+import { Agent, OpenAILLM, LLMRegistry, HttpRequestTool } from "../src";
 
 // Load environment variables
 dotenv.config();

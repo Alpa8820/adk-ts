@@ -1,8 +1,5 @@
 import dotenv from "dotenv";
-import { Agent } from "../src/agents";
-import { OpenAILLM } from "../src/llm/providers/openai/OpenAILLM";
-import { LLMRegistry } from "../src/llm/registry/LLMRegistry";
-import { FunctionTool } from "../src/tools/function";
+import { Agent, OpenAILLM, LLMRegistry, FunctionTool } from "../src";
 
 // Load environment variables
 dotenv.config();

@@ -6,6 +6,15 @@
 export { BaseTool } from "./base/base-tool";
 export type { ToolConfig } from "./base/base-tool";
 
+// Tool context
+export { ToolContext } from "./tool-context";
+export type { IToolContext } from "./tool-context";
+
+// Function tools
+export { FunctionTool } from "./function/function-tool";
+export { createFunctionTool } from "./function";
+export { buildFunctionDeclaration, type BuildFunctionDeclarationOptions } from "./function/function-utils";
+
 // Common tools
 export { GoogleSearch } from "./common/google-search";
 export { HttpRequestTool } from "./common/http-request-tool";
