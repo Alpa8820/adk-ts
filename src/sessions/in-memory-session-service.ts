@@ -1,3 +1,4 @@
+import type { Event } from "@adk/events/event";
 import type { SessionService } from "./base-session-service";
 import type { ListSessionOptions, Session } from "./session";
 import { SessionState } from "./state";
@@ -38,6 +39,7 @@ export class InMemorySessionService implements SessionService {
 			createdAt: now,
 			updatedAt: now,
 			state: new SessionState(),
+			events: [],
 		};
 
 		this.sessions.set(sessionId, session);
@@ -138,5 +140,43 @@ export class InMemorySessionService implements SessionService {
 	 */
 	private generateSessionId(): string {
 		return `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+	}
+
+	/**
+	 * Appends an event to a session object
+	 * @param session The session to append the event to
+	 * @param event The event to append
+	 * @returns The appended event
+	 */
+	async appendEvent(session: Session, event: Event): Promise<Event> {
+		if (event.is_partial) {
+			return event;
+		}
+
+		// Update session state based on event
+		if (event.actions?.stateDelta) {
+			for (const [key, value] of Object.entries(event.actions.stateDelta)) {
+				if (key.startsWith("_temp_")) {
+					continue;
+				}
+
+				if (!session.state) {
+					session.state = new SessionState();
+				}
+
+				session.state.set(key, value);
+			}
+		}
+
+		// Add event to session
+		if (!session.events) {
+			session.events = [];
+		}
+		session.events.push(event);
+
+		// Update session timestamp
+		session.updatedAt = new Date();
+
+		return event;
 	}
 }

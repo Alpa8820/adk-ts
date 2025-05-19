@@ -1,3 +1,4 @@
+import type { Event } from "@adk/events/event";
 import type { ListSessionOptions, Session } from "./session";
 /**
  * Service for managing sessions
@@ -43,4 +44,12 @@ export interface SessionService {
 	 * @param sessionId Session identifier
 	 */
 	deleteSession(sessionId: string): Promise<void>;
+
+	/**
+	 * Appends an event to a session object
+	 * @param session The session to append the event to
+	 * @param event The event to append
+	 * @returns The appended event
+	 */
+	appendEvent(session: Session, event: Event): Promise<Event>;
 }

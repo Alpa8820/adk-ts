@@ -1,7 +1,7 @@
+import type { Event } from "@adk/events/event";
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-
 import type { Message } from "../models/llm-request";
 import type { SessionService } from "./base-session-service";
 import type { ListSessionOptions, Session } from "./session";
@@ -183,6 +183,43 @@ export class DatabaseSessionService implements SessionService {
 		await this.db
 			.delete(this.sessionsTable)
 			.where(eq(this.sessionsTable.id, sessionId));
+	}
+
+	/**
+	 * Appends an event to a session object
+	 * @param session The session to append the event to
+	 * @param event The event to append
+	 * @returns The appended event
+	 */
+	async appendEvent(session: Session, event: Event): Promise<Event> {
+		if (event.is_partial) {
+			return event;
+		}
+
+		// Update session state based on event
+		if (event.actions?.stateDelta) {
+			for (const [key, value] of Object.entries(event.actions.stateDelta)) {
+				if (key.startsWith("_temp_")) {
+					continue;
+				}
+
+				session.state?.set(key, value);
+			}
+		}
+
+		// Add event to session
+		if (!session.events) {
+			session.events = [];
+		}
+		session.events.push(event);
+
+		// Update session timestamp
+		session.updatedAt = new Date();
+
+		// Save the updated session to the database
+		await this.updateSession(session);
+
+		return event;
 	}
 
 	// TODO: Consider if table creation/migration logic is needed here or handled externally (e.g., drizzle-kit migrations)

@@ -1,3 +1,4 @@
+import type { Event } from "@adk/events/event";
 import type { Message } from "../models/llm-request";
 import type { SessionState } from "./state";
 
@@ -39,6 +40,11 @@ export interface Session {
 	 * Session state for storing arbitrary data
 	 */
 	state: SessionState;
+
+	/**
+	 * Session events
+	 */
+	events?: Event[];
 }
 
 /**
