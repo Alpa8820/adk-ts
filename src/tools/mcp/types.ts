@@ -25,6 +25,7 @@ export type McpTransportType =
 			mode: "stdio";
 			command: string;
 			args: string[];
+			env?: Record<string, string>; //Note: If provided, this might replace the entire environment for the spawned command rather than augmenting it. Ensure all necessary env vars (like PATH) are included, or omit if relying on inherited environment.
 	  }
 	| {
 			mode: "sse";

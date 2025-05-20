@@ -138,6 +138,7 @@ export class McpClientService {
 			return new StdioClientTransport({
 				command: this.config.transport.command,
 				args: this.config.transport.args,
+				env: this.config.transport.env,
 			});
 		} catch (error) {
 			throw new McpError(
