@@ -91,12 +91,50 @@ export class Runner {
 			});
 		}
 
-		// Run the agent and yield events
-		for await (const event of this.agent.runStreaming(invocationContext)) {
-			if (!event.is_partial) {
-				await this.sessionService.appendEvent(session, event);
+		// Get responses from agent
+		let lastPartialEvent: Event | null = null;
+		
+		try {
+			// Run the agent and yield events
+			for await (const response of this.agent.runStreaming(invocationContext)) {
+				const event = new Event({
+					invocationId: invocationContext.sessionId,
+					author: "assistant",
+					content: response.content || "",
+					function_call: response.function_call,
+					tool_calls: response.tool_calls,
+					partial: response.is_partial,
+					raw_response: response.raw_response,
+				});
+				
+				// Only save non-partial events to the session
+				if (!event.is_partial && event.content) {
+					await this.sessionService.appendEvent(session, event);
+				}
+				
+				// Track partial events for debugging
+				if (event.is_partial) {
+					lastPartialEvent = event;
+				}
+				
+				yield event;
 			}
-			yield event;
+		} catch (error) {
+			console.error("Error running agent:", error);
+			
+			// If we had partial events but no final event, create a final event
+			if (lastPartialEvent && session.events && session.events.length === 0) {
+				const finalEvent = new Event({
+					invocationId: invocationContext.sessionId,
+					author: "assistant",
+					content: "Sorry, there was an error processing your request.",
+					partial: false,
+				});
+				await this.sessionService.appendEvent(session, finalEvent);
+				yield finalEvent;
+			}
+			
+			throw error;
 		}
 	}
 

@@ -64,6 +64,7 @@ export interface LLMRequestConfig {
 	frequency_penalty?: number;
 	presence_penalty?: number;
 	functions?: FunctionDeclaration[];
+	stream?: boolean;
 }
 
 /**

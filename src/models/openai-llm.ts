@@ -260,8 +260,16 @@ export class OpenAILLM extends BaseLLM {
   private convertChunk(
     chunk: OpenAI.Chat.ChatCompletionChunk.Choice,
   ): LLMResponse {
+    if (process.env.DEBUG === "true") {
+      console.log(`OpenAI: Converting chunk - delta: ${JSON.stringify(chunk.delta || {})}`);
+    }
+    
+    // Special case: some chunks might be empty or just contain whitespace
+    // Make sure we capture these properly for streaming
+    const content = chunk.delta?.content;
+    
     const result = new LLMResponse({
-      content: chunk.delta?.content || null,
+      content: content !== undefined ? content : null,
       role: chunk.delta?.role || "assistant",
       is_partial: true,
     });
@@ -295,6 +303,8 @@ export class OpenAILLM extends BaseLLM {
     llmRequest: LLMRequest,
     stream = false,
   ): AsyncGenerator<LLMResponse, void, unknown> {
+    // Check if streaming should be enabled from the request config
+    stream = stream || llmRequest.config.stream === true;
     // Prepare messages
     const messages = llmRequest.messages.map((msg) => this.convertMessage(msg));
 
@@ -319,6 +329,11 @@ export class OpenAILLM extends BaseLLM {
         this.defaultParams.presence_penalty,
       stream,
     };
+    
+    // Log the streaming status
+    if (process.env.DEBUG === "true") {
+      console.log(`OpenAI: Streaming mode ${stream ? "enabled" : "disabled"}`);
+    }
 
     // Add tools if available
     if (tools && tools.length > 0) {
@@ -327,6 +342,10 @@ export class OpenAILLM extends BaseLLM {
 
     try {
       if (stream) {
+        if (process.env.DEBUG === "true") {
+          console.log("OpenAI: Starting streaming request");
+        }
+        
         // Handle streaming - explicitly cast the stream to the correct type
         const streamResponse =
           await this.client.chat.completions.create(params);
@@ -334,15 +353,39 @@ export class OpenAILLM extends BaseLLM {
         // Track partial function/tool calls
         let partialFunctionCall: FunctionCall | undefined;
         const partialToolCalls: Map<string, ToolCall> = new Map();
+        
+        // For tracking accumulated content for better streaming
+        let accumulatedContent = "";
 
         // Ensure the response is a proper async iterable for await...of
         const asyncIterable = streamResponse as AsyncIterable<any>;
 
+        if (process.env.DEBUG === "true") {
+          console.log("OpenAI: Stream response received, processing chunks");
+        }
+
         for await (const chunk of asyncIterable) {
-          if (!chunk.choices || chunk.choices.length === 0) continue;
+          if (!chunk.choices || chunk.choices.length === 0) {
+            if (process.env.DEBUG === "true") {
+              console.log("OpenAI: Empty chunk received, skipping");
+            }
+            continue;
+          }
 
           const choice = chunk.choices[0];
           const responseChunk = this.convertChunk(choice);
+          
+          // Track the accumulated content for debugging
+          if (responseChunk.content !== null) {
+            accumulatedContent += responseChunk.content;
+          }
+          
+          if (process.env.DEBUG === "true") {
+            console.log(`OpenAI: Chunk received - delta: "${choice.delta?.content || ''}"`, 
+              `responseChunk content: "${responseChunk.content || ''}"`,
+              `is_partial: ${responseChunk.is_partial}`,
+              `accumulated: "${accumulatedContent.substring(0, 30)}${accumulatedContent.length > 30 ? '...' : ''}"`);
+          }
 
           // Track partial function call
           if (responseChunk.function_call) {
@@ -377,10 +420,33 @@ export class OpenAILLM extends BaseLLM {
             responseChunk.tool_calls = Array.from(partialToolCalls.values());
           }
 
+          if (process.env.DEBUG === "true") {
+            console.log("OpenAI: Yielding chunk to caller");
+          }
           yield responseChunk;
+        }
+        
+        // After all chunks are processed, yield a final non-streaming chunk with complete content
+        if (accumulatedContent.length > 0) {
+          if (process.env.DEBUG === "true") {
+            console.log(`OpenAI: Yielding final accumulated content: "${accumulatedContent.substring(0, 30)}${accumulatedContent.length > 30 ? '...' : ''}"`);
+          }
+          yield new LLMResponse({
+            content: accumulatedContent,
+            role: "assistant",
+            is_partial: false,
+          });
+        }
+        
+        if (process.env.DEBUG === "true") {
+          console.log("OpenAI: Finished processing all stream chunks");
         }
       } else {
         // Handle non-streaming
+        if (process.env.DEBUG === "true") {
+          console.log("OpenAI: Making non-streaming request");
+        }
+        
         const response = await this.client.chat.completions.create(params);
 
         // @ts-expect-error - OpenAI SDK types may be inconsistent
@@ -388,6 +454,10 @@ export class OpenAILLM extends BaseLLM {
           throw new Error("No response from OpenAI");
         }
 
+        if (process.env.DEBUG === "true") {
+          console.log("OpenAI: Non-streaming response received");
+        }
+        
         // @ts-expect-error - OpenAI SDK types may be inconsistent
         yield this.convertResponse(response.choices[0]);
       }

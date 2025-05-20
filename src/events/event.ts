@@ -96,6 +96,11 @@ export class Event extends LLMResponse {
 		this.branch = branch;
 		this.id = id || Event.newId();
 		this.timestamp = timestamp || Date.now();
+		
+		// Ensure content is properly handled for streaming responses
+		if (this.is_partial && this.content === "") {
+			this.content = null;
+		}
 	}
 
 	/**
@@ -111,6 +116,14 @@ export class Event extends LLMResponse {
 			(!this.tool_calls || this.tool_calls.length === 0) &&
 			!this.is_partial
 		);
+	}
+	
+	/**
+	 * Returns whether the event has meaningful content.
+	 * Used to filter out empty or meaningless streaming chunks.
+	 */
+	hasContent(): boolean {
+		return this.content !== null && this.content !== undefined && this.content.trim() !== "";
 	}
 
 	/**

@@ -79,6 +79,12 @@ export class RunConfig {
 	streamingMode: StreamingMode;
 
 	/**
+	 * Whether to stream the response
+	 * This is derived from streamingMode and used by LLM implementations
+	 */
+	stream: boolean;
+
+	/**
 	 * Output audio transcription configuration
 	 */
 	outputAudioTranscription?: AudioTranscriptionConfig;
@@ -89,6 +95,8 @@ export class RunConfig {
 		this.saveInputBlobsAsArtifacts = config?.saveInputBlobsAsArtifacts || false;
 		this.supportCFC = config?.supportCFC || false;
 		this.streamingMode = config?.streamingMode || StreamingMode.NONE;
+		// Set stream flag based on streamingMode for LLM implementations
+		this.stream = this.streamingMode !== StreamingMode.NONE;
 		this.outputAudioTranscription = config?.outputAudioTranscription;
 	}
 }

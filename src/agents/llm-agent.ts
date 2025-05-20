@@ -570,12 +570,15 @@ export class Agent extends BaseAgent {
 				messages: context.messages,
 				config: {
 					functions: toolDeclarations as any[],
+					// Pass through all the runtime config settings
+					...context.config,
+					// Ensure streaming is enabled
 					stream: true,
 				},
 			};
 
 			// Stream response from LLM
-			const responseGenerator = this.llm.generateContentAsync(request);
+			const responseGenerator = this.llm.generateContentAsync(request, true);
 
 			// Capture the final response for tool execution
 			let finalResponse: LLMResponse | null = null;

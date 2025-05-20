@@ -7,10 +7,8 @@ import {
   RunConfig,
   StreamingMode,
 } from "@adk";
-import { Event } from "@adk/events";
 import * as dotenv from "dotenv";
 import { v4 as uuidv4 } from "uuid";
-import readline from "readline";
 
 // Load environment variables from .env file if it exists
 dotenv.config();
@@ -21,10 +19,10 @@ LLMRegistry.registerLLM(OpenAILLM);
 // Initialize the agent with OpenAI's model
 const agent = new Agent({
   name: "runner_assistant",
-  model: "gpt-4.1-mini-2025-04-14", // This will use the LLMRegistry to get the right provider
+  model: "gpt-3.5-turbo", // This will use the LLMRegistry to get the right provider
   description: "A simple assistant demonstrating Runner usage",
   instructions:
-    "You are a helpful assistant. Answer questions concisely and accurately.",
+    "You are a helpful assistant. Answer questions directly and accurately. When asked about the three laws of robotics, explain that they were created by Isaac Asimov and describe them in detail.",
 });
 
 // Create an in-memory runner with our agent
@@ -65,64 +63,65 @@ async function runConversation() {
 }
 
 async function processMessage(messageContent: string, sessionId: string) {
-  // Define configuration for this run
-  const runConfig = new RunConfig({
-    streamingMode: StreamingMode.SSE, // Enable streaming for this run
-  });
-
-  // Create a new message
-  const newMessage = {
-    role: "user" as MessageRole,
-    content: messageContent,
-  };
-
   console.log(`👤 User: ${messageContent}`);
   console.log("🤖 Assistant: ");
 
-  // Set up a simple way to clear line for streaming updates
-  const clearLine = () => {
-    readline.clearLine(process.stdout, 0);
-    readline.cursorTo(process.stdout, 0);
-  };
+  try {
+    // Set up streaming configuration
+    const runConfig = new RunConfig({
+      streamingMode: StreamingMode.SSE,
+    });
 
-  // Use the runner to process the message
-  let fullResponse = "";
-  let partialResponse = "";
-
-  for await (const event of runner.runAsync({
-    userId,
-    sessionId,
-    newMessage,
-    runConfig,
-  })) {
-    // Ensure event is an Event instance
-    const eventObj = event instanceof Event ? event : new Event(event);
-
-    if (eventObj.author === "assistant") {
-      // Handle streaming response chunks
-      if (eventObj.is_partial) {
-        // Update our partial response
-        partialResponse = eventObj.content || "";
-        process.stdout.write(partialResponse);
-      } else {
-        // We got a full (non-partial) response
-        fullResponse = eventObj.content || "";
-
-        // If we were previously in streaming mode, clear the line
-        if (partialResponse) {
-          clearLine();
+    // Create a new message
+    const newMessage = {
+      role: "user" as MessageRole,
+      content: messageContent,
+    };
+    
+    // Track streaming state
+    let isStreaming = false;
+    let streamedContent = "";
+    
+    // Process the message through the runner
+    for await (const event of runner.runAsync({
+      userId,
+      sessionId,
+      newMessage,
+      runConfig,
+    })) {
+      // Skip events without content
+      if (!event.content) continue;
+      
+      // Only process assistant messages
+      if (event.author === "assistant") {
+        if (event.is_partial) {
+          // Handle streaming chunks
+          isStreaming = true;
+          process.stdout.write(event.content);
+          streamedContent += event.content;
+        } else {
+          // Handle complete response
+          if (!isStreaming) {
+            // If we haven't streamed anything yet, print the full response
+            console.log(event.content);
+          } else if (streamedContent.trim() !== event.content.trim()) {
+            // If the final content is different from what we've streamed, print it
+            console.log("\nFull response:", event.content);
+          } else {
+            // We've already streamed the content, just add a newline
+            console.log();
+          }
         }
-
-        // Print the full response
-        console.log(fullResponse);
-        partialResponse = "";
       }
     }
-  }
-
-  // If we only received partial responses, ensure we add a newline
-  if (partialResponse && !fullResponse) {
-    console.log();
+    
+    // Ensure there's a newline after streaming
+    if (isStreaming && !streamedContent.endsWith("\n")) {
+      console.log();
+    }
+    
+  } catch (error: any) {
+    console.error("Error processing message:", error?.message || String(error));
   }
 }
 
