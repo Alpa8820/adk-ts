@@ -207,7 +207,7 @@ const memoryService = new PersistentMemoryService({
 // Create an agent with memory
 const agent = new Agent({
   name: "memory_assistant",
-  model: "gpt-3.5-turbo",
+  model: "gpt-4.1-mini-2025-04-14",
   instructions: "You have persistent memory. Remember user preferences.",
   memoryService,
   userId: 'user-123'

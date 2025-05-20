@@ -1,4 +1,12 @@
-import { Agent, InMemoryRunner, LLMRegistry, OpenAILLM, type MessageRole, RunConfig, StreamingMode } from "@adk";
+import {
+  Agent,
+  InMemoryRunner,
+  LLMRegistry,
+  OpenAILLM,
+  type MessageRole,
+  RunConfig,
+  StreamingMode,
+} from "@adk";
 import { Event } from "@adk/events";
 import * as dotenv from "dotenv";
 import { v4 as uuidv4 } from "uuid";
@@ -13,7 +21,7 @@ LLMRegistry.registerLLM(OpenAILLM);
 // Initialize the agent with OpenAI's model
 const agent = new Agent({
   name: "runner_assistant",
-  model: "gpt-3.5-turbo", // This will use the LLMRegistry to get the right provider
+  model: "gpt-4.1-mini-2025-04-14", // This will use the LLMRegistry to get the right provider
   description: "A simple assistant demonstrating Runner usage",
   instructions:
     "You are a helpful assistant. Answer questions concisely and accurately.",
@@ -27,12 +35,12 @@ const userId = uuidv4();
 
 async function runConversation() {
   console.log("🤖 Starting a runner example with OpenAI's model...");
-  
+
   // Create a session using the InMemorySessionService from the runner
   console.log("📝 Creating a new session...");
   const session = await runner.sessionService.createSession(userId);
   const sessionId = session.id;
-  
+
   console.log(`🔑 Session ID: ${sessionId}`);
   console.log(`👤 User ID: ${userId}`);
 
@@ -46,11 +54,11 @@ async function runConversation() {
 
   // Run another follow-up question
   console.log(
-    "\n📝 Third question: 'Can you suggest three practical applications of these laws in modern AI systems?'"
+    "\n📝 Third question: 'Can you suggest three practical applications of these laws in modern AI systems?'",
   );
   await processMessage(
     "Can you suggest three practical applications of these laws in modern AI systems?",
-    sessionId
+    sessionId,
   );
 
   console.log("\n✅ Example completed successfully!");
@@ -80,7 +88,7 @@ async function processMessage(messageContent: string, sessionId: string) {
   // Use the runner to process the message
   let fullResponse = "";
   let partialResponse = "";
-  
+
   for await (const event of runner.runAsync({
     userId,
     sessionId,
@@ -89,7 +97,7 @@ async function processMessage(messageContent: string, sessionId: string) {
   })) {
     // Ensure event is an Event instance
     const eventObj = event instanceof Event ? event : new Event(event);
-    
+
     if (eventObj.author === "assistant") {
       // Handle streaming response chunks
       if (eventObj.is_partial) {
@@ -99,19 +107,19 @@ async function processMessage(messageContent: string, sessionId: string) {
       } else {
         // We got a full (non-partial) response
         fullResponse = eventObj.content || "";
-        
+
         // If we were previously in streaming mode, clear the line
         if (partialResponse) {
           clearLine();
         }
-        
+
         // Print the full response
         console.log(fullResponse);
         partialResponse = "";
       }
     }
   }
-  
+
   // If we only received partial responses, ensure we add a newline
   if (partialResponse && !fullResponse) {
     console.log();
