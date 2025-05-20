@@ -306,7 +306,7 @@ export class OpenAILLM extends BaseLLM {
 		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		// Check if streaming should be enabled from the request config
-		stream = stream || llmRequest.config.stream === true;
+		const shouldStream = stream || llmRequest.config.stream === true;
 		// Prepare messages
 		const messages = llmRequest.messages.map((msg) => this.convertMessage(msg));
 
@@ -329,12 +329,14 @@ export class OpenAILLM extends BaseLLM {
 			presence_penalty:
 				llmRequest.config.presence_penalty ??
 				this.defaultParams.presence_penalty,
-			stream,
+			stream: shouldStream,
 		};
 
 		// Log the streaming status
 		if (process.env.DEBUG === "true") {
-			console.log(`OpenAI: Streaming mode ${stream ? "enabled" : "disabled"}`);
+			console.log(
+				`OpenAI: Streaming mode ${shouldStream ? "enabled" : "disabled"}`,
+			);
 		}
 
 		// Add tools if available
@@ -343,7 +345,7 @@ export class OpenAILLM extends BaseLLM {
 		}
 
 		try {
-			if (stream) {
+			if (shouldStream) {
 				if (process.env.DEBUG === "true") {
 					console.log("OpenAI: Starting streaming request");
 				}
