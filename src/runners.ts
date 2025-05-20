@@ -93,7 +93,7 @@ export class Runner {
 
 		// Get responses from agent
 		let lastPartialEvent: Event | null = null;
-		
+
 		try {
 			// Run the agent and yield events
 			for await (const response of this.agent.runStreaming(invocationContext)) {
@@ -106,22 +106,22 @@ export class Runner {
 					partial: response.is_partial,
 					raw_response: response.raw_response,
 				});
-				
+
 				// Only save non-partial events to the session
 				if (!event.is_partial && event.content) {
 					await this.sessionService.appendEvent(session, event);
 				}
-				
+
 				// Track partial events for debugging
 				if (event.is_partial) {
 					lastPartialEvent = event;
 				}
-				
+
 				yield event;
 			}
 		} catch (error) {
 			console.error("Error running agent:", error);
-			
+
 			// If we had partial events but no final event, create a final event
 			if (lastPartialEvent && session.events && session.events.length === 0) {
 				const finalEvent = new Event({
@@ -133,7 +133,7 @@ export class Runner {
 				await this.sessionService.appendEvent(session, finalEvent);
 				yield finalEvent;
 			}
-			
+
 			throw error;
 		}
 	}
