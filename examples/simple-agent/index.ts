@@ -1,16 +1,16 @@
-import { Agent, LLMRegistry, type MessageRole, OpenAILLM } from "@adk";
+import { Agent, GoogleLLM, LLMRegistry, type MessageRole } from "@adk";
 import * as dotenv from "dotenv";
 
 // Load environment variables from .env file if it exists
 dotenv.config();
 
 // Register the OpenAI LLM
-LLMRegistry.registerLLM(OpenAILLM);
+LLMRegistry.registerLLM(GoogleLLM);
 
 // Initialize the agent with OpenAI's gpt-4.1-mini-2025-04-14 model
 const agent = new Agent({
 	name: "openai_assistant",
-	model: "gpt-4.1-mini-2025-04-14", // This will use the LLMRegistry to get the right provider
+	model: "gemini-2.5-flash-preview-04-17", // This will use the LLMRegistry to get the right provider
 	description: "A simple assistant using OpenAI's gpt-4.1-mini-2025-04-14",
 	instructions:
 		"You are a helpful assistant. Answer questions concisely and accurately.",
