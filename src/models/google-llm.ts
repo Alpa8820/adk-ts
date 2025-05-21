@@ -5,11 +5,11 @@ import { LLMResponse } from "./llm-response";
 
 // Multimodal part for image processing
 interface ImagePart {
-  type: string;
-  image_url: {
-    url: string;
-    mime_type?: string;
-  };
+	type: string;
+	image_url: {
+		url: string;
+		mime_type?: string;
+	};
 }
 
 // We'll use any type since we're dynamically importing the GoogleGenAI SDK
@@ -17,15 +17,15 @@ type GenAISDK = any;
 
 // Define custom Part type for multimodal content since we're using dynamic imports
 interface Part {
-  text?: string;
-  inlineData?: {
-    mimeType: string;
-    data: string;
-  };
-  functionResponse?: {
-    name: string;
-    response: { content: string };
-  };
+	text?: string;
+	inlineData?: {
+		mimeType: string;
+		data: string;
+	};
+	functionResponse?: {
+		name: string;
+		response: { content: string };
+	};
 }
 
 /**
@@ -86,12 +86,12 @@ export class GoogleLLM extends BaseLLM {
 	 * Generative model instance
 	 */
 	private generativeModel: any; // Can be Vertex GenerativeModel or Google GenAI Model instance
-	
+
 	/**
 	 * Flag to indicate if the GenAI SDK has been loaded
 	 */
 	private genAIInitialized = false;
-	
+
 	/**
 	 * Function calling mode for configuration
 	 */
@@ -161,20 +161,20 @@ export class GoogleLLM extends BaseLLM {
 	private async initializeGenAI(apiKey: string): Promise<void> {
 		try {
 			// Dynamically import the ESM module
-			const genaiModule = await import('@google/genai');
-			
+			const genaiModule = await import("@google/genai");
+
 			// Initialize client with API key
 			this.genAI = new genaiModule.GoogleGenAI({ apiKey });
-			
+
 			// Get the generative model instance using the new SDK
 			this.generativeModel = this.genAI.models;
-			
+
 			// Mark as initialized
 			this.genAIInitialized = true;
-			
+
 			// Store FunctionCallingConfigMode for later use
 			this.FunctionCallingMode = genaiModule.FunctionCallingConfigMode;
-			
+
 			// SDK initialized successfully
 		} catch (error) {
 			console.error("GoogleLLM initialization error:", error);
@@ -299,33 +299,34 @@ export class GoogleLLM extends BaseLLM {
 		}
 
 		// Handle function calls (Vertex AI format)
-if (response?.candidates?.[0]?.content?.parts?.[0]?.functionCall) {
-const functionCall = response.candidates[0].content.parts[0].functionCall;
+		if (response?.candidates?.[0]?.content?.parts?.[0]?.functionCall) {
+			const functionCall = response.candidates[0].content.parts[0].functionCall;
 
-result.function_call = {
-	name: functionCall.name,
-	arguments: JSON.stringify(functionCall.args || {}),
-};
-
-// Set tool_calls array too for newer format
-result.tool_calls = [
-	{
-		id: `google-${Date.now()}`,
-		function: {
-			name: functionCall.name,
-			arguments: JSON.stringify(functionCall.args || {}),
-		},
-	},
-];
-} else if (response?.functionCalls && response.functionCalls.length > 0) {
-			// Handle function calls from Google GenAI SDK format
-			const functionCall = response.functionCalls[0];
-			
 			result.function_call = {
 				name: functionCall.name,
-				arguments: typeof functionCall.args === 'object' 
-					? JSON.stringify(functionCall.args || {})
-					: (functionCall.args || '{}'),
+				arguments: JSON.stringify(functionCall.args || {}),
+			};
+
+			// Set tool_calls array too for newer format
+			result.tool_calls = [
+				{
+					id: `google-${Date.now()}`,
+					function: {
+						name: functionCall.name,
+						arguments: JSON.stringify(functionCall.args || {}),
+					},
+				},
+			];
+		} else if (response?.functionCalls && response.functionCalls.length > 0) {
+			// Handle function calls from Google GenAI SDK format
+			const functionCall = response.functionCalls[0];
+
+			result.function_call = {
+				name: functionCall.name,
+				arguments:
+					typeof functionCall.args === "object"
+						? JSON.stringify(functionCall.args || {})
+						: functionCall.args || "{}",
 			};
 
 			// Set tool_calls array for newer format
@@ -334,9 +335,10 @@ result.tool_calls = [
 					id: `google-${Date.now()}-${index}`,
 					function: {
 						name: functionCall.name,
-						arguments: typeof functionCall.args === 'object' 
-							? JSON.stringify(functionCall.args || {})
-							: (functionCall.args || '{}'),
+						arguments:
+							typeof functionCall.args === "object"
+								? JSON.stringify(functionCall.args || {})
+								: functionCall.args || "{}",
 					},
 				}),
 			);
@@ -354,14 +356,16 @@ result.tool_calls = [
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		try {
 			// Initialize GenAI SDK if needed (for API key approach)
-		if (!this.useVertexAI && !this.genAIInitialized) {
-			const apiKey = process.env.GOOGLE_API_KEY;
-			if (!apiKey) {
-				throw new Error("Google API Key is required but not found in environment variables.");
+			if (!this.useVertexAI && !this.genAIInitialized) {
+				const apiKey = process.env.GOOGLE_API_KEY;
+				if (!apiKey) {
+					throw new Error(
+						"Google API Key is required but not found in environment variables.",
+					);
+				}
+				await this.initializeGenAI(apiKey);
 			}
-			await this.initializeGenAI(apiKey);
-		}
-			
+
 			if (this.useVertexAI) {
 				// Vertex AI implementation
 				// Convert messages to Google format for Vertex AI
@@ -445,7 +449,9 @@ result.tool_calls = [
 				const functionCallingConfig = llmRequest.config.functions
 					? {
 							functionCallingConfig: {
-								mode: this.FunctionCallingMode ? this.FunctionCallingMode.ANY : "ANY",
+								mode: this.FunctionCallingMode
+									? this.FunctionCallingMode.ANY
+									: "ANY",
 							},
 						}
 					: undefined;
@@ -470,55 +476,53 @@ result.tool_calls = [
 
 				if (stream) {
 					// Handle streaming with GenAI API
-									const streamingResult = await this.generativeModel.generateContentStream({
-										model: this.model,
-										contents: chatHistory.contents,
-										systemInstruction: chatHistory.system,
-										...requestOptions,
-									});
+					const streamingResult =
+						await this.generativeModel.generateContentStream({
+							model: this.model,
+							contents: chatHistory.contents,
+							systemInstruction: chatHistory.system,
+							...requestOptions,
+						});
 
-									// Stream started
-									
-									// Process the stream according to the new GenAI SDK
-									for await (const chunk of streamingResult.stream) {
-										// Handle each chunk from the stream
-										if (chunk.text) {
-											const partialText = chunk.text.trim() || "";
+					// Stream started
 
-											// Create partial response
-											const partialResponse = new LLMResponse({
-												content: partialText,
-												role: "assistant",
-												is_partial: true,
-											});
+					// Process the stream according to the new GenAI SDK
+					for await (const chunk of streamingResult.stream) {
+						// Handle each chunk from the stream
+						if (chunk.text) {
+							const partialText = chunk.text.trim() || "";
 
-											yield partialResponse;
-										}
-									}
+							// Create partial response
+							const partialResponse = new LLMResponse({
+								content: partialText,
+								role: "assistant",
+								is_partial: true,
+							});
 
-									// Check for function calls from the complete response
-									const response = await streamingResult.response;
-									if (
-										response.functionCalls &&
-										response.functionCalls.length > 0
-									) {
-										yield this.convertGenAIResponse(response);
-									} else if (response.text) {
-										// Final complete text response (not a function call)
-										yield new LLMResponse({
-											content: response.text,
-											role: "assistant",
-										});
-									}
-								} else {
-									// Handle non-streaming with GenAI API
-									// Generating content
-									const response = await this.generativeModel.generateContent({
-										model: this.model,
-										contents: chatHistory.contents,
-										systemInstruction: chatHistory.system,
-										...requestOptions,
-									});
+							yield partialResponse;
+						}
+					}
+
+					// Check for function calls from the complete response
+					const response = await streamingResult.response;
+					if (response.functionCalls && response.functionCalls.length > 0) {
+						yield this.convertGenAIResponse(response);
+					} else if (response.text) {
+						// Final complete text response (not a function call)
+						yield new LLMResponse({
+							content: response.text,
+							role: "assistant",
+						});
+					}
+				} else {
+					// Handle non-streaming with GenAI API
+					// Generating content
+					const response = await this.generativeModel.generateContent({
+						model: this.model,
+						contents: chatHistory.contents,
+						systemInstruction: chatHistory.system,
+						...requestOptions,
+					});
 					yield this.convertGenAIResponse(response);
 				}
 			}
@@ -557,28 +561,30 @@ result.tool_calls = [
 					parts = [{ text: message.content }];
 				} else if (Array.isArray(message.content)) {
 					// For multimodal content
-					parts = message.content.map(part => {
+					parts = message.content.map((part) => {
 						if (part.type === "text") {
 							return { text: part.text };
-						} else if (part.type === "image") {
+						}
+						if (part.type === "image") {
 							// Handle image parts
 							const imagePart = part as ImagePart;
-							const mimeType = typeof imagePart.image_url === "object" && 
-								"mime_type" in imagePart.image_url && 
-								imagePart.image_url.mime_type 
-									? imagePart.image_url.mime_type 
+							const mimeType =
+								typeof imagePart.image_url === "object" &&
+								"mime_type" in imagePart.image_url &&
+								imagePart.image_url.mime_type
+									? imagePart.image_url.mime_type
 									: "image/jpeg";
-							
+
 							// Extract base64 data
 							const data = imagePart.image_url.url.startsWith("data:")
 								? imagePart.image_url.url.split(",")[1]
 								: Buffer.from(imagePart.image_url.url).toString("base64");
-							
+
 							return {
 								inlineData: {
 									mimeType,
-									data
-								}
+									data,
+								},
 							};
 						}
 						return { text: JSON.stringify(part) };
@@ -667,9 +673,10 @@ result.tool_calls = [
 
 			result.function_call = {
 				name: functionCall.name,
-				arguments: typeof functionCall.args === 'object' 
-					? JSON.stringify(functionCall.args || {})
-					: (functionCall.args || '{}'),
+				arguments:
+					typeof functionCall.args === "object"
+						? JSON.stringify(functionCall.args || {})
+						: functionCall.args || "{}",
 			};
 
 			// Set tool_calls array too for newer format
@@ -678,9 +685,10 @@ result.tool_calls = [
 					id: `google-${Date.now()}-${index}`,
 					function: {
 						name: functionCall.name,
-						arguments: typeof functionCall.args === 'object' 
-							? JSON.stringify(functionCall.args || {})
-							: (functionCall.args || '{}'),
+						arguments:
+							typeof functionCall.args === "object"
+								? JSON.stringify(functionCall.args || {})
+								: functionCall.args || "{}",
 					},
 				}),
 			);
