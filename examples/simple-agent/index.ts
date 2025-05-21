@@ -4,14 +4,14 @@ import * as dotenv from "dotenv";
 // Load environment variables from .env file if it exists
 dotenv.config();
 
-// Register the OpenAI LLM
+// Register the Google LLM
 LLMRegistry.registerLLM(GoogleLLM);
 
-// Initialize the agent with OpenAI's gpt-4.1-mini-2025-04-14 model
+// Initialize the agent with Google's Gemini model
 const agent = new Agent({
-	name: "openai_assistant",
-	model: "gemini-2.5-flash-preview-04-17", // This will use the LLMRegistry to get the right provider
-	description: "A simple assistant using OpenAI's gpt-4.1-mini-2025-04-14",
+	name: "gemini_assistant",
+	model: "gemini-2.5-flash-preview-04-17", // Use Gemini model through LLMRegistry
+	description: "A simple assistant using Google's Gemini 2.5 Flash model",
 	instructions:
 		"You are a helpful assistant. Answer questions concisely and accurately.",
 });
@@ -19,7 +19,7 @@ const agent = new Agent({
 async function main() {
 	try {
 		console.log(
-			"🤖 Starting a simple agent example with OpenAI's gpt-4.1-mini-2025-04-14...",
+			"🤖 Starting a simple agent example with Google's Gemini 2.5 Flash model...",
 		);
 
 		// Example 1: Basic question answering

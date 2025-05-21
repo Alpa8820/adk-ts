@@ -3,21 +3,19 @@ import { BaseLLM } from "./base-llm";
 import type { LLMRequest, Message, MessageRole } from "./llm-request";
 import { LLMResponse } from "./llm-response";
 
-// Type definitions for Google GenAI SDK
-interface GoogleGenAI {
-  models: {
-    generateContent: (options: any) => Promise<any>;
-    generateContentStream: (options: any) => Promise<any>;
+// Multimodal part for image processing
+interface ImagePart {
+  type: string;
+  image_url: {
+    url: string;
+    mime_type?: string;
   };
 }
 
-interface FunctionDeclaration {
-  name: string;
-  description: string;
-  parameters: any;
-}
+// We'll use any type since we're dynamically importing the GoogleGenAI SDK
+type GenAISDK = any;
 
-// Part interface for multimodal content
+// Define custom Part type for multimodal content since we're using dynamic imports
 interface Part {
   text?: string;
   inlineData?: {
@@ -28,22 +26,6 @@ interface Part {
     name: string;
     response: { content: string };
   };
-}
-
-// Multimodal part for image processing
-interface ImagePart {
-  type: string;
-  image_url: {
-    url: string;
-    mime_type?: string;
-  };
-}
-
-// Enum for function calling mode
-enum FunctionCallingConfigMode {
-  ANY = "ANY",
-  AUTO = "AUTO",
-  NONE = "NONE"
 }
 
 /**
@@ -96,14 +78,24 @@ export class GoogleLLM extends BaseLLM {
 	private vertex?: VertexAI;
 
 	/**
-	 * Google Gen AI client (if using API key)
+	 * Google Generative AI client (if using API key)
 	 */
-	private genAI?: GoogleGenAI;
+	private genAI?: GenAISDK;
 
 	/**
 	 * Generative model instance
 	 */
 	private generativeModel: any; // Can be Vertex GenerativeModel or Google GenAI Model instance
+	
+	/**
+	 * Flag to indicate if the GenAI SDK has been loaded
+	 */
+	private genAIInitialized = false;
+	
+	/**
+	 * Function calling mode for configuration
+	 */
+	private FunctionCallingMode: any;
 
 	/**
 	 * Default parameters for requests
@@ -155,51 +147,39 @@ export class GoogleLLM extends BaseLLM {
 				);
 			}
 
-			// Create Google Gen AI client - using the new SDK pattern
-			// In a real implementation, you would use:
-			// this.genAI = new GoogleGenAI({ apiKey });
-			this.genAI = { 
-				models: {
-					generateContent: async (options: any) => {
-						// Implementation will be replaced when @google/genai is installed
-						console.log("Called generateContent with:", JSON.stringify(options, null, 2));
-						return Promise.resolve({ text: "Mock response", functionCalls: [] });
-					},
-					generateContentStream: async (options: any) => {
-						// Implementation will be replaced when @google/genai is installed
-						console.log("Called generateContentStream with:", JSON.stringify(options, null, 2));
-						const mockStream = {
-							[Symbol.asyncIterator]: () => ({
-								next: () => Promise.resolve({ 
-									done: true, 
-									value: { text: "Mock response" } 
-								})
-							}),
-							stream: {
-								[Symbol.asyncIterator]: () => ({
-									next: () => Promise.resolve({ 
-										done: true, 
-										value: { candidates: [{ content: { parts: [{ text: "Mock response" }] } }] } 
-									})
-								})
-							},
-							response: Promise.resolve({ 
-								text: "Mock complete response", 
-								functionCalls: [] 
-							})
-						};
-						return Promise.resolve(mockStream);
-					}
-				}
-			} as GoogleGenAI;
-
-			// Use models property as the generative model instance
-			this.generativeModel = this.genAI.models;
+			// For API key approach, we'll initialize in the first call to generateContentAsync
+			// This allows us to handle the ESM dynamic import gracefully
+			this.genAIInitialized = false;
 		}
 
-		console.log(
-			`Using ${this.useVertexAI ? "Vertex AI" : "Gen AI SDK with API Key"} for Google Gemini LLM (model: ${this.model})`,
-		);
+		// Initialization complete
+	}
+
+	/**
+	 * Initialize the GenAI SDK asynchronously - called on first use
+	 */
+	private async initializeGenAI(apiKey: string): Promise<void> {
+		try {
+			// Dynamically import the ESM module
+			const genaiModule = await import('@google/genai');
+			
+			// Initialize client with API key
+			this.genAI = new genaiModule.GoogleGenAI({ apiKey });
+			
+			// Get the generative model instance using the new SDK
+			this.generativeModel = this.genAI.models;
+			
+			// Mark as initialized
+			this.genAIInitialized = true;
+			
+			// Store FunctionCallingConfigMode for later use
+			this.FunctionCallingMode = genaiModule.FunctionCallingConfigMode;
+			
+			// SDK initialized successfully
+		} catch (error) {
+			console.error("GoogleLLM initialization error:", error);
+			throw error;
+		}
 	}
 
 	/**
@@ -294,7 +274,7 @@ export class GoogleLLM extends BaseLLM {
 					name: func.name,
 					description: func.description,
 					parameters: func.parameters,
-				} as FunctionDeclaration,
+				},
 			],
 		}));
 	}
@@ -309,30 +289,57 @@ export class GoogleLLM extends BaseLLM {
 			content: null,
 		});
 
-		// Extract text content
+		// Extract text content based on response format
 		if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
+			// Vertex AI format
 			result.content = response.candidates[0].content.parts[0].text;
+		} else if (response?.text) {
+			// Google GenAI SDK format
+			result.content = response.text;
 		}
 
 		// Handle function calls (Vertex AI format)
-		if (response?.candidates?.[0]?.content?.parts?.[0]?.functionCall) {
-			const functionCall = response.candidates[0].content.parts[0].functionCall;
+if (response?.candidates?.[0]?.content?.parts?.[0]?.functionCall) {
+const functionCall = response.candidates[0].content.parts[0].functionCall;
 
+result.function_call = {
+	name: functionCall.name,
+	arguments: JSON.stringify(functionCall.args || {}),
+};
+
+// Set tool_calls array too for newer format
+result.tool_calls = [
+	{
+		id: `google-${Date.now()}`,
+		function: {
+			name: functionCall.name,
+			arguments: JSON.stringify(functionCall.args || {}),
+		},
+	},
+];
+} else if (response?.functionCalls && response.functionCalls.length > 0) {
+			// Handle function calls from Google GenAI SDK format
+			const functionCall = response.functionCalls[0];
+			
 			result.function_call = {
 				name: functionCall.name,
-				arguments: JSON.stringify(functionCall.args || {}),
+				arguments: typeof functionCall.args === 'object' 
+					? JSON.stringify(functionCall.args || {})
+					: (functionCall.args || '{}'),
 			};
 
-			// Set tool_calls array too for newer format
-			result.tool_calls = [
-				{
-					id: `google-${Date.now()}`,
+			// Set tool_calls array for newer format
+			result.tool_calls = response.functionCalls.map(
+				(functionCall: any, index: number) => ({
+					id: `google-${Date.now()}-${index}`,
 					function: {
 						name: functionCall.name,
-						arguments: JSON.stringify(functionCall.args || {}),
+						arguments: typeof functionCall.args === 'object' 
+							? JSON.stringify(functionCall.args || {})
+							: (functionCall.args || '{}'),
 					},
-				},
-			];
+				}),
+			);
 		}
 
 		return result;
@@ -346,6 +353,15 @@ export class GoogleLLM extends BaseLLM {
 		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		try {
+			// Initialize GenAI SDK if needed (for API key approach)
+		if (!this.useVertexAI && !this.genAIInitialized) {
+			const apiKey = process.env.GOOGLE_API_KEY;
+			if (!apiKey) {
+				throw new Error("Google API Key is required but not found in environment variables.");
+			}
+			await this.initializeGenAI(apiKey);
+		}
+			
 			if (this.useVertexAI) {
 				// Vertex AI implementation
 				// Convert messages to Google format for Vertex AI
@@ -425,79 +441,89 @@ export class GoogleLLM extends BaseLLM {
 						llmRequest.config.max_tokens ?? this.defaultParams.maxOutputTokens,
 				};
 
-				// Prepare tools and function calling config if specified
-				const toolConfig = llmRequest.config.functions
+				// Prepare function calling config
+				const functionCallingConfig = llmRequest.config.functions
 					? {
-							toolConfig: {
-								functionCallingConfig: {
-									mode: FunctionCallingConfigMode.ANY,
-								},
+							functionCallingConfig: {
+								mode: this.FunctionCallingMode ? this.FunctionCallingMode.ANY : "ANY",
 							},
 						}
-					: {};
+					: undefined;
 
 				// Prepare tools if specified
 				const tools = llmRequest.config.functions
 					? this.convertFunctionsToGenAITools(llmRequest.config.functions)
 					: undefined;
 
-				// Create request options (pass parameters directly for GenAI API)
+				// Create request options for GenAI API
 				const requestOptions: any = {
 					temperature: generationConfig.temperature,
 					topP: generationConfig.topP,
 					maxOutputTokens: generationConfig.maxOutputTokens,
-					...toolConfig,
 				};
 
-				// Add tools if available
+				// Add tools configuration if available
 				if (tools && tools.length > 0) {
 					requestOptions.tools = tools;
+					requestOptions.toolConfig = functionCallingConfig;
 				}
 
 				if (stream) {
 					// Handle streaming with GenAI API
-					const streamingResult =
-						await this.generativeModel.generateContentStream({
-							model: this.model,
-							contents: chatHistory.contents,
-							system: chatHistory.system,
-							...requestOptions,
-						});
+									const streamingResult = await this.generativeModel.generateContentStream({
+										model: this.model,
+										contents: chatHistory.contents,
+										systemInstruction: chatHistory.system,
+										...requestOptions,
+									});
 
-					for await (const chunk of streamingResult) {
-						const partialText = chunk.text?.trim() || "";
+									// Stream started
+									
+									// Process the stream according to the new GenAI SDK
+									for await (const chunk of streamingResult.stream) {
+										// Handle each chunk from the stream
+										if (chunk.text) {
+											const partialText = chunk.text.trim() || "";
 
-						// Create partial response
-						const partialResponse = new LLMResponse({
-							content: partialText,
-							role: "assistant",
-							is_partial: true,
-						});
+											// Create partial response
+											const partialResponse = new LLMResponse({
+												content: partialText,
+												role: "assistant",
+												is_partial: true,
+											});
 
-						yield partialResponse;
-					}
+											yield partialResponse;
+										}
+									}
 
-					// Check for function calls from the complete response
-					const response = await streamingResult.response;
-					if (
-						response.functionCalls &&
-						response.functionCalls.length > 0
-					) {
-						yield this.convertGenAIResponse(response);
-					}
-				} else {
-					// Handle non-streaming with GenAI API
-					const response = await this.generativeModel.generateContent({
-						model: this.model,
-						contents: chatHistory.contents,
-						system: chatHistory.system,
-						...requestOptions,
-					});
+									// Check for function calls from the complete response
+									const response = await streamingResult.response;
+									if (
+										response.functionCalls &&
+										response.functionCalls.length > 0
+									) {
+										yield this.convertGenAIResponse(response);
+									} else if (response.text) {
+										// Final complete text response (not a function call)
+										yield new LLMResponse({
+											content: response.text,
+											role: "assistant",
+										});
+									}
+								} else {
+									// Handle non-streaming with GenAI API
+									// Generating content
+									const response = await this.generativeModel.generateContent({
+										model: this.model,
+										contents: chatHistory.contents,
+										systemInstruction: chatHistory.system,
+										...requestOptions,
+									});
 					yield this.convertGenAIResponse(response);
 				}
 			}
 		} catch (error) {
-			console.error("Error generating content from Google Gemini:", error);
+			console.error("GoogleLLM generation error:", error);
 			throw error;
 		}
 	}
@@ -533,9 +559,9 @@ export class GoogleLLM extends BaseLLM {
 					// For multimodal content
 					parts = message.content.map(part => {
 						if (part.type === "text") {
-							return { text: part.text } as Part;
+							return { text: part.text };
 						} else if (part.type === "image") {
-							// Handle image parts with proper typing
+							// Handle image parts
 							const imagePart = part as ImagePart;
 							const mimeType = typeof imagePart.image_url === "object" && 
 								"mime_type" in imagePart.image_url && 
@@ -553,9 +579,9 @@ export class GoogleLLM extends BaseLLM {
 									mimeType,
 									data
 								}
-							} as Part;
+							};
 						}
-						return { text: JSON.stringify(part) } as Part;
+						return { text: JSON.stringify(part) };
 					});
 				} else {
 					parts = [{ text: JSON.stringify(message.content) }];
@@ -577,21 +603,22 @@ export class GoogleLLM extends BaseLLM {
 					parts: [{ text: content }],
 				});
 			} else if (message.role === "function" || message.role === "tool") {
-				// With the new SDK, we should use proper function response format
+				// For GenAI SDK, we need to use the proper user role with functionResponse
 				const functionName = message.name || "unknown";
 				const functionContent =
 					typeof message.content === "string"
 						? message.content
 						: JSON.stringify(message.content);
 
-				// For GenAI SDK, we wrap this as a function response part
-				// Note: In the actual implementation, functionResponse should be properly structured
-				// according to the GenAI SDK requirements
+				// Add as a user message with functionResponse
 				chatHistory.push({
 					role: "user",
 					parts: [
 						{
-							text: `Function response from ${functionName}: ${functionContent}`,
+							functionResponse: {
+								name: functionName,
+								response: { content: functionContent },
+							},
 						},
 					],
 				});
@@ -617,9 +644,9 @@ export class GoogleLLM extends BaseLLM {
 			{
 				functionDeclarations: functions.map((func) => ({
 					name: func.name,
-					description: func.description,
-					parameters: func.parameters,
-				} as FunctionDeclaration)),
+					description: func.description || "",
+					parameters: func.parameters || {},
+				})),
 			},
 		];
 	}
@@ -638,7 +665,6 @@ export class GoogleLLM extends BaseLLM {
 		if (response.functionCalls && response.functionCalls.length > 0) {
 			const functionCall = response.functionCalls[0];
 
-			// Set the older format function_call property for compatibility
 			result.function_call = {
 				name: functionCall.name,
 				arguments: typeof functionCall.args === 'object' 
@@ -646,7 +672,7 @@ export class GoogleLLM extends BaseLLM {
 					: (functionCall.args || '{}'),
 			};
 
-			// Set tool_calls array for newer format compatibility
+			// Set tool_calls array too for newer format
 			result.tool_calls = response.functionCalls.map(
 				(functionCall: any, index: number) => ({
 					id: `google-${Date.now()}-${index}`,
