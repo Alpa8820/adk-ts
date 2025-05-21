@@ -17,7 +17,7 @@
 		"docs:markdown": "typedoc --plugin typedoc-plugin-markdown",
 		"predeploy": "npm run docs",
 		"deploy:docs": "gh-pages -d docs",
-		"example": "ts-node -r tsconfig-paths/register examples/index.ts",
+		"example": "tsx examples/index.ts",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage"
 	},
@@ -58,6 +58,7 @@
 		"rimraf": "^5.0.5",
 		"ts-node": "^10.9.1",
 		"tsconfig-paths": "^4.2.0",
+		"tsx": "^4.19.4",
 		"typedoc": "^0.28.2",
 		"typedoc-plugin-markdown": "^4.6.2",
 		"typescript": "^5.3.2",
