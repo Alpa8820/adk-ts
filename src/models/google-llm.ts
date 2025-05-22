@@ -313,12 +313,25 @@ export class GoogleLLM extends BaseLLM {
 		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		try {
+			console.log(
+				`[${new Date().toISOString()}] Starting generateContentAsync with request:`,
+				llmRequest,
+			);
+
 			// Convert messages to Google GenAI format - do this once
+			console.log(
+				`[${new Date().toISOString()}] Converting messages to Google GenAI format`,
+			);
 			const { contents, systemInstruction } = this.convertMessages(
 				llmRequest.messages,
 			);
+			console.log(`[${new Date().toISOString()}] Converted messages:`, {
+				contents,
+				systemInstruction,
+			});
 
 			// Prepare generation config with direct property access
+			console.log(`[${new Date().toISOString()}] Preparing generation config`);
 			const generationConfig = {
 				temperature:
 					llmRequest.config.temperature ?? this.defaultParams.temperature,
@@ -326,22 +339,38 @@ export class GoogleLLM extends BaseLLM {
 				maxOutputTokens:
 					llmRequest.config.max_tokens ?? this.defaultParams.maxOutputTokens,
 			};
+			console.log(
+				`[${new Date().toISOString()}] Generation config:`,
+				generationConfig,
+			);
 
 			// Prepare request options
+			console.log(`[${new Date().toISOString()}] Preparing request options`);
 			const requestOptions: any = {
 				model: this.model,
 				contents,
 				systemInstruction,
 				...generationConfig,
 			};
+			console.log(
+				`[${new Date().toISOString()}] Request options:`,
+				requestOptions,
+			);
 
 			// Add function calling config if functions are provided
 			if (
 				llmRequest.config.functions &&
 				llmRequest.config.functions.length > 0
 			) {
+				console.log(
+					`[${new Date().toISOString()}] Adding function calling config`,
+				);
 				const functionDeclarations = this.convertFunctionsToDeclarations(
 					llmRequest.config.functions,
+				);
+				console.log(
+					`[${new Date().toISOString()}] Function declarations:`,
+					functionDeclarations,
 				);
 
 				requestOptions.config = {
@@ -357,21 +386,33 @@ export class GoogleLLM extends BaseLLM {
 						},
 					],
 				};
+				console.log(
+					`[${new Date().toISOString()}] Updated request options with functions:`,
+					requestOptions,
+				);
 			}
 
 			if (stream) {
+				console.log(`[${new Date().toISOString()}] Handling streaming request`);
 				// Handle streaming with function call support
 				const streamingResult =
 					await this.genAI.models.generateContentStream(requestOptions);
+				console.log(`[${new Date().toISOString()}] Got streaming result`);
 
 				let lastChunk: any = null;
 
 				// Process the stream chunks
+				console.log(`[${new Date().toISOString()}] Processing stream chunks`);
 				for await (const chunk of streamingResult) {
+					console.log(`[${new Date().toISOString()}] Processing chunk:`, chunk);
 					lastChunk = chunk; // Keep track of the last chunk
 
 					if (chunk.text) {
 						const partialText = chunk.text.trim() || "";
+						console.log(
+							`[${new Date().toISOString()}] Got partial text:`,
+							partialText,
+						);
 
 						// Create partial response
 						const partialResponse = new LLMResponse({
@@ -379,28 +420,50 @@ export class GoogleLLM extends BaseLLM {
 							role: "assistant",
 							is_partial: true,
 						});
+						console.log(
+							`[${new Date().toISOString()}] Created partial response:`,
+							partialResponse,
+						);
 
 						yield partialResponse;
 					}
 
 					// Check for function calls in each chunk
 					if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+						console.log(
+							`[${new Date().toISOString()}] Found function calls in chunk:`,
+							chunk.functionCalls,
+						);
 						yield this.convertResponse(chunk);
 					}
 				}
 
 				// If we have a last chunk with function calls that wasn't processed
 				if (lastChunk?.functionCalls && lastChunk.functionCalls.length > 0) {
+					console.log(
+						`[${new Date().toISOString()}] Processing final chunk with function calls:`,
+						lastChunk,
+					);
 					yield this.convertResponse(lastChunk);
 				}
 			} else {
+				console.log(
+					`[${new Date().toISOString()}] Handling non-streaming request`,
+				);
 				// Non-streaming request
 				const response =
 					await this.genAI.models.generateContent(requestOptions);
+				console.log(
+					`[${new Date().toISOString()}] Got non-streaming response:`,
+					response,
+				);
 				yield this.convertResponse(response);
 			}
 		} catch (error) {
-			console.error("GoogleLLM generation error:", error);
+			console.error(
+				`[${new Date().toISOString()}] GoogleLLM generation error:`,
+				error,
+			);
 			throw error;
 		}
 	}

@@ -417,25 +417,7 @@ export class Agent extends BaseAgent {
 			// Add tool declarations if any tools are available
 			const functions = this.tools.map((tool) => tool.getDeclaration());
 
-			const responseGenerator = await this.llm.generateContentAsync(
-				new LLMRequest({
-					messages: context.messages,
-					config: {
-						...options.config,
-						functions: functions.length > 0 ? functions : undefined,
-					},
-				}),
-			);
-
 			let response: LLMResponse | undefined;
-			for await (const chunk of responseGenerator) {
-				response = chunk;
-			}
-
-			if (!response) {
-				throw new Error("No response from LLM");
-			}
-
 			let stepCount = 0;
 			while (stepCount < this.maxToolExecutionSteps) {
 				stepCount++;
@@ -464,6 +446,9 @@ export class Agent extends BaseAgent {
 				if (!currentResponse) {
 					throw new Error("No response from LLM");
 				}
+
+				// Store the response for return
+				response = currentResponse;
 
 				if (
 					currentResponse.tool_calls &&
@@ -515,7 +500,8 @@ export class Agent extends BaseAgent {
 				}
 			}
 
-			return response;
+			// If we've reached the maximum number of steps, return the last response
+			return response!;
 		} catch (error) {
 			console.error("Error in agent execution:", error);
 			throw error;
