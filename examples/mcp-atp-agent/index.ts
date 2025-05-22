@@ -1,4 +1,4 @@
-import { Agent, LLMRegistry, GoogleLLM, type MessageRole } from "@adk";
+import { Agent, GoogleLLM, LLMRegistry, type MessageRole } from "@adk";
 import { McpError, McpToolset } from "@adk/tools/mcp";
 import type { McpConfig } from "@adk/tools/mcp/types";
 import * as dotenv from "dotenv";
@@ -99,8 +99,9 @@ async function main() {
 		// Create the agent with MCP ATP tools
 		const agent = new Agent({
 			name: "mcp_atp_assistant",
-			model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-04-17",
-			description: "An assistant that can interact with the IQ AI ATP via MCP using Google Gemini",
+			model: process.env.LLM_MODEL || "gemini-2.0-flash",
+			description:
+				"An assistant that can interact with the IQ AI ATP via MCP using Google Gemini",
 			instructions:
 				"You are a helpful assistant that can interact with the IQ AI Agent Tokenization Platform (ATP).",
 			tools: mcpTools,

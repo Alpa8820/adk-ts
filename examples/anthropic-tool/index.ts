@@ -2,11 +2,11 @@ import {
 	Agent,
 	BaseTool,
 	type FunctionDeclaration,
+	GoogleLLM,
+	LLMRegistry,
 	type Message,
 	type MessageRole,
 	type ToolContext,
-	GoogleLLM,
-	LLMRegistry,
 } from "@adk";
 import * as dotenv from "dotenv";
 
@@ -99,7 +99,7 @@ async function main() {
 		// Create the agent with Gemini model and weather tool
 		const agent = new Agent({
 			name: "gemini_weather_assistant",
-			model: "gemini-2.5-flash-preview-04-17", // Using Gemini Flash with tool calling support
+			model: "gemini-2.0-flash", // Using Gemini Flash with tool calling support
 			description: "A weather assistant powered by Google Gemini",
 			instructions: `You are a helpful assistant that can provide weather information.
 When asked about weather for a location, use the get_weather tool to retrieve the data.

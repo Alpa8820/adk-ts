@@ -1,7 +1,7 @@
 import {
 	Agent,
-	LLMRegistry,
 	GoogleLLM,
+	LLMRegistry,
 	RunConfig,
 	UserInteractionTool,
 } from "@adk";
@@ -64,8 +64,9 @@ async function main() {
 	// Create an agent with this tool
 	const agent = new Agent({
 		name: "user_interaction_demo",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-04-17",
-		description: "An agent that demonstrates user interaction capabilities using Google Gemini",
+		model: process.env.LLM_MODEL || "gemini-2.0-flash",
+		description:
+			"An agent that demonstrates user interaction capabilities using Google Gemini",
 		instructions: `You are a helpful assistant that can interact with the user to gather information.
     Use the user_interaction tool to ask the user questions or get their input on decisions.
     Always be respectful and clear in your prompts to the user.`,

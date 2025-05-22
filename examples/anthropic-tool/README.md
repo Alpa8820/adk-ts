@@ -35,7 +35,7 @@ npm run example:anthropic  # Note: The script name remains the same for compatib
 
 This example showcases tool calling with Google Gemini models:
 
-1. Uses Gemini 2.5 Flash which supports tool calling
+1. Uses Gemini 2.0 Flash which supports tool calling
 2. Registers a weather tool with the Agent framework
 3. Demonstrates both single-turn and multi-turn tool usage
 4. Shows structured responses from the tool
@@ -50,4 +50,4 @@ The example uses the latest Google GenAI SDK which provides proper TypeScript ty
 ## Models
 
 This example works with the following Gemini model:
-- gemini-2.5-flash-preview-04-17
+- gemini-2.0-flash

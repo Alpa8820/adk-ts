@@ -5,7 +5,7 @@
  * to create, write, and read files through MCP tools.
  */
 
-import { Agent, LLMRegistry, type MessageRole, GoogleLLM } from "@adk";
+import { Agent, GoogleLLM, LLMRegistry, type MessageRole } from "@adk";
 import { McpError, McpToolset } from "@adk/tools/mcp";
 import type { McpConfig } from "@adk/tools/mcp/types";
 import * as dotenv from "dotenv";
@@ -63,7 +63,7 @@ async function main() {
 		// Create the agent with MCP filesystem tools
 		const agent = new Agent({
 			name: "filesystem_assistant",
-			model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-04-17",
+			model: process.env.LLM_MODEL || "gemini-2.0-flash",
 			description: "An assistant that can manipulate files using Google Gemini",
 			instructions: `You are a helpful assistant that can manipulate files on the user's desktop.
 				You have access to tools that let you write, read, and manage files.

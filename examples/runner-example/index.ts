@@ -1,9 +1,9 @@
 import {
 	Agent,
+	GoogleLLM,
 	InMemoryRunner,
 	LLMRegistry,
 	type MessageRole,
-	GoogleLLM,
 	RunConfig,
 	StreamingMode,
 } from "@adk";
@@ -19,8 +19,9 @@ LLMRegistry.registerLLM(GoogleLLM);
 // Initialize the agent with Google's Gemini model
 const agent = new Agent({
 	name: "runner_assistant",
-	model: "gemini-2.5-flash-preview-04-17", // This will use the LLMRegistry to get the right provider
-	description: "A simple assistant demonstrating Runner usage with Google Gemini",
+	model: "gemini-2.0-flash", // This will use the LLMRegistry to get the right provider
+	description:
+		"A simple assistant demonstrating Runner usage with Google Gemini",
 	instructions:
 		"You are a helpful assistant. Answer questions directly and accurately. When asked about the three laws of robotics, explain that they were created by Isaac Asimov and describe them in detail.",
 });

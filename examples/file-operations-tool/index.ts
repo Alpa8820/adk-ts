@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { Agent, FileOperationsTool, LLMRegistry, GoogleLLM } from "@adk";
+import { Agent, FileOperationsTool, GoogleLLM, LLMRegistry } from "@adk";
 import * as dotenv from "dotenv";
 
 // Load environment variables
@@ -18,8 +18,9 @@ async function main() {
 	// Create an agent with this tool
 	const agent = new Agent({
 		name: "file_operations_demo",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-04-17",
-		description: "An agent that demonstrates file operations capabilities using Google Gemini",
+		model: process.env.LLM_MODEL || "gemini-2.0-flash",
+		description:
+			"An agent that demonstrates file operations capabilities using Google Gemini",
 		instructions: `You are a helpful assistant that can perform file system operations.
     Use the file_operations tool to read, write, and manage files.
     Always verify operations success by checking the 'success' property in the response.
