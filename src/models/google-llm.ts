@@ -153,21 +153,15 @@ export class GoogleLLM extends BaseLLM {
 		const contents: any[] = [];
 		let systemMessage: string | null = null;
 
-		// First pass: extract system message if present
+		// Single pass through messages
 		for (const message of messages) {
 			if (message.role === "system") {
 				systemMessage =
 					typeof message.content === "string"
 						? message.content
 						: JSON.stringify(message.content);
-				break;
+				continue;
 			}
-		}
-
-		// Second pass: convert all non-system messages
-		for (const message of messages) {
-			// Skip system messages as they're handled separately
-			if (message.role === "system") continue;
 
 			// Handle user messages
 			if (message.role === "user") {
@@ -191,10 +185,14 @@ export class GoogleLLM extends BaseLLM {
 									? imagePart.image_url.mime_type
 									: "image/jpeg";
 
-							// Extract base64 data
-							const data = imagePart.image_url.url.startsWith("data:")
-								? imagePart.image_url.url.split(",")[1]
-								: Buffer.from(imagePart.image_url.url).toString("base64");
+							// Extract base64 data - optimize this for large images
+							let data: string;
+							if (imagePart.image_url.url.startsWith("data:")) {
+								data = imagePart.image_url.url.split(",")[1];
+							} else {
+								// Consider using a more efficient method for large images
+								data = Buffer.from(imagePart.image_url.url).toString("base64");
+							}
 
 							parts.push({
 								inlineData: {
@@ -315,12 +313,12 @@ export class GoogleLLM extends BaseLLM {
 		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		try {
-			// Convert messages to Google GenAI format
+			// Convert messages to Google GenAI format - do this once
 			const { contents, systemInstruction } = this.convertMessages(
 				llmRequest.messages,
 			);
 
-			// Prepare generation config
+			// Prepare generation config with direct property access
 			const generationConfig = {
 				temperature:
 					llmRequest.config.temperature ?? this.defaultParams.temperature,
@@ -362,12 +360,16 @@ export class GoogleLLM extends BaseLLM {
 			}
 
 			if (stream) {
-				// Handle streaming
+				// Handle streaming with function call support
 				const streamingResult =
 					await this.genAI.models.generateContentStream(requestOptions);
 
+				let lastChunk: any = null;
+
 				// Process the stream chunks
 				for await (const chunk of streamingResult) {
+					lastChunk = chunk; // Keep track of the last chunk
+
 					if (chunk.text) {
 						const partialText = chunk.text.trim() || "";
 
@@ -380,23 +382,16 @@ export class GoogleLLM extends BaseLLM {
 
 						yield partialResponse;
 					}
+
+					// Check for function calls in each chunk
+					if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+						yield this.convertResponse(chunk);
+					}
 				}
 
-				// For function calls, we need to get the final response
-				// The SDK doesn't expose a direct way to get the final response from a stream
-				// So we'll make a non-streaming request to check for function calls
-				if (
-					llmRequest.config.functions &&
-					llmRequest.config.functions.length > 0
-				) {
-					const finalResponse =
-						await this.genAI.models.generateContent(requestOptions);
-					if (
-						finalResponse.functionCalls &&
-						finalResponse.functionCalls.length > 0
-					) {
-						yield this.convertResponse(finalResponse);
-					}
+				// If we have a last chunk with function calls that wasn't processed
+				if (lastChunk?.functionCalls && lastChunk.functionCalls.length > 0) {
+					yield this.convertResponse(lastChunk);
 				}
 			} else {
 				// Non-streaming request
