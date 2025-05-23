@@ -2,6 +2,7 @@ import {
 	type GenerateContentConfig,
 	type GenerateContentParameters,
 	GoogleGenAI,
+	type GoogleGenAIOptions,
 } from "@google/genai";
 import { BaseLLM } from "./base-llm";
 import type { LLMRequest, Message, MessageRole } from "./llm-request";
@@ -70,6 +71,7 @@ export class GoogleLLM extends BaseLLM {
 		const location = config?.location || process.env.GOOGLE_CLOUD_LOCATION;
 		const useVertexAI = process.env.USE_VERTEX_AI === "true";
 
+		// Validate configurations
 		if (!useVertexAI && !apiKey) {
 			throw new Error(
 				"Google API Key is required. Provide via config or GOOGLE_API_KEY env var.",
@@ -82,10 +84,25 @@ export class GoogleLLM extends BaseLLM {
 			);
 		}
 
-		// Create Vertex AI instance
-		this.ai = new GoogleGenAI({ apiKey });
+		// Prepare options based on authentication method
+		let options: GoogleGenAIOptions;
 
-		// Store default parameters
+		if (useVertexAI) {
+			options = {
+				vertexai: true,
+				project: projectId,
+				location,
+			};
+		} else {
+			options = {
+				apiKey,
+			};
+		}
+
+		// Create Google GenAI instance
+		this.ai = new GoogleGenAI(options);
+
+		// Store default parameters with fallbacks
 		this.defaultParams = {
 			temperature: config?.defaultParams?.temperature ?? 0.7,
 			topP: config?.defaultParams?.top_p ?? 1,
@@ -317,15 +334,6 @@ export class GoogleLLM extends BaseLLM {
 					});
 
 					yield partialResponse;
-				}
-
-				// Final response handling for function calls which may only be in the final response
-				const finalResponse = await streamingResult.response;
-				const hasToolCall =
-					finalResponse?.candidates?.[0]?.content?.parts?.[0]?.functionCall;
-
-				if (hasToolCall) {
-					yield this.convertResponse(finalResponse);
 				}
 			} else {
 				// Non-streaming request
