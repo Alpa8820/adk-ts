@@ -69,7 +69,7 @@ export class GoogleLLM extends BaseLLM {
 		// Get vertex configuration from environment or passed config
 		const projectId = config?.projectId || process.env.GOOGLE_CLOUD_PROJECT;
 		const location = config?.location || process.env.GOOGLE_CLOUD_LOCATION;
-		const useVertexAI = process.env.USE_VERTEX_AI === "true";
+		const useVertexAI = process.env.USE_VERTEX_AI?.toLowerCase() === "true";
 
 		// Validate configurations
 		if (!useVertexAI && !apiKey) {
