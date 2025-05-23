@@ -3,6 +3,7 @@ import {
 	type GenerateContentParameters,
 	GoogleGenAI,
 	type GoogleGenAIOptions,
+	type Part,
 } from "@google/genai";
 import { BaseLLM } from "./base-llm";
 import type { LLMRequest, Message, MessageRole } from "./llm-request";
@@ -119,49 +120,148 @@ export class GoogleLLM extends BaseLLM {
 			"gemini-.*",
 		];
 	}
-
 	/**
 	 * Convert a message to Google Vertex AI format
 	 */
 	private convertMessage(message: Message): any {
-		// Base content as empty string, will be populated based on message type
-		let content: any = "";
+		const googleRole = this.mapRole(message.role);
+		const parts: Part[] = []; // Use the imported Part type
 
-		// Handle multimodal content
-		if (Array.isArray(message.content)) {
-			// Create parts array for multimodal content
-			const parts: any[] = [];
-
-			for (const part of message.content) {
-				if (part.type === "text") {
-					parts.push({ text: part.text });
-				} else if (part.type === "image") {
-					parts.push({
-						inlineData: {
-							mimeType:
-								typeof part.image_url === "object" &&
-								"mime_type" in part.image_url
-									? part.image_url.mime_type
-									: "image/jpeg",
-							data: part.image_url.url.startsWith("data:")
-								? part.image_url.url.split(",")[1] // Handle base64 data URLs
-								: Buffer.from(part.image_url.url).toString("base64"), // Convert URL to base64
-						},
-					});
-				}
+		// Case 1: This is a tool result being sent back to the model
+		if (googleRole === "function") {
+			// ADK 'tool' Message should have 'name' and 'content' (stringified JSON result).
+			// 'tool_call_id' from ADK message isn't directly used in Gemini's functionResponse part,
+			// but the 'name' is crucial.
+			if (
+				typeof message.name !== "string" ||
+				typeof message.content !== "string"
+			) {
+				const errorMsg = `ADK 'tool' message for Gemini requires 'name' (string) and 'content' (stringified JSON result). Received: name=${message.name}, content type=${typeof message.content}`;
+				console.error(errorMsg, message);
+				// Return a part that indicates an error, or handle as per your error strategy
+				parts.push({ text: `Error processing tool result: ${errorMsg}` });
+				return { role: googleRole, parts };
 			}
+			try {
+				parts.push({
+					functionResponse: {
+						name: message.name, // The name of the function that was called
+						response: JSON.parse(message.content), // The result, parsed into an object
+					},
+				});
+			} catch (e: any) {
+				const errorMsg = `Tool content for function '${message.name}' is not valid JSON: ${message.content}. Error: ${e.message}`;
+				console.error(errorMsg, message);
+				// Send the error back as part of the response to the model
+				parts.push({
+					functionResponse: {
+						name: message.name,
+						response: { error: errorMsg, originalContent: message.content },
+					},
+				});
+			}
+		}
+		// Case 2: This is the assistant's request to call one or more tools
+		else if (
+			message.role === "assistant" &&
+			message.tool_calls &&
+			message.tool_calls.length > 0
+		) {
+			// If the assistant provided any text alongside the tool call request
+			if (
+				typeof message.content === "string" &&
+				message.content.trim() !== ""
+			) {
+				parts.push({ text: message.content });
+			}
+			// Add each tool call as a functionCall part
+			for (const toolCall of message.tool_calls) {
+				let argsObject = {};
+				try {
+					if (
+						toolCall.function.arguments &&
+						typeof toolCall.function.arguments === "string"
+					) {
+						argsObject = JSON.parse(toolCall.function.arguments);
+					} else if (typeof toolCall.function.arguments === "object") {
+						// If arguments are already an object (less common for string-based LLM outputs)
+						argsObject = toolCall.function.arguments;
+					}
+				} catch (e: any) {
+					console.warn(
+						`Failed to parse tool arguments for ${toolCall.function.name}, using empty object. Args: ${toolCall.function.arguments}. Error: ${e.message}`,
+					);
+				}
+				parts.push({
+					functionCall: {
+						name: toolCall.function.name,
+						args: argsObject,
+					},
+				});
+			}
+		}
+		// Case 3: Standard user message or assistant's simple text response (or multimodal content)
+		else {
+			if (Array.isArray(message.content)) {
+				for (const part of message.content) {
+					if (part.type === "text") {
+						parts.push({ text: part.text });
+					} else if (part.type === "image" && part.image_url) {
+						// Ensure image_url is treated as an object if it might be a string
+						const imageUrlObject =
+							typeof part.image_url === "string"
+								? { url: part.image_url, mime_type: "image/jpeg" } // Provide a default mime_type
+								: part.image_url;
 
-			content = parts;
-		} else if (typeof message.content === "string") {
-			content = message.content;
+						parts.push({
+							inlineData: {
+								data: imageUrlObject.url.startsWith("data:")
+									? imageUrlObject.url.split(",")[1]
+									: Buffer.from(imageUrlObject.url).toString("base64"),
+							},
+						});
+					}
+				}
+			} else if (typeof message.content === "string") {
+				parts.push({ text: message.content });
+			} else if (
+				message.content === null &&
+				(googleRole === "user" || googleRole === "model")
+			) {
+				// Handle null content for user/model roles by sending an empty text part,
+				// as Gemini expects parts to be non-empty.
+				parts.push({ text: "" });
+			}
 		}
 
-		// Map to Google format
-		const role = this.mapRole(message.role);
+		// Gemini API requires the parts array to be non-empty for 'user' and 'model' roles.
+		// If parts is still empty here for such roles, and it's not a structured call/response, add an empty text part.
+		if (
+			parts.length === 0 &&
+			(googleRole === "user" ||
+				(googleRole === "model" &&
+					(!message.tool_calls || message.tool_calls.length === 0)))
+		) {
+			if (
+				message.content === null ||
+				message.content === "" ||
+				message.content === undefined
+			) {
+				parts.push({ text: "" });
+			} else {
+				// This might indicate an unhandled content type or an issue in the logic above.
+				console.warn(
+					`Message for role '${googleRole}' resulted in empty parts despite having content. Original message:`,
+					JSON.stringify(message),
+					"Adding an empty text part as a fallback.",
+				);
+				parts.push({ text: "" });
+			}
+		}
 
 		return {
-			role,
-			parts: Array.isArray(content) ? content : [{ text: content }],
+			role: googleRole,
+			parts: parts,
 		};
 	}
 
