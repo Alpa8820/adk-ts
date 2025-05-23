@@ -73,7 +73,10 @@ dotenv.config();
 // Create a basic agent
 const agent = new Agent({
   name: "simple_assistant",
-  model: "gpt-4-turbo", // Or "claude-3-opus" or "gemini-2.0-flash"
+// Create a basic agent
+const agent = new Agent({
+  name: "simple_assistant",
+  model: "gemini-2.0-flash", // Or "gpt-4-turbo" or "claude-3-opus"
   description: "A simple assistant",
   instructions: "You are a helpful assistant. Answer questions concisely."
 });
