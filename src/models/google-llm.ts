@@ -1,39 +1,25 @@
 import {
-	FunctionCallingConfigMode,
-	type FunctionDeclaration,
+	type GenerateContentConfig,
+	type GenerateContentParameters,
 	GoogleGenAI,
 } from "@google/genai";
 import { BaseLLM } from "./base-llm";
-import type { LLMRequest, Message } from "./llm-request";
+import type { LLMRequest, Message, MessageRole } from "./llm-request";
 import { LLMResponse } from "./llm-response";
-
-// Multimodal part for image processing
-interface ImagePart {
-	type: string;
-	image_url: {
-		url: string;
-		mime_type?: string;
-	};
-}
 
 /**
  * Google Gemini LLM configuration
  */
 export interface GoogleLLMConfig {
 	/**
-	 * Google Cloud Project ID (for Vertex AI)
+	 * Google Cloud Project ID (can be provided via GOOGLE_CLOUD_PROJECT env var)
 	 */
 	projectId?: string;
 
 	/**
-	 * Google Cloud location (for Vertex AI)
+	 * Google Cloud location (can be provided via GOOGLE_CLOUD_LOCATION env var)
 	 */
 	location?: string;
-
-	/**
-	 * API version to use (v1, v1beta, v1alpha)
-	 */
-	apiVersion?: string;
 
 	/**
 	 * Default model parameters
@@ -57,21 +43,13 @@ export interface GoogleLLMConfig {
 }
 
 /**
- * Result of message conversion for Google GenAI
- */
-interface ConvertedMessages {
-	contents: any[];
-	systemInstruction?: string;
-}
-
-/**
- * Google Gemini LLM implementation using @google/genai SDK
+ * Google Gemini LLM implementation
  */
 export class GoogleLLM extends BaseLLM {
 	/**
-	 * Google Generative AI client
+	 * Generative model instance
 	 */
-	private genAI: GoogleGenAI;
+	private ai: GoogleGenAI;
 
 	/**
 	 * Default parameters for requests
@@ -84,52 +62,35 @@ export class GoogleLLM extends BaseLLM {
 	constructor(model: string, config?: GoogleLLMConfig) {
 		super(model);
 
+		// Get configuration from environment or passed config
+		const apiKey = process.env.GOOGLE_API_KEY;
+
+		// Get vertex configuration from environment or passed config
+		const projectId = config?.projectId || process.env.GOOGLE_CLOUD_PROJECT;
+		const location = config?.location || process.env.GOOGLE_CLOUD_LOCATION;
+		const useVertexAI = process.env.USE_VERTEX_AI === "true";
+
+		if (!useVertexAI && !apiKey) {
+			throw new Error(
+				"Google API Key is required. Provide via config or GOOGLE_API_KEY env var.",
+			);
+		}
+
+		if (useVertexAI && (!projectId || !location)) {
+			throw new Error(
+				"Google Cloud Project ID and Location are required when using Vertex AI.",
+			);
+		}
+
+		// Create Vertex AI instance
+		this.ai = new GoogleGenAI({ apiKey });
+
 		// Store default parameters
 		this.defaultParams = {
 			temperature: config?.defaultParams?.temperature ?? 0.7,
 			topP: config?.defaultParams?.top_p ?? 1,
 			maxOutputTokens: config?.defaultParams?.maxOutputTokens ?? 1024,
 		};
-
-		// Determine which API to use (Vertex AI or direct Gemini API)
-		const apiKey = process.env.GOOGLE_API_KEY;
-		const useVertexAI =
-			process.env.GOOGLE_GENAI_USE_VERTEXAI?.toLowerCase() !== "false" &&
-			!apiKey;
-
-		if (useVertexAI) {
-			// Vertex AI approach
-			const projectId = config?.projectId || process.env.GOOGLE_CLOUD_PROJECT;
-			const location =
-				config?.location || process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
-
-			if (!projectId) {
-				throw new Error(
-					"Google Cloud Project ID is required for Vertex AI. Provide via config or GOOGLE_CLOUD_PROJECT env var.",
-				);
-			}
-
-			// Initialize with Vertex AI settings
-			this.genAI = new GoogleGenAI({
-				vertexai: true,
-				project: projectId,
-				location: location,
-				apiVersion: config?.apiVersion || "v1beta", // Default to v1beta for newer features
-			});
-		} else {
-			// API Key approach
-			if (!apiKey) {
-				throw new Error(
-					"Google API Key is required when not using Vertex AI. Provide via GOOGLE_API_KEY env var.",
-				);
-			}
-
-			// Initialize with API key
-			this.genAI = new GoogleGenAI({
-				apiKey: apiKey,
-				apiVersion: config?.apiVersion || "v1beta", // Default to v1beta for newer features
-			});
-		}
 	}
 
 	/**
@@ -138,168 +99,152 @@ export class GoogleLLM extends BaseLLM {
 	static supportedModels(): string[] {
 		return [
 			// Gemini models
-			"gemini-*",
-			// Fine-tuned vertex endpoint pattern
-			"projects/*/locations/*/endpoints/*",
-			// Vertex gemini long name
-			"projects/*/locations/*/publishers/google/models/gemini*",
+			"gemini-.*",
 		];
 	}
 
 	/**
-	 * Convert ADK messages to Google GenAI format
+	 * Convert a message to Google Vertex AI format
 	 */
-	private convertMessages(messages: Message[]): ConvertedMessages {
-		const contents: any[] = [];
-		let systemMessage: string | null = null;
+	private convertMessage(message: Message): any {
+		// Base content as empty string, will be populated based on message type
+		let content: any = "";
 
-		// Single pass through messages
-		for (const message of messages) {
-			if (message.role === "system") {
-				systemMessage =
-					typeof message.content === "string"
-						? message.content
-						: JSON.stringify(message.content);
-				continue;
-			}
+		// Handle multimodal content
+		if (Array.isArray(message.content)) {
+			// Create parts array for multimodal content
+			const parts: any[] = [];
 
-			// Handle user messages
-			if (message.role === "user") {
-				const parts: any[] = [];
-
-				// Process content based on type
-				if (typeof message.content === "string") {
-					parts.push({ text: message.content });
-				} else if (Array.isArray(message.content)) {
-					// For multimodal content
-					for (const part of message.content) {
-						if (part.type === "text") {
-							parts.push({ text: part.text });
-						} else if (part.type === "image") {
-							// Handle image parts
-							const imagePart = part as ImagePart;
-							const mimeType =
-								typeof imagePart.image_url === "object" &&
-								"mime_type" in imagePart.image_url &&
-								imagePart.image_url.mime_type
-									? imagePart.image_url.mime_type
-									: "image/jpeg";
-
-							// Extract base64 data - optimize this for large images
-							let data: string;
-							if (imagePart.image_url.url.startsWith("data:")) {
-								data = imagePart.image_url.url.split(",")[1];
-							} else {
-								// Consider using a more efficient method for large images
-								data = Buffer.from(imagePart.image_url.url).toString("base64");
-							}
-
-							parts.push({
-								inlineData: {
-									mimeType,
-									data,
-								},
-							});
-						}
-					}
-				}
-
-				contents.push({
-					role: "user",
-					parts,
-				});
-			} else if (message.role === "assistant" || message.role === "model") {
-				// Handle assistant messages
-				const content =
-					typeof message.content === "string"
-						? message.content
-						: JSON.stringify(message.content);
-
-				contents.push({
-					role: "model",
-					parts: [{ text: content }],
-				});
-			} else if (message.role === "function" || message.role === "tool") {
-				// For function/tool responses
-				const functionName = message.name || "unknown";
-				const functionContent =
-					typeof message.content === "string"
-						? message.content
-						: JSON.stringify(message.content);
-
-				// Add as a user message with functionResponse
-				contents.push({
-					role: "user",
-					parts: [
-						{
-							functionResponse: {
-								name: functionName,
-								response: { content: functionContent },
-							},
+			for (const part of message.content) {
+				if (part.type === "text") {
+					parts.push({ text: part.text });
+				} else if (part.type === "image") {
+					parts.push({
+						inlineData: {
+							mimeType:
+								typeof part.image_url === "object" &&
+								"mime_type" in part.image_url
+									? part.image_url.mime_type
+									: "image/jpeg",
+							data: part.image_url.url.startsWith("data:")
+								? part.image_url.url.split(",")[1] // Handle base64 data URLs
+								: Buffer.from(part.image_url.url).toString("base64"), // Convert URL to base64
 						},
-					],
-				});
+					});
+				}
 			}
+
+			content = parts;
+		} else if (typeof message.content === "string") {
+			content = message.content;
 		}
 
+		// Map to Google format
+		const role = this.mapRole(message.role);
+
 		return {
-			contents,
-			systemInstruction: systemMessage || undefined,
+			role,
+			parts: Array.isArray(content) ? content : [{ text: content }],
 		};
 	}
 
 	/**
-	 * Convert functions to Google GenAI function declarations
+	 * Map ADK role to Google role
 	 */
-	private convertFunctionsToDeclarations(
-		functions: any[],
-	): FunctionDeclaration[] {
+	private mapRole(role: MessageRole): string {
+		switch (role) {
+			case "user":
+				return "user";
+			case "assistant":
+			case "function":
+			case "tool":
+			case "model":
+				return "model";
+			case "system":
+				return "user"; // Map system to user as we'll handle system messages separately
+			default:
+				return "user";
+		}
+	}
+
+	/**
+	 * Extract system message from messages array
+	 */
+	private extractSystemMessage(messages: Message[]): {
+		systemMessage: string | null;
+		filteredMessages: Message[];
+	} {
+		const systemMessages = messages.filter((msg) => msg.role === "system");
+		const filteredMessages = messages.filter((msg) => msg.role !== "system");
+
+		// Combine all system messages into one if there are multiple
+		let systemMessage: string | null = null;
+		if (systemMessages.length > 0) {
+			systemMessage = systemMessages
+				.map((msg) =>
+					typeof msg.content === "string"
+						? msg.content
+						: JSON.stringify(msg.content),
+				)
+				.join("\n");
+		}
+
+		return { systemMessage, filteredMessages };
+	}
+
+	/**
+	 * Convert functions to Google function declarations
+	 */
+	private convertFunctionsToTools(functions: any[]): any[] {
 		if (!functions || functions.length === 0) {
 			return [];
 		}
 
 		return functions.map((func) => ({
-			name: func.name,
-			description: func.description || "",
-			parameters: func.parameters || {},
+			functionDeclarations: [
+				{
+					name: func.name,
+					description: func.description,
+					parameters: func.parameters,
+				},
+			],
 		}));
 	}
 
 	/**
-	 * Convert Google GenAI response to LLMResponse
+	 * Convert Google response to LLMResponse
 	 */
 	private convertResponse(response: any): LLMResponse {
 		// Create base response
 		const result = new LLMResponse({
 			role: "assistant",
-			content: response.text?.trim() || null,
+			content: null,
 		});
 
+		// Extract text content
+		if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
+			result.content = response.candidates[0].content.parts[0].text;
+		}
+
 		// Handle function calls
-		if (response.functionCalls && response.functionCalls.length > 0) {
-			const functionCall = response.functionCalls[0];
+		if (response?.candidates?.[0]?.content?.parts?.[0]?.functionCall) {
+			const functionCall = response.candidates[0].content.parts[0].functionCall;
 
 			result.function_call = {
 				name: functionCall.name,
-				arguments:
-					typeof functionCall.args === "object"
-						? JSON.stringify(functionCall.args || {})
-						: functionCall.args || "{}",
+				arguments: JSON.stringify(functionCall.args || {}),
 			};
 
-			// Set tool_calls array for newer format
-			result.tool_calls = response.functionCalls.map(
-				(functionCall: any, index: number) => ({
-					id: `google-${Date.now()}-${index}`,
+			// Set tool_calls array too for newer format
+			result.tool_calls = [
+				{
+					id: `google-${Date.now()}`,
 					function: {
 						name: functionCall.name,
-						arguments:
-							typeof functionCall.args === "object"
-								? JSON.stringify(functionCall.args || {})
-								: functionCall.args || "{}",
+						arguments: JSON.stringify(functionCall.args || {}),
 					},
-				}),
-			);
+				},
+			];
 		}
 
 		return result;
@@ -313,94 +258,82 @@ export class GoogleLLM extends BaseLLM {
 		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {
 		try {
-			// Convert messages to Google GenAI format - do this once
-			const { contents, systemInstruction } = this.convertMessages(
+			// Extract system message and filter it out from regular messages
+			const { systemMessage, filteredMessages } = this.extractSystemMessage(
 				llmRequest.messages,
 			);
 
-			// Prepare generation config with direct property access
-			const generationConfig = {
+			// Convert remaining messages to Google format
+			const messages = filteredMessages.map((msg) => this.convertMessage(msg));
+
+			// Prepare generation config
+			const generationConfig: GenerateContentConfig = {
 				temperature:
 					llmRequest.config.temperature ?? this.defaultParams.temperature,
 				topP: llmRequest.config.top_p ?? this.defaultParams.topP,
 				maxOutputTokens:
 					llmRequest.config.max_tokens ?? this.defaultParams.maxOutputTokens,
+				systemInstruction: systemMessage
+					? {
+							parts: [{ text: systemMessage }],
+						}
+					: undefined,
 			};
 
-			// Prepare request options
-			const requestOptions: any = {
+			// Prepare tools if specified
+			const tools = llmRequest.config.functions
+				? this.convertFunctionsToTools(llmRequest.config.functions)
+				: undefined;
+
+			// Prepare chat request
+			const requestOptions: GenerateContentParameters = {
+				contents: messages,
+				config: generationConfig,
 				model: this.model,
-				contents,
-				systemInstruction,
-				...generationConfig,
 			};
 
-			// Add function calling config if functions are provided
-			if (
-				llmRequest.config.functions &&
-				llmRequest.config.functions.length > 0
-			) {
-				const functionDeclarations = this.convertFunctionsToDeclarations(
-					llmRequest.config.functions,
-				);
-
-				requestOptions.config = {
-					toolConfig: {
-						functionCallingConfig: {
-							mode: FunctionCallingConfigMode.ANY,
-							allowedFunctionNames: functionDeclarations.map((fn) => fn.name),
-						},
-					},
-					tools: [
-						{
-							functionDeclarations,
-						},
-					],
-				};
+			// Add tools if available
+			if (tools && tools.length > 0 && requestOptions.config) {
+				requestOptions.config.tools = tools;
 			}
 
 			if (stream) {
-				// Handle streaming with function call support
+				// Handle streaming
 				const streamingResult =
-					await this.genAI.models.generateContentStream(requestOptions);
+					await this.ai.models.generateContentStream(requestOptions);
 
-				let lastChunk: any = null;
-
-				// Process the stream chunks
 				for await (const chunk of streamingResult) {
-					lastChunk = chunk; // Keep track of the last chunk
-
-					if (chunk.text) {
-						const partialText = chunk.text.trim() || "";
-
-						// Create partial response
-						const partialResponse = new LLMResponse({
-							content: partialText,
-							role: "assistant",
-							is_partial: true,
-						});
-
-						yield partialResponse;
+					if (!chunk.candidates?.[0]?.content?.parts?.[0]?.text) {
+						continue;
 					}
+					const partialText =
+						chunk.candidates[0]?.content?.parts[0]?.text || "";
 
-					// Check for function calls in each chunk
-					if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-						yield this.convertResponse(chunk);
-					}
+					// Create partial response
+					const partialResponse = new LLMResponse({
+						content: partialText,
+						role: "assistant",
+						is_partial: true,
+					});
+
+					yield partialResponse;
 				}
 
-				// If we have a last chunk with function calls that wasn't processed
-				if (lastChunk?.functionCalls && lastChunk.functionCalls.length > 0) {
-					yield this.convertResponse(lastChunk);
+				// Final response handling for function calls which may only be in the final response
+				const finalResponse = await streamingResult.response;
+				const hasToolCall =
+					finalResponse?.candidates?.[0]?.content?.parts?.[0]?.functionCall;
+
+				if (hasToolCall) {
+					yield this.convertResponse(finalResponse);
 				}
 			} else {
 				// Non-streaming request
-				const response =
-					await this.genAI.models.generateContent(requestOptions);
+				const response = await this.ai.models.generateContent(requestOptions);
 				yield this.convertResponse(response);
 			}
 		} catch (error) {
-			console.error("❌ Error in GoogleLLM:", error);
+			console.error("Error generating content from Google Gemini:", error);
 			throw error;
 		}
 	}
