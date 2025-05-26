@@ -120,53 +120,72 @@ export class GoogleLLM extends BaseLLM {
 			"gemini-.*",
 		];
 	}
+
 	/**
 	 * Convert a message to Google Vertex AI format
 	 */
 	private convertMessage(message: Message): any {
 		const googleRole = this.mapRole(message.role);
-		const parts: Part[] = []; // Use the imported Part type
+		let parts: Part[] = [];
 
-		// Case 1: This is a tool result being sent back to the model
-		if (googleRole === "function") {
-			// ADK 'tool' Message should have 'name' and 'content' (stringified JSON result).
-			// 'tool_call_id' from ADK message isn't directly used in Gemini's functionResponse part,
-			// but the 'name' is crucial.
-			if (
+		if (message.role === "tool") {
+			// This is an ADK 'tool' message (a result from a tool)
+			if (googleRole !== "function") {
+				console.error(
+					`[GoogleLLM] convertMessage: ADK 'tool' role was expected to map to Google 'function' role, but mapped to '${googleRole}'. This is a configuration error in mapRole.`,
+					message,
+				);
+				// Create an error part to send to the model
+				parts.push({
+					functionResponse: {
+						name: message.name || "unknown_function_error",
+						response: {
+							error: "Internal SDK error: Tool role mapping failed.",
+							originalContent: message.content,
+						},
+					},
+				});
+			} else if (
 				typeof message.name !== "string" ||
 				typeof message.content !== "string"
 			) {
-				const errorMsg = `ADK 'tool' message for Gemini requires 'name' (string) and 'content' (stringified JSON result). Received: name=${message.name}, content type=${typeof message.content}`;
-				console.error(errorMsg, message);
-				// Return a part that indicates an error, or handle as per your error strategy
-				parts.push({ text: `Error processing tool result: ${errorMsg}` });
-				return { role: googleRole, parts };
-			}
-			try {
+				const errorMsg = `ADK 'tool' message (for Google 'function' role) requires 'name' (string) and 'content' (stringified JSON result). Received: name=${message.name}, content type=${typeof message.content}`;
+				console.error(
+					"[GoogleLLM] convertMessage - ERROR in tool message structure:",
+					errorMsg,
+					message,
+				);
 				parts.push({
 					functionResponse: {
-						name: message.name, // The name of the function that was called
-						response: JSON.parse(message.content), // The result, parsed into an object
-					},
-				});
-			} catch (e: any) {
-				const errorMsg = `Tool content for function '${message.name}' is not valid JSON: ${message.content}. Error: ${e.message}`;
-				console.error(errorMsg, message);
-				// Send the error back as part of the response to the model
-				parts.push({
-					functionResponse: {
-						name: message.name,
+						name: message.name || "unknown_function_error",
 						response: { error: errorMsg, originalContent: message.content },
 					},
 				});
+			} else {
+				try {
+					parts.push({
+						functionResponse: {
+							name: message.name,
+							response: JSON.parse(message.content), // The result, parsed into an object
+						},
+					});
+				} catch (e: any) {
+					const errorMsg = `Tool content for function '${message.name}' is not valid JSON: ${message.content}. Error: ${e.message}`;
+					console.error(
+						"[GoogleLLM] convertMessage - ERROR parsing tool content:",
+						errorMsg,
+						message,
+					);
+					parts.push({
+						functionResponse: {
+							name: message.name,
+							response: { error: errorMsg, originalContent: message.content },
+						},
+					});
+				}
 			}
-		}
-		// Case 2: This is the assistant's request to call one or more tools
-		else if (
-			message.role === "assistant" &&
-			message.tool_calls &&
-			message.tool_calls.length > 0
-		) {
+		} else if (message.role === "assistant") {
+			// This is an ADK 'assistant' message (model's turn, might include requests for tool calls)
 			// If the assistant provided any text alongside the tool call request
 			if (
 				typeof message.content === "string" &&
@@ -175,42 +194,49 @@ export class GoogleLLM extends BaseLLM {
 				parts.push({ text: message.content });
 			}
 			// Add each tool call as a functionCall part
-			for (const toolCall of message.tool_calls) {
-				let argsObject = {};
-				try {
-					if (
-						toolCall.function.arguments &&
-						typeof toolCall.function.arguments === "string"
-					) {
-						argsObject = JSON.parse(toolCall.function.arguments);
-					} else if (typeof toolCall.function.arguments === "object") {
-						// If arguments are already an object (less common for string-based LLM outputs)
-						argsObject = toolCall.function.arguments;
+			if (message.tool_calls && message.tool_calls.length > 0) {
+				for (const toolCall of message.tool_calls) {
+					let argsObject = {};
+					try {
+						if (
+							toolCall.function.arguments &&
+							typeof toolCall.function.arguments === "string"
+						) {
+							argsObject = JSON.parse(toolCall.function.arguments);
+						} else if (typeof toolCall.function.arguments === "object") {
+							argsObject = toolCall.function.arguments; // Already an object
+						}
+					} catch (e: any) {
+						console.warn(
+							`[GoogleLLM] Failed to parse tool arguments for ${toolCall.function.name}, using empty object. Args: ${toolCall.function.arguments}. Error: ${e.message}`,
+						);
 					}
-				} catch (e: any) {
-					console.warn(
-						`Failed to parse tool arguments for ${toolCall.function.name}, using empty object. Args: ${toolCall.function.arguments}. Error: ${e.message}`,
-					);
+					parts.push({
+						functionCall: {
+							name: toolCall.function.name,
+							args: argsObject,
+						},
+					});
 				}
+			}
+			// If an assistant message has no text content and no tool_calls,
+			// ensure there's at least an empty text part if the content was explicitly null or empty.
+			// Gemini expects 'model' role to have parts.
+			if (parts.length === 0) {
 				parts.push({
-					functionCall: {
-						name: toolCall.function.name,
-						args: argsObject,
-					},
+					text: typeof message.content === "string" ? message.content : "",
 				});
 			}
-		}
-		// Case 3: Standard user message or assistant's simple text response (or multimodal content)
-		else {
+		} else if (message.role === "user" || message.role === "system") {
+			// Standard user message, or system message (which gets mapped to 'user' role for contents)
 			if (Array.isArray(message.content)) {
 				for (const part of message.content) {
 					if (part.type === "text") {
 						parts.push({ text: part.text });
 					} else if (part.type === "image" && part.image_url) {
-						// Ensure image_url is treated as an object if it might be a string
 						const imageUrlObject =
 							typeof part.image_url === "string"
-								? { url: part.image_url, mime_type: "image/jpeg" } // Provide a default mime_type
+								? { url: part.image_url, mime_type: "image/jpeg" }
 								: part.image_url;
 
 						parts.push({
@@ -232,31 +258,58 @@ export class GoogleLLM extends BaseLLM {
 				// as Gemini expects parts to be non-empty.
 				parts.push({ text: "" });
 			}
-		}
-
-		// Gemini API requires the parts array to be non-empty for 'user' and 'model' roles.
-		// If parts is still empty here for such roles, and it's not a structured call/response, add an empty text part.
-		if (
-			parts.length === 0 &&
-			(googleRole === "user" ||
-				(googleRole === "model" &&
-					(!message.tool_calls || message.tool_calls.length === 0)))
-		) {
-			if (
-				message.content === null ||
-				message.content === "" ||
-				message.content === undefined
-			) {
-				parts.push({ text: "" });
-			} else {
-				// This might indicate an unhandled content type or an issue in the logic above.
-				console.warn(
-					`Message for role '${googleRole}' resulted in empty parts despite having content. Original message:`,
-					JSON.stringify(message),
-					"Adding an empty text part as a fallback.",
-				);
+			// Ensure parts array is not empty for user/model roles if no specific content was pushed
+			if (parts.length === 0) {
 				parts.push({ text: "" });
 			}
+		} else {
+			// Fallback for any unexpected ADK message roles
+			console.warn(
+				`[GoogleLLM] convertMessage: Unhandled ADK message role '${message.role}'. Treating as simple text.`,
+			);
+			parts.push({
+				text:
+					typeof message.content === "string"
+						? message.content
+						: JSON.stringify(message.content),
+			});
+		}
+
+		// Final safety check: Gemini API requires the parts array to be non-empty for 'user' and 'model' roles.
+		// For 'function' role, it must contain exactly one 'functionResponse' part.
+		if (
+			parts.length === 0 &&
+			(googleRole === "user" || googleRole === "model")
+		) {
+			console.warn(
+				`[GoogleLLM] convertMessage - Parts array was empty for googleRole '${googleRole}' (ADK role '${message.role}'). Adding empty text part. Message:`,
+				JSON.stringify(message),
+			);
+			parts.push({ text: "" });
+		}
+		// Ensure function role has exactly one functionResponse part
+		if (
+			googleRole === "function" &&
+			(parts.length !== 1 || !parts[0]?.functionResponse)
+		) {
+			console.error(
+				`[GoogleLLM] convertMessage - Invalid parts for 'function' role. Expected 1 functionResponse part. Got:`,
+				JSON.stringify(parts),
+				"Original ADK message:",
+				JSON.stringify(message),
+			);
+			// Overwrite parts with a structured error if this critical condition is met
+			parts = [
+				{
+					functionResponse: {
+						name: message.name || "unknown_function_structure_error",
+						response: {
+							error:
+								"Internal SDK error: Invalid parts structure for function response.",
+						},
+					},
+				},
+			];
 		}
 
 		return {
@@ -273,13 +326,18 @@ export class GoogleLLM extends BaseLLM {
 			case "user":
 				return "user";
 			case "assistant":
-			case "function":
-			case "tool":
-			case "model":
 				return "model";
+			case "tool":
+				return "function";
 			case "system":
-				return "user"; // Map system to user as we'll handle system messages separately
+				// System messages are handled by extracting them and putting them
+				// into the 'systemInstruction' field of the request.
+				// If they were to be part of 'contents', 'user' is often the role.
+				return "user";
 			default:
+				console.warn(
+					`[GoogleLLM] mapRole: Unknown ADK role '${role}', defaulting to 'user'.`,
+				);
 				return "user";
 		}
 	}
@@ -338,6 +396,13 @@ export class GoogleLLM extends BaseLLM {
 			content: null,
 		});
 
+		// Check if text is a string (even if empty)
+		if (
+			typeof response?.candidates?.[0]?.content?.parts?.[0]?.text === "string"
+		) {
+			result.content = response.candidates[0].content.parts[0].text;
+		}
+
 		// Extract text content
 		if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
 			result.content = response.candidates[0].content.parts[0].text;
@@ -366,7 +431,6 @@ export class GoogleLLM extends BaseLLM {
 
 		return result;
 	}
-
 	/**
 	 * Generates content from the given request
 	 */
@@ -438,6 +502,7 @@ export class GoogleLLM extends BaseLLM {
 			} else {
 				// Non-streaming request
 				const response = await this.ai.models.generateContent(requestOptions);
+
 				yield this.convertResponse(response);
 			}
 		} catch (error) {

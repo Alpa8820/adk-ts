@@ -493,6 +493,7 @@ export class Agent extends BaseAgent {
 							role: "tool",
 							tool_call_id: result.id,
 							content: result.result,
+							name: result.name,
 						});
 					}
 				} else {
