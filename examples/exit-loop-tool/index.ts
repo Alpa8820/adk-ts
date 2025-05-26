@@ -10,7 +10,7 @@ async function main() {
 
 	const agent = new Agent({
 		name: "exit_loop_demo",
-		model: process.env.LLM_MODEL || "gemini-2.0-flash",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 		description:
 			"An agent that demonstrates the exit loop tool using Google Gemini",
 		instructions: `You are a helpful assistant that can exit a loop when asked to do so.

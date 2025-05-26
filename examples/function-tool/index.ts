@@ -79,7 +79,7 @@ async function main() {
 	// Create an agent with these tools
 	const agent = new Agent({
 		name: "function_tool_demo",
-		model: process.env.LLM_MODEL || "gemini-2.0-flash",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 		description:
 			"An agent that demonstrates function tools using Google Gemini",
 		instructions: `You are a helpful assistant that can perform calculations, fetch weather data, and retrieve user information.

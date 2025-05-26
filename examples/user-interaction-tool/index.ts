@@ -64,7 +64,7 @@ async function main() {
 	// Create an agent with this tool
 	const agent = new Agent({
 		name: "user_interaction_demo",
-		model: process.env.LLM_MODEL || "gemini-2.0-flash",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 		description:
 			"An agent that demonstrates user interaction capabilities using Google Gemini",
 		instructions: `You are a helpful assistant that can interact with the user to gather information.

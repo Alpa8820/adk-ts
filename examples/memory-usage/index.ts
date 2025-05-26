@@ -100,7 +100,7 @@ async function persistentMemoryExample() {
 	const agent = new Agent({
 		name: "memory_assistant",
 		description: "An assistant with persistent memory using Google Gemini",
-		model: "gemini-2.0-flash",
+		model: "gemini-2.5-flash-preview-05-20",
 		instructions:
 			"You are a helpful assistant with persistence. When the user refers to previous conversations, you can recall what was discussed.",
 		memoryService,

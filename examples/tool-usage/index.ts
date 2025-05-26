@@ -25,7 +25,7 @@ async function main() {
 		// Create the agent with custom tools
 		const agent = new Agent({
 			name: "tool_assistant",
-			model: process.env.LLM_MODEL || "gemini-2.0-flash",
+			model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 			description:
 				"An assistant that demonstrates tool usage with Google Gemini",
 			instructions:

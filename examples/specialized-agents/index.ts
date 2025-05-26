@@ -25,10 +25,10 @@ LLMRegistry.logRegisteredModels();
 async function runSpecializedAgentExamples() {
 	console.log("==== Specialized Agents Examples ====");
 
-	// Create component agents - using gemini-2.0-flash which works in the simple-agent example
+	// Create component agents - using gemini-2.5-flash-preview-05-20 which works in the simple-agent example
 	const researchAgent = new Agent({
 		name: "researcher",
-		model: "gemini-2.0-flash", // This will use the LLMRegistry to get the right provider
+		model: "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
 		description: "Conducts research on a topic",
 		instructions:
 			"You are a research assistant. Your job is to find information about topics.",
@@ -36,7 +36,7 @@ async function runSpecializedAgentExamples() {
 
 	const summaryAgent = new Agent({
 		name: "summarizer",
-		model: "gemini-2.0-flash", // This will use the LLMRegistry to get the right provider
+		model: "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
 		description: "Summarizes information",
 		instructions:
 			"You are a summarization expert. Your job is to create concise summaries.",
@@ -44,7 +44,7 @@ async function runSpecializedAgentExamples() {
 
 	const analyzerAgent = new Agent({
 		name: "analyzer",
-		model: "gemini-2.0-flash", // This will use the LLMRegistry to get the right provider
+		model: "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
 		description: "Analyzes information",
 		instructions:
 			"You are an analytical assistant. Your job is to analyze information and provide insights.",
@@ -52,7 +52,7 @@ async function runSpecializedAgentExamples() {
 
 	const weatherAgent = new Agent({
 		name: "weather_expert",
-		model: "gemini-2.0-flash", // This will use the LLMRegistry to get the right provider
+		model: "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
 		description: "Provides information about weather",
 		instructions:
 			"You are a weather expert. Provide information about weather patterns.",
@@ -60,7 +60,7 @@ async function runSpecializedAgentExamples() {
 
 	const drafterAgent = new Agent({
 		name: "content_drafter",
-		model: "gemini-2.0-flash", // This will use the LLMRegistry to get the right provider
+		model: "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
 		description: "Drafts content iteratively",
 		instructions:
 			"You are a content writer. Your job is to draft and refine content.",
@@ -124,7 +124,7 @@ async function runSpecializedAgentExamples() {
 	// Create new agents for LangGraph (can't reuse agents that already have parents)
 	const graphResearchAgent = new Agent({
 		name: "graph_researcher",
-		model: "gemini-2.0-flash",
+		model: "gemini-2.5-flash-preview-05-20",
 		description: "Conducts research on a topic",
 		instructions:
 			"You are a research assistant. Your job is to find information about topics.",
@@ -132,7 +132,7 @@ async function runSpecializedAgentExamples() {
 
 	const graphSummaryAgent = new Agent({
 		name: "graph_summarizer",
-		model: "gemini-2.0-flash",
+		model: "gemini-2.5-flash-preview-05-20",
 		description: "Summarizes information",
 		instructions:
 			"You are a summarization expert. Your job is to create concise summaries.",
@@ -140,7 +140,7 @@ async function runSpecializedAgentExamples() {
 
 	const graphAnalyzerAgent = new Agent({
 		name: "graph_analyzer",
-		model: "gemini-2.0-flash",
+		model: "gemini-2.5-flash-preview-05-20",
 		description: "Analyzes information",
 		instructions:
 			"You are an analytical assistant. Your job is to analyze information and provide insights.",
@@ -148,7 +148,7 @@ async function runSpecializedAgentExamples() {
 
 	const graphDrafterAgent = new Agent({
 		name: "graph_drafter",
-		model: "gemini-2.0-flash",
+		model: "gemini-2.5-flash-preview-05-20",
 		description: "Drafts content iteratively",
 		instructions:
 			"You are a content writer. Your job is to draft and refine content.",

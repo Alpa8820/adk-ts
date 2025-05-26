@@ -73,10 +73,7 @@ dotenv.config();
 // Create a basic agent
 const agent = new Agent({
   name: "simple_assistant",
-// Create a basic agent
-const agent = new Agent({
-  name: "simple_assistant",
-  model: "gemini-2.0-flash", // Or "gpt-4-turbo" or "claude-3-opus"
+  model: "gemini-2.5-flash-preview-05-20", // Or "gpt-4-turbo" or "claude-3-opus"
   description: "A simple assistant",
   instructions: "You are a helpful assistant. Answer questions concisely."
 });
@@ -210,7 +207,7 @@ const memoryService = new PersistentMemoryService({
 // Create an agent with memory
 const agent = new Agent({
   name: "memory_assistant",
-  model: "gemini-2.0-flash",
+  model: "gemini-2.5-flash-preview-05-20",
   instructions: "You have persistent memory. Remember user preferences.",
   memoryService,
   userId: 'user-123'

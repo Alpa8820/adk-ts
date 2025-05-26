@@ -14,7 +14,7 @@ async function main() {
 	// Create an agent with this tool
 	const agent = new Agent({
 		name: "http_request_demo",
-		model: process.env.LLM_MODEL || "gemini-2.0-flash",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 		description:
 			"An agent that demonstrates HTTP request capabilities using Google Gemini",
 		instructions: `You are a helpful assistant that can make HTTP requests to retrieve information.
