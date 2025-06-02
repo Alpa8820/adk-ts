@@ -74,15 +74,8 @@ export class PgLiteSessionService implements SessionService {
 		}
 
 		try {
-			// Get the underlying PGlite instance from the Drizzle database
-			const pglite = (this.db as any).client;
-
-			if (!pglite || typeof pglite.exec !== "function") {
-				throw new Error("Unable to access PGlite client for table creation");
-			}
-
-			// Create the sessions table if it doesn't exist
-			await pglite.exec(`
+			// Use Drizzle's execute method instead of accessing PGlite directly
+			await this.db.execute(`
 				CREATE TABLE IF NOT EXISTS sessions (
 					id VARCHAR(255) PRIMARY KEY,
 					user_id VARCHAR(255) NOT NULL,
