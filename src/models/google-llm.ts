@@ -375,15 +375,54 @@ export class GoogleLLM extends BaseLLM {
 			return [];
 		}
 
-		return functions.map((func) => ({
-			functionDeclarations: [
-				{
+		const tools = [
+			{
+				functionDeclarations: functions.map((func) => ({
 					name: func.name,
 					description: func.description,
-					parameters: func.parameters,
-				},
-			],
-		}));
+					parameters: this.convertParametersToGoogleFormat(func.parameters),
+				})),
+			},
+		];
+
+		return tools;
+	}
+
+	/**
+	 * Convert parameter types to Google Gemini format (uppercase types)
+	 */
+	private convertParametersToGoogleFormat(parameters: any): any {
+		if (!parameters) return parameters;
+
+		const converted = { ...parameters };
+
+		// Convert main type to uppercase
+		if (converted.type && typeof converted.type === "string") {
+			converted.type = converted.type.toUpperCase();
+		}
+
+		// Convert property types to uppercase
+		if (converted.properties) {
+			converted.properties = { ...converted.properties };
+			for (const [key, prop] of Object.entries(converted.properties)) {
+				if (prop && typeof prop === "object" && "type" in prop) {
+					converted.properties[key] = {
+						...(prop as any),
+						type:
+							typeof (prop as any).type === "string"
+								? (prop as any).type.toUpperCase()
+								: (prop as any).type,
+					};
+				}
+			}
+		}
+
+		// Handle nested objects recursively if needed
+		if (converted.items) {
+			converted.items = this.convertParametersToGoogleFormat(converted.items);
+		}
+
+		return converted;
 	}
 
 	/**
