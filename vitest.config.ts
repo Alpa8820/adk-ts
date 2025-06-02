@@ -2,11 +2,11 @@ import { defineConfig } from "vitest/config";
 import { resolve } from "path";
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@adk": resolve(__dirname, "./src"),
-    },
-  },
+	resolve: {
+		alias: {
+			"@adk": resolve(__dirname, "./src"),
+		},
+	},
 	test: {
 		globals: true,
 		environment: "node",
