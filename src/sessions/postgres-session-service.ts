@@ -45,7 +45,7 @@ export interface DatabaseSessionServiceConfig {
 	sessionsTable?: SessionsTable;
 }
 
-export class DatabaseSessionService implements SessionService {
+export class PostgresSessionService implements SessionService {
 	private db: NodePgDatabase<{ sessions: SessionsTable }>;
 	private sessionsTable: SessionsTable;
 
