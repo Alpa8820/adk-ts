@@ -23,11 +23,9 @@ dotenv.config();
 // Register the Google LLM
 LLMRegistry.registerLLM(GoogleLLM);
 
-// Initialize PGlite database
+// Initialize PGlite database and session service
 const pglite = new PGlite();
 const db = drizzle(pglite, { schema: { sessions: sessionsSchema } });
-
-// Create the session service
 const sessionService = new PgLiteSessionService({ db });
 
 // Initialize the agent with Google's Gemini model
@@ -51,34 +49,14 @@ const runner = new Runner({
 // Generate unique ID for user
 const userId = uuidv4();
 
-async function initializeDatabase() {
-	console.log("🗄️  Initializing PGlite database...");
-
-	// Create the sessions table
-	await pglite.exec(`
-		CREATE TABLE IF NOT EXISTS sessions (
-			id VARCHAR(255) PRIMARY KEY,
-			user_id VARCHAR(255) NOT NULL,
-			messages JSONB DEFAULT '[]',
-			metadata JSONB DEFAULT '{}',
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-			state JSONB DEFAULT '{}'
-		);
-	`);
-
-	console.log("✅ Database initialized successfully!");
-}
-
 async function runConversation() {
 	console.log(
 		"🤖 Starting a PGlite runner example with persistent sessions...",
 	);
-
-	// Initialize the database first
-	await initializeDatabase();
+	console.log("🗄️  PGlite database will be initialized automatically...");
 
 	// Create a session using the PgLiteSessionService
+	// The database tables will be created automatically on first use
 	console.log("📝 Creating a new session with PGlite persistence...");
 	const session = await runner.sessionService.createSession(userId, {
 		example: "pglite-runner",

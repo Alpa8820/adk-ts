@@ -1,11 +1,9 @@
 import type { Event } from "@adk/events/event";
+import type { ListSessionOptions, Message, Session } from "@adk/models";
+import { type SessionService, SessionState } from "@adk/sessions";
 import { eq } from "drizzle-orm";
 import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 import type { PgliteDatabase } from "drizzle-orm/pglite";
-import type { Message } from "../models/llm-request";
-import type { SessionService } from "./base-session-service";
-import type { ListSessionOptions, Session } from "./session";
-import { SessionState } from "./state";
 
 // Define Drizzle schema for sessions
 // Adjust column types based on your specific DB and needs
@@ -43,15 +41,73 @@ export interface DatabaseSessionServiceConfig {
 	 * Optional: Pass the sessions schema table directly if not attached to db client's schema property
 	 */
 	sessionsTable?: SessionsTable;
+
+	/**
+	 * Optional: Skip automatic table creation if you handle migrations externally
+	 */
+	skipTableCreation?: boolean;
 }
 
 export class PgLiteSessionService implements SessionService {
 	private db: PgliteDatabase<{ sessions: SessionsTable }>;
 	private sessionsTable: SessionsTable;
+	private initialized = false;
 
 	constructor(config: DatabaseSessionServiceConfig) {
 		this.db = config.db;
 		this.sessionsTable = config.sessionsTable || sessionsSchema;
+
+		// Initialize database tables unless explicitly skipped
+		if (!config.skipTableCreation) {
+			this.initializeDatabase().catch((error) => {
+				console.error("Failed to initialize PgLite database:", error);
+			});
+		}
+	}
+
+	/**
+	 * Initialize the database by creating required tables if they don't exist
+	 */
+	private async initializeDatabase(): Promise<void> {
+		if (this.initialized) {
+			return;
+		}
+
+		try {
+			// Get the underlying PGlite instance from the Drizzle database
+			const pglite = (this.db as any).client;
+
+			if (!pglite || typeof pglite.exec !== "function") {
+				throw new Error("Unable to access PGlite client for table creation");
+			}
+
+			// Create the sessions table if it doesn't exist
+			await pglite.exec(`
+				CREATE TABLE IF NOT EXISTS sessions (
+					id VARCHAR(255) PRIMARY KEY,
+					user_id VARCHAR(255) NOT NULL,
+					messages JSONB DEFAULT '[]',
+					metadata JSONB DEFAULT '{}',
+					created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+					updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+					state JSONB DEFAULT '{}'
+				);
+			`);
+
+			this.initialized = true;
+		} catch (error) {
+			console.error("Error initializing PgLite database:", error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Ensure database is initialized before any operation
+	 */
+	private async ensureInitialized(): Promise<void> {
+		if (!this.initialized) {
+			await this.initializeDatabase();
+		}
 	}
 
 	private generateSessionId(): string {
@@ -62,6 +118,8 @@ export class PgLiteSessionService implements SessionService {
 		userId: string,
 		metadata: Record<string, any> = {},
 	): Promise<Session> {
+		await this.ensureInitialized();
+
 		const sessionId = this.generateSessionId();
 		const now = new Date();
 		const sessionState = new SessionState();
@@ -103,6 +161,8 @@ export class PgLiteSessionService implements SessionService {
 	}
 
 	async getSession(sessionId: string): Promise<Session | undefined> {
+		await this.ensureInitialized();
+
 		const results = await this.db
 			.select()
 			.from(this.sessionsTable)
@@ -128,6 +188,8 @@ export class PgLiteSessionService implements SessionService {
 	}
 
 	async updateSession(session: Session): Promise<void> {
+		await this.ensureInitialized();
+
 		const updateData: Partial<SessionRow> = {
 			userId: session.userId,
 			messages: session.messages as Message[],
@@ -147,6 +209,8 @@ export class PgLiteSessionService implements SessionService {
 		userId: string,
 		options?: ListSessionOptions,
 	): Promise<Session[]> {
+		await this.ensureInitialized();
+
 		let query = this.db
 			.select()
 			.from(this.sessionsTable)
@@ -180,6 +244,8 @@ export class PgLiteSessionService implements SessionService {
 	}
 
 	async deleteSession(sessionId: string): Promise<void> {
+		await this.ensureInitialized();
+
 		await this.db
 			.delete(this.sessionsTable)
 			.where(eq(this.sessionsTable.id, sessionId));
@@ -192,6 +258,8 @@ export class PgLiteSessionService implements SessionService {
 	 * @returns The appended event
 	 */
 	async appendEvent(session: Session, event: Event): Promise<Event> {
+		await this.ensureInitialized();
+
 		if (event.is_partial) {
 			return event;
 		}
