@@ -1,39 +1,37 @@
-name: Release
+name: Push checks
 
-on:
-  push:
-    branches:
-      - main
-
-concurrency: ${{ github.workflow }}-${{ github.ref }}
+on: [push]
 
 jobs:
-  release:
-    name: Release
+  Checkout:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout Repo
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup pnpm 8
-        uses: pnpm/action-setup@v3
         with:
-          version: 8
-
+          fetch-depth: 1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.0.0
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22.0.0
-
-      - name: Install Dependencies
-        run: pnpm i
-
-      - name: Create Release Pull Request or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - uses: actions/cache@v4
+        name: Setup pnpm cache
         with:
-          # This expects you to have a script called release which does a build for your packages and calls changeset publish
-          publish: pnpm publish-packages
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: Install dependencies
+        run: pnpm install
+      - name: Biome Lint Check
+        run: pnpm lint-staged
+      - name: unit tests
+        run: pnpm test:plugins
