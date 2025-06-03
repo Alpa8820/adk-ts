@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.0.3
+
+### Patch Changes
+
+- 7481f59: added mcp tool export
+
 ## 0.0.2
 
 ### Patch Changes
