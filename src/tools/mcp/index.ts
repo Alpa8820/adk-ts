@@ -22,6 +22,7 @@ export {
 	McpErrorType,
 };
 
+export * from "./types";
 /**
  * A class for managing MCP tools similar to Python's MCPToolset.
  * Provides functionality to retrieve and use tools from an MCP server.
