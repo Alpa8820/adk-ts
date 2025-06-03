@@ -5,11 +5,11 @@ import * as p from "@clack/prompts";
 import * as dotenv from "dotenv";
 
 // Get all example directories and files
-const examplesDir = path.resolve(__dirname);
+const examplesSrcDir = path.resolve(__dirname);
 const turborepoRoot = path.resolve(__dirname, "..", ".."); // Go up to turborepo root
 const examples: { name: string; path: string }[] = [];
 
-dotenv.config({ path: path.resolve(examplesDir, ".env") });
+dotenv.config({ path: path.resolve(examplesSrcDir, "..", ".env") });
 
 // Helper function to get all example files
 function getExampleFiles(dir: string) {
@@ -28,7 +28,7 @@ function getExampleFiles(dir: string) {
 			if (fs.existsSync(indexPath)) {
 				examples.push({
 					name: item,
-					path: path.relative(examplesDir, indexPath),
+					path: path.relative(examplesSrcDir, indexPath),
 				});
 			}
 		} else if (
@@ -38,7 +38,7 @@ function getExampleFiles(dir: string) {
 			// Add standalone example files
 			examples.push({
 				name: item.replace(".ts", ""),
-				path: path.relative(examplesDir, itemPath),
+				path: path.relative(examplesSrcDir, itemPath),
 			});
 		}
 	}
@@ -60,7 +60,7 @@ function parseArgs() {
 function runExample(example: { name: string; path: string }) {
 	console.log(`\nRunning example: ${example.name}\n`);
 
-	const examplePath = path.resolve(examplesDir, example.path);
+	const examplePath = path.resolve(examplesSrcDir, example.path);
 
 	// Use pnpm exec tsx - this is the most reliable approach in turborepo
 	const exampleProcess = spawn("pnpm", ["exec", "tsx", examplePath], {
@@ -90,7 +90,7 @@ function runExample(example: { name: string; path: string }) {
 
 async function main() {
 	// Get all examples
-	getExampleFiles(examplesDir);
+	getExampleFiles(examplesSrcDir);
 
 	// Sort examples alphabetically
 	examples.sort((a, b) => a.name.localeCompare(b.name));

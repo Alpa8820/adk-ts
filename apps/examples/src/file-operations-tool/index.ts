@@ -1,9 +1,6 @@
 import * as path from "node:path";
 import { Agent, FileOperationsTool, GoogleLLM, LLMRegistry } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
 // Load environment variables
-dotenv.config();
 
 // Register LLM provider
 LLMRegistry.registerLLM(GoogleLLM);

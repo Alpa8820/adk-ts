@@ -8,13 +8,10 @@ import {
 	type Session,
 	SessionState,
 } from "@iqai/adk";
-import * as dotenv from "dotenv";
 
 // Register Google LLM
 LLMRegistry.registerLLM(GoogleLLM);
-
 // Load environment variables from .env file if it exists
-dotenv.config();
 
 /**
  * Maximum number of messages to keep in conversation history

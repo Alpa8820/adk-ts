@@ -1,7 +1,4 @@
 import { Agent, ExitLoopTool, GoogleLLM, LLMRegistry } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
-dotenv.config();
 
 LLMRegistry.registerLLM(GoogleLLM);
 

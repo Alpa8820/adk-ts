@@ -8,10 +8,7 @@ import {
 	ParallelAgent,
 	SequentialAgent,
 } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
 // Load environment variables from .env file if it exists
-dotenv.config();
 
 // Use the provided OpenAI API key as in the simple-agent example
 

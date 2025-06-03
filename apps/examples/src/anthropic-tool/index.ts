@@ -8,10 +8,7 @@ import {
 	type MessageRole,
 	type ToolContext,
 } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
 // Load environment variables from .env file
-dotenv.config();
 
 // Register Google LLM
 LLMRegistry.registerLLM(GoogleLLM);

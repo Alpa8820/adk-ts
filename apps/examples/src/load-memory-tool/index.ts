@@ -6,10 +6,7 @@ import {
 	SessionState,
 	ToolContext,
 } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
 // Load environment variables
-dotenv.config();
 
 async function main() {
 	console.log("=== LoadMemoryTool Example ===");

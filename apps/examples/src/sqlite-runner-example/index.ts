@@ -1,3 +1,4 @@
+import * as fs from "node:fs";
 import * as path from "node:path";
 import {
 	Agent,
@@ -11,11 +12,8 @@ import {
 	StreamingMode,
 } from "@iqai/adk";
 import Database from "better-sqlite3";
-import * as dotenv from "dotenv";
-import { v4 as uuidv4 } from "uuid";
 
-// Load environment variables from .env file if it exists
-dotenv.config();
+import { v4 as uuidv4 } from "uuid";
 
 // Register the Google LLM
 LLMRegistry.registerLLM(GoogleLLM);
@@ -23,7 +21,14 @@ LLMRegistry.registerLLM(GoogleLLM);
 // Initialize SQLite database and session service
 // Now users only need to provide a SQLite instance!
 
-const sqlite = new Database(path.join(process.cwd(), "data", "sessions.db"));
+const dbPath = path.format({
+	dir: "apps/examples/src/sqlite-runner-example/data/session.db",
+});
+if (!fs.existsSync(path.dirname(dbPath))) {
+	fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+}
+const sqlite = new Database(dbPath);
+
 const sessionService = new SqliteSessionService({ sqlite });
 
 // Initialize the agent with Google's Gemini model

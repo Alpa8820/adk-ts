@@ -1,8 +1,5 @@
 import { Agent, GoogleLLM, LLMRegistry, type MessageRole } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
 // Load environment variables from .env file if it exists
-dotenv.config();
 
 // Register the Google LLM
 LLMRegistry.registerLLM(GoogleLLM);

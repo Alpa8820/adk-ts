@@ -1,7 +1,4 @@
 import { GetUserChoiceTool } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
-dotenv.config();
 
 async function main() {
 	console.log("=== GetUserChoiceTool Example ===");

@@ -1,8 +1,5 @@
 import { Agent, GoogleLLM, HttpRequestTool, LLMRegistry } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
 // Load environment variables
-dotenv.config();
 
 // Register LLM provider
 LLMRegistry.registerLLM(GoogleLLM);

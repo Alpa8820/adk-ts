@@ -5,11 +5,10 @@ import {
 	type Message,
 	type MessageRole,
 } from "@iqai/adk";
-import * as dotenv from "dotenv";
+
 import { CalculatorTool } from "./calculator";
 import { WeatherTool } from "./weather";
 // Load environment variables from .env file
-dotenv.config();
 
 // Register the Google LLM
 LLMRegistry.registerLLM(GoogleLLM);

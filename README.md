@@ -68,7 +68,7 @@ import { Agent } from '@iqai/adk';
 import dotenv from 'dotenv';
 
 // Load environment variables
-dotenv.config();
+;
 
 // Create a basic agent
 const agent = new Agent({

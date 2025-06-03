@@ -7,11 +7,9 @@ import {
 	RunConfig,
 	StreamingMode,
 } from "@iqai/adk";
-import * as dotenv from "dotenv";
-import { v4 as uuidv4 } from "uuid";
 
+import { v4 as uuidv4 } from "uuid";
 // Load environment variables from .env file if it exists
-dotenv.config();
 
 // Register the Google LLM
 LLMRegistry.registerLLM(GoogleLLM);

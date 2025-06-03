@@ -7,10 +7,7 @@ import {
 	McpToolset,
 	type MessageRole,
 } from "@iqai/adk";
-import * as dotenv from "dotenv";
-
 // Load environment variables from .env file
-dotenv.config();
 
 LLMRegistry.registerLLM(GoogleLLM);
 
