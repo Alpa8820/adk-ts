@@ -2,11 +2,14 @@ import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as p from "@clack/prompts";
+import * as dotenv from "dotenv";
 
 // Get all example directories and files
 const examplesDir = path.resolve(__dirname);
-const projectRoot = path.resolve(__dirname, "..");
+const turborepoRoot = path.resolve(__dirname, "..", ".."); // Go up to turborepo root
 const examples: { name: string; path: string }[] = [];
+
+dotenv.config({ path: path.resolve(examplesDir, ".env") });
 
 // Helper function to get all example files
 function getExampleFiles(dir: string) {
@@ -66,18 +69,22 @@ async function main() {
 
 	console.log(`\nRunning example: ${selectedExample.name}\n`);
 
-	// Get absolute paths to everything
-	const tsxBin = path.resolve(projectRoot, "node_modules", ".bin", "tsx");
 	const examplePath = path.resolve(examplesDir, selectedExample.path);
 
-	// Run the selected example with tsx
-	const exampleProcess = spawn(tsxBin, [examplePath], {
+	// Use pnpm exec tsx - this is the most reliable approach in turborepo
+	const exampleProcess = spawn("pnpm", ["exec", "tsx", examplePath], {
 		stdio: "inherit",
 		shell: process.platform === "win32", // Use shell only on Windows
-		cwd: projectRoot,
+		cwd: turborepoRoot, // Run from turborepo root so pnpm workspace resolution works
 		env: {
 			...process.env,
 		},
+	});
+
+	exampleProcess.on("error", (error) => {
+		console.error("Failed to start example process:", error);
+		console.log("Make sure tsx is installed. Try running: pnpm add -D tsx");
+		process.exit(1);
 	});
 
 	exampleProcess.on("close", (code) => {
