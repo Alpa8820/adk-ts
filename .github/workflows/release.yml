@@ -12,19 +12,28 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js and pnpm
-        uses: wyvox/action-setup-pnpm@v3
+      - name: Setup pnpm 8
+        uses: pnpm/action-setup@v3
         with:
-          node-version: '18'
+          version: 8
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.0.0
+
+      - name: Install Dependencies
+        run: pnpm i
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
         uses: changesets/action@v1
         with:
-          publish: pnpm release
+          # This expects you to have a script called release which does a build for your packages and calls changeset publish
+          publish: pnpm publish-packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
