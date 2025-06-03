@@ -44,32 +44,23 @@ function getExampleFiles(dir: string) {
 	}
 }
 
-// Get all examples
-getExampleFiles(examplesDir);
+// Parse command line arguments
+function parseArgs() {
+	const args = process.argv.slice(2);
+	const nameIndex = args.indexOf("--name");
 
-// Sort examples alphabetically
-examples.sort((a, b) => a.name.localeCompare(b.name));
-
-async function main() {
-	p.intro("ADK Examples Runner");
-	console.log("Select an example to run:\n");
-
-	const selectedExample = await p.select({
-		message: "Choose an example to run:",
-		options: examples.map((example) => ({
-			label: example.name,
-			value: example,
-		})),
-	});
-
-	if (p.isCancel(selectedExample)) {
-		p.cancel("Operation cancelled");
-		process.exit(0);
+	if (nameIndex !== -1 && nameIndex + 1 < args.length) {
+		return { name: args[nameIndex + 1] };
 	}
 
-	console.log(`\nRunning example: ${selectedExample.name}\n`);
+	return { name: null };
+}
 
-	const examplePath = path.resolve(examplesDir, selectedExample.path);
+// Function to run an example
+function runExample(example: { name: string; path: string }) {
+	console.log(`\nRunning example: ${example.name}\n`);
+
+	const examplePath = path.resolve(examplesDir, example.path);
 
 	// Use pnpm exec tsx - this is the most reliable approach in turborepo
 	const exampleProcess = spawn("pnpm", ["exec", "tsx", examplePath], {
@@ -95,6 +86,51 @@ async function main() {
 			process.exit(code || 1);
 		}
 	});
+}
+
+async function main() {
+	// Get all examples
+	getExampleFiles(examplesDir);
+
+	// Sort examples alphabetically
+	examples.sort((a, b) => a.name.localeCompare(b.name));
+
+	const { name } = parseArgs();
+
+	// If --name argument is provided, try to find and run the example directly
+	if (name) {
+		const matchedExample = examples.find(
+			(example) => example.name.toLowerCase() === name.toLowerCase(),
+		);
+
+		if (matchedExample) {
+			runExample(matchedExample);
+			return;
+		}
+		console.error(`Example "${name}" not found.`);
+		console.log("\nAvailable examples:");
+		examples.forEach((example) => console.log(`  - ${example.name}`));
+		process.exit(1);
+	}
+
+	// Interactive mode
+	p.intro("ADK Examples Runner");
+	console.log("Select an example to run:\n");
+
+	const selectedExample = await p.select({
+		message: "Choose an example to run:",
+		options: examples.map((example) => ({
+			label: example.name,
+			value: example,
+		})),
+	});
+
+	if (p.isCancel(selectedExample)) {
+		p.cancel("Operation cancelled");
+		process.exit(0);
+	}
+
+	runExample(selectedExample);
 }
 
 main().catch((error) => {
