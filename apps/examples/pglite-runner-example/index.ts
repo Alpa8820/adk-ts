@@ -9,10 +9,8 @@ import {
 	RunConfig,
 	Runner,
 	StreamingMode,
-	sessionsSchema,
 } from "@iqai/adk";
 import * as dotenv from "dotenv";
-import { drizzle } from "drizzle-orm/pglite";
 import { v4 as uuidv4 } from "uuid";
 
 // Load environment variables from .env file if it exists
@@ -22,9 +20,9 @@ dotenv.config();
 LLMRegistry.registerLLM(GoogleLLM);
 
 // Initialize PGlite database and session service
+// Now users only need to provide a PGlite instance!
 const pglite = new PGlite();
-const db = drizzle(pglite, { schema: { sessions: sessionsSchema } });
-const sessionService = new PgLiteSessionService({ db });
+const sessionService = new PgLiteSessionService({ pglite });
 
 // Initialize the agent with Google's Gemini model
 const agent = new Agent({

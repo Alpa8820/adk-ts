@@ -1,16 +1,16 @@
 import type { Event } from "@adk/events/event";
 import type { ListSessionOptions, Message, Session } from "@adk/models";
 import { type SessionService, SessionState } from "@adk/sessions";
+import type { PGlite } from "@electric-sql/pglite";
 import { eq } from "drizzle-orm";
 import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-import type { PgliteDatabase } from "drizzle-orm/pglite";
+import { type PgliteDatabase, drizzle } from "drizzle-orm/pglite";
 
 // Define Drizzle schema for sessions
-// Adjust column types based on your specific DB and needs
 export const sessionsSchema = pgTable("sessions", {
 	id: varchar("id", { length: 255 }).primaryKey(),
 	userId: varchar("user_id", { length: 255 }).notNull(),
-	messages: jsonb("messages").default("[]").$type<Message[]>(), // Store Message array as JSONB
+	messages: jsonb("messages").default("[]").$type<Message[]>(),
 	metadata: jsonb("metadata").default("{}").$type<Record<string, any>>(),
 	createdAt: timestamp("created_at", { withTimezone: true })
 		.defaultNow()
@@ -18,29 +18,22 @@ export const sessionsSchema = pgTable("sessions", {
 	updatedAt: timestamp("updated_at", { withTimezone: true })
 		.defaultNow()
 		.notNull(),
-	state: jsonb("state").default("{}").$type<Record<string, any>>(), // Store serialized SessionState as JSONB
+	state: jsonb("state").default("{}").$type<Record<string, any>>(),
 });
 
-// Type for the Drizzle schema (optional but good for type safety)
+// Type for the Drizzle schema
 export type SessionsTable = typeof sessionsSchema;
-
-// Infer the type of a row in the sessions table for stricter typing
 export type SessionRow = typeof sessionsSchema.$inferSelect;
 
 /**
- * Configuration for DatabaseSessionService with Drizzle and PGlite
+ * Configuration for PgLiteSessionService
  */
-export interface DatabaseSessionServiceConfig {
+export interface PgLiteSessionServiceConfig {
 	/**
-	 * An initialized Drizzle ORM database client instance with PGlite.
-	 * Example: drizzle(new PGlite(), { schema: { sessions: sessionsSchema } })
+	 * An initialized PGlite instance.
+	 * The service will handle all Drizzle ORM setup internally.
 	 */
-	db: PgliteDatabase<{ sessions: SessionsTable }>;
-
-	/**
-	 * Optional: Pass the sessions schema table directly if not attached to db client's schema property
-	 */
-	sessionsTable?: SessionsTable;
+	pglite: PGlite;
 
 	/**
 	 * Optional: Skip automatic table creation if you handle migrations externally
@@ -53,9 +46,12 @@ export class PgLiteSessionService implements SessionService {
 	private sessionsTable: SessionsTable;
 	private initialized = false;
 
-	constructor(config: DatabaseSessionServiceConfig) {
-		this.db = config.db;
-		this.sessionsTable = config.sessionsTable || sessionsSchema;
+	constructor(config: PgLiteSessionServiceConfig) {
+		// Initialize Drizzle with the provided PGlite instance
+		this.db = drizzle(config.pglite, {
+			schema: { sessions: sessionsSchema },
+		});
+		this.sessionsTable = sessionsSchema;
 
 		// Initialize database tables unless explicitly skipped
 		if (!config.skipTableCreation) {
@@ -74,7 +70,6 @@ export class PgLiteSessionService implements SessionService {
 		}
 
 		try {
-			// Use Drizzle's execute method instead of accessing PGlite directly
 			await this.db.execute(`
 				CREATE TABLE IF NOT EXISTS sessions (
 					id VARCHAR(255) PRIMARY KEY,
@@ -123,8 +118,8 @@ export class PgLiteSessionService implements SessionService {
 			messages: [] as Message[],
 			metadata,
 			createdAt: now,
-			updatedAt: now, // Drizzle's defaultNow() on schema handles this, but explicit is fine
-			state: sessionState.toObject(), // Serialize SessionState
+			updatedAt: now,
+			state: sessionState.toObject(),
 		};
 
 		const results = await this.db
@@ -147,7 +142,6 @@ export class PgLiteSessionService implements SessionService {
 				: [],
 			metadata: result.metadata || {},
 			state: SessionState.fromObject(result.state || {}),
-			// Ensure dates are Date objects if Drizzle returns strings for some drivers/configs
 			createdAt: new Date(result.createdAt),
 			updatedAt: new Date(result.updatedAt),
 		};
@@ -187,7 +181,6 @@ export class PgLiteSessionService implements SessionService {
 			userId: session.userId,
 			messages: session.messages as Message[],
 			metadata: session.metadata,
-			// createdAt should typically not be updated after creation
 			updatedAt: new Date(),
 			state: session.state.toObject(),
 		};
@@ -210,16 +203,8 @@ export class PgLiteSessionService implements SessionService {
 			.where(eq(this.sessionsTable.userId, userId));
 
 		if (options?.limit !== undefined && options.limit > 0) {
-			query = query.limit(options.limit) as typeof query; // Using 'as' to help TypeScript if inference is tricky
+			query = query.limit(options.limit) as typeof query;
 		}
-
-		// TODO: Add filtering for createdAfter, updatedAfter, metadataFilter
-		// This would require dynamic query building with Drizzle's `and` / `or` operators
-		// and potentially more complex `where` clauses.
-		// Example for createdAfter (assuming options.createdAfter is a Date):
-		// if (options?.createdAfter) {
-		//   query = query.where(gte(this.sessionsTable.createdAt, options.createdAfter));
-		// }
 
 		const results: SessionRow[] = await query;
 
@@ -244,12 +229,6 @@ export class PgLiteSessionService implements SessionService {
 			.where(eq(this.sessionsTable.id, sessionId));
 	}
 
-	/**
-	 * Appends an event to a session object
-	 * @param session The session to append the event to
-	 * @param event The event to append
-	 * @returns The appended event
-	 */
 	async appendEvent(session: Session, event: Event): Promise<Event> {
 		await this.ensureInitialized();
 
@@ -282,10 +261,4 @@ export class PgLiteSessionService implements SessionService {
 
 		return event;
 	}
-
-	// TODO: Consider if table creation/migration logic is needed here or handled externally (e.g., drizzle-kit migrations)
-	// TODO: Implement methods corresponding to Python's append_event, list_events,
-	// get_app_state, update_app_state, get_user_state, update_user_state
-	// if full parity with Python's DatabaseSessionService is desired.
-	// This would require defining corresponding Drizzle schemas for Events, AppState, UserState.
 }
