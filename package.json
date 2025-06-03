@@ -3,7 +3,7 @@
 	"version": "0.0.1",
 	"description": "Agent Development Kit for TypeScript with multi-provider LLM support",
 	"main": "dist/index.js",
-	"types": "dist/index.d.mjs",
+	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "tsup",
 		"test": "vitest run",
