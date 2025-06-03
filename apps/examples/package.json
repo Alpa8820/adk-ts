@@ -1,0 +1,26 @@
+{
+	"name": "@iqai/examples",
+	"version": "0.0.4",
+	"description": "Agent Development Kit for TypeScript with multi-provider LLM support",
+	"scripts": {
+		"dev": "tsx ./index.ts"
+	},
+	"author": "IQAI",
+	"license": "MIT",
+	"dependencies": {
+		"@iqai/adk": "workspace:*",
+		"dotenv": "^16.5.0",
+		"uuid": "^11.1.0",
+		"@electric-sql/pglite": "^0.3.2",
+		"@clack/prompts": "^0.11.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.17.30",
+		"tsx": "^4.19.4",
+		"typescript": "^5.3.2"
+	},
+	"packageManager": "pnpm@9.0.0",
+	"engines": {
+		"node": ">=22.0"
+	}
+}
