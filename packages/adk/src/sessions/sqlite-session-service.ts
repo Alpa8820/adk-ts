@@ -1,24 +1,30 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { Event } from "@adk/events/event";
 import type { ListSessionOptions, Message, Session } from "@adk/models";
 import { type SessionService, SessionState } from "@adk/sessions";
-import type { PGlite } from "@electric-sql/pglite";
+import type Database from "better-sqlite3";
 import { eq } from "drizzle-orm";
-import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
-import { type PgliteDatabase, drizzle } from "drizzle-orm/pglite";
+import {
+	type BetterSQLite3Database,
+	drizzle,
+} from "drizzle-orm/better-sqlite3";
+import { integer, text } from "drizzle-orm/sqlite-core";
+import { sqliteTable } from "drizzle-orm/sqlite-core";
 
 // Define Drizzle schema for sessions
-const sessionsSchema = pgTable("sessions", {
-	id: varchar("id", { length: 255 }).primaryKey(),
-	userId: varchar("user_id", { length: 255 }).notNull(),
-	messages: jsonb("messages").default("[]").$type<Message[]>(),
-	metadata: jsonb("metadata").default("{}").$type<Record<string, any>>(),
-	createdAt: timestamp("created_at", { withTimezone: true })
-		.defaultNow()
-		.notNull(),
-	updatedAt: timestamp("updated_at", { withTimezone: true })
-		.defaultNow()
-		.notNull(),
-	state: jsonb("state").default("{}").$type<Record<string, any>>(),
+const sessionsSchema = sqliteTable("sessions", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull(),
+	messages: text("messages", { mode: "json" }).default("[]").$type<Message[]>(),
+	metadata: text("metadata", { mode: "json" })
+		.default("{}")
+		.$type<Record<string, any>>(),
+	createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+	updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+	state: text("state", { mode: "json" })
+		.default("{}")
+		.$type<Record<string, any>>(),
 });
 
 // Type for the Drizzle schema
@@ -26,14 +32,14 @@ export type SessionsTable = typeof sessionsSchema;
 export type SessionRow = typeof sessionsSchema.$inferSelect;
 
 /**
- * Configuration for PgLiteSessionService
+ * Configuration for SqliteSessionService
  */
-export interface PgLiteSessionServiceConfig {
+export interface SqliteSessionServiceConfig {
 	/**
-	 * An initialized PGlite instance.
+	 * An initialized better-sqlite3 Database instance.
 	 * The service will handle all Drizzle ORM setup internally.
 	 */
-	pglite: PGlite;
+	sqlite: Database.Database;
 
 	/**
 	 * Optional: Skip automatic table creation if you handle migrations externally
@@ -41,14 +47,26 @@ export interface PgLiteSessionServiceConfig {
 	skipTableCreation?: boolean;
 }
 
-export class PgLiteSessionService implements SessionService {
-	private db: PgliteDatabase<{ sessions: SessionsTable }>;
+export class SqliteSessionService implements SessionService {
+	private db: BetterSQLite3Database<{ sessions: SessionsTable }>;
 	private sessionsTable: SessionsTable;
 	private initialized = false;
+	private sqliteInstance: Database.Database;
 
-	constructor(config: PgLiteSessionServiceConfig) {
-		// Initialize Drizzle with the provided PGlite instance
-		this.db = drizzle(config.pglite, {
+	constructor(config: SqliteSessionServiceConfig) {
+		this.sqliteInstance = config.sqlite;
+
+		// Ensure the database directory exists
+		const dbPath = this.sqliteInstance.name;
+		if (dbPath && dbPath !== ":memory:") {
+			const dbDir = path.dirname(dbPath);
+			if (!fs.existsSync(dbDir)) {
+				fs.mkdirSync(dbDir, { recursive: true });
+			}
+		}
+
+		// Initialize Drizzle with the provided SQLite instance
+		this.db = drizzle(config.sqlite, {
 			schema: { sessions: sessionsSchema },
 		});
 		this.sessionsTable = sessionsSchema;
@@ -56,7 +74,7 @@ export class PgLiteSessionService implements SessionService {
 		// Initialize database tables unless explicitly skipped
 		if (!config.skipTableCreation) {
 			this.initializeDatabase().catch((error) => {
-				console.error("Failed to initialize PgLite database:", error);
+				console.error("Failed to initialize SQLite database:", error);
 			});
 		}
 	}
@@ -70,21 +88,30 @@ export class PgLiteSessionService implements SessionService {
 		}
 
 		try {
-			await this.db.execute(`
+			// Enable WAL mode for better concurrent access
+			this.sqliteInstance.pragma("journal_mode = WAL");
+
+			// Create sessions table using raw SQL since Drizzle doesn't have migrations built-in
+			this.sqliteInstance.exec(`
 				CREATE TABLE IF NOT EXISTS sessions (
-					id VARCHAR(255) PRIMARY KEY,
-					user_id VARCHAR(255) NOT NULL,
-					messages JSONB DEFAULT '[]',
-					metadata JSONB DEFAULT '{}',
-					created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-					updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
-					state JSONB DEFAULT '{}'
+					id TEXT PRIMARY KEY,
+					user_id TEXT NOT NULL,
+					messages TEXT DEFAULT '[]',
+					metadata TEXT DEFAULT '{}',
+					created_at INTEGER NOT NULL,
+					updated_at INTEGER NOT NULL,
+					state TEXT DEFAULT '{}'
 				);
+			`);
+
+			// Create index on user_id for faster queries
+			this.sqliteInstance.exec(`
+				CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
 			`);
 
 			this.initialized = true;
 		} catch (error) {
-			console.error("Error initializing PgLite database:", error);
+			console.error("Error initializing SQLite database:", error);
 			throw error;
 		}
 	}
@@ -112,7 +139,7 @@ export class PgLiteSessionService implements SessionService {
 		const now = new Date();
 		const sessionState = new SessionState();
 
-		const newSessionData: SessionRow = {
+		const newSessionData: typeof this.sessionsTable.$inferInsert = {
 			id: sessionId,
 			userId,
 			messages: [] as Message[],
@@ -142,8 +169,8 @@ export class PgLiteSessionService implements SessionService {
 				: [],
 			metadata: result.metadata || {},
 			state: SessionState.fromObject(result.state || {}),
-			createdAt: new Date(result.createdAt),
-			updatedAt: new Date(result.updatedAt),
+			createdAt: result.createdAt,
+			updatedAt: result.updatedAt,
 		};
 	}
 
@@ -169,8 +196,8 @@ export class PgLiteSessionService implements SessionService {
 				: [],
 			metadata: sessionData.metadata || {},
 			state: SessionState.fromObject(sessionData.state || {}),
-			createdAt: new Date(sessionData.createdAt),
-			updatedAt: new Date(sessionData.updatedAt),
+			createdAt: sessionData.createdAt,
+			updatedAt: sessionData.updatedAt,
 		};
 	}
 
@@ -216,8 +243,8 @@ export class PgLiteSessionService implements SessionService {
 				: [],
 			metadata: sessionData.metadata || {},
 			state: SessionState.fromObject(sessionData.state || {}),
-			createdAt: new Date(sessionData.createdAt),
-			updatedAt: new Date(sessionData.updatedAt),
+			createdAt: sessionData.createdAt,
+			updatedAt: sessionData.updatedAt,
 		}));
 	}
 

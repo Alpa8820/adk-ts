@@ -1,15 +1,16 @@
-import { PGlite } from "@electric-sql/pglite";
+import * as path from "node:path";
 import {
 	Agent,
 	GoogleLLM,
 	InMemoryMemoryService,
 	LLMRegistry,
 	type MessageRole,
-	PgLiteSessionService,
 	RunConfig,
 	Runner,
+	SqliteSessionService,
 	StreamingMode,
 } from "@iqai/adk";
+import Database from "better-sqlite3";
 import * as dotenv from "dotenv";
 import { v4 as uuidv4 } from "uuid";
 
@@ -19,24 +20,25 @@ dotenv.config();
 // Register the Google LLM
 LLMRegistry.registerLLM(GoogleLLM);
 
-// Initialize PGlite database and session service
-// Now users only need to provide a PGlite instance!
-const pglite = new PGlite();
-const sessionService = new PgLiteSessionService({ pglite });
+// Initialize SQLite database and session service
+// Now users only need to provide a SQLite instance!
+
+const sqlite = new Database(path.join(process.cwd(), "data", "sessions.db"));
+const sessionService = new SqliteSessionService({ sqlite });
 
 // Initialize the agent with Google's Gemini model
 const agent = new Agent({
-	name: "pglite_runner_assistant",
+	name: "sqlite_runner_assistant",
 	model: "gemini-2.5-flash-preview-05-20",
 	description:
-		"A simple assistant demonstrating Runner usage with PGlite session persistence",
+		"A simple assistant demonstrating Runner usage with SQLite session persistence",
 	instructions:
 		"You are a helpful assistant with persistent session storage. Answer questions directly and accurately. When asked about databases, explain the benefits of using persistent storage over in-memory storage.",
 });
 
-// Create a runner with PGlite session service
+// Create a runner with SQLite session service
 const runner = new Runner({
-	appName: "PgLiteRunnerDemo",
+	appName: "SqliteRunnerDemo",
 	agent,
 	sessionService,
 	memoryService: new InMemoryMemoryService(),
@@ -47,15 +49,15 @@ const userId = uuidv4();
 
 async function runConversation() {
 	console.log(
-		"🤖 Starting a PGlite runner example with persistent sessions...",
+		"🤖 Starting a SQLite runner example with persistent sessions...",
 	);
-	console.log("🗄️  PGlite database will be initialized automatically...");
+	console.log("🗄️  SQLite database will be initialized automatically...");
 
-	// Create a session using the PgLiteSessionService
+	// Create a session using the SqliteSessionService
 	// The database tables will be created automatically on first use
-	console.log("📝 Creating a new session with PGlite persistence...");
+	console.log("📝 Creating a new session with SQLite persistence...");
 	const session = await runner.sessionService.createSession(userId, {
-		example: "pglite-runner",
+		example: "sqlite-runner",
 		timestamp: new Date().toISOString(),
 	});
 	const sessionId = session.id;
@@ -75,10 +77,10 @@ async function runConversation() {
 
 	// Run a follow-up question
 	console.log(
-		"\n📝 Follow-up question: 'Can you explain what PGlite is and how it differs from PostgreSQL?'",
+		"\n📝 Follow-up question: 'Can you explain what SQLite is and how it differs from PostgreSQL?'",
 	);
 	await processMessage(
-		"Can you explain what PGlite is and how it differs from PostgreSQL?",
+		"Can you explain what SQLite is and how it differs from PostgreSQL?",
 		sessionId,
 	);
 
@@ -107,7 +109,10 @@ async function runConversation() {
 	const userSessions = await runner.sessionService.listSessions(userId);
 	console.log(`Found ${userSessions.length} session(s) for user ${userId}`);
 
-	console.log("\n✅ PGlite runner example completed successfully!");
+	console.log("\n✅ SQLite runner example completed successfully!");
+
+	// Close the database connection
+	sqlite.close();
 }
 
 async function processMessage(messageContent: string, sessionId: string) {
@@ -174,5 +179,5 @@ async function processMessage(messageContent: string, sessionId: string) {
 
 // Run the example
 runConversation().catch((error) => {
-	console.error("❌ Error in PGlite runner example:", error);
+	console.error("❌ Error in SQLite runner example:", error);
 });
