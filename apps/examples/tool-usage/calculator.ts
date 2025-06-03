@@ -1,4 +1,8 @@
-import { BaseTool, type FunctionDeclaration, type ToolContext } from "@adk";
+import {
+	BaseTool,
+	type FunctionDeclaration,
+	type ToolContext,
+} from "@iqai/adk";
 
 /**
  * Custom Calculator Tool

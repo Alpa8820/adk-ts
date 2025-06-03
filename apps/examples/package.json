@@ -8,11 +8,12 @@
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {
+		"@clack/prompts": "^0.11.0",
+		"@electric-sql/pglite": "^0.3.2",
 		"@iqai/adk": "workspace:*",
 		"dotenv": "^16.5.0",
-		"uuid": "^11.1.0",
-		"@electric-sql/pglite": "^0.3.2",
-		"@clack/prompts": "^0.11.0"
+		"drizzle-orm": "^0.43.1",
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@types/node": "^20.17.30",

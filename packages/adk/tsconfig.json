@@ -3,11 +3,11 @@
 	"main": "./src/index.ts",
 	"compilerOptions": {
 		"outDir": "dist",
-		"rootDir": "./src",
+		"rootDir": ".",
 		"declaration": true,
 		"paths": {
 			"@adk/*": ["./src/*"]
 		}
 	},
-	"include": ["src"]
+	"include": ["src", "tests"]
 }
