@@ -312,18 +312,6 @@ export class GoogleLLM extends BaseLLM {
 			];
 		}
 
-		console.log("[GoogleLLM] convertMessage", {
-			input: JSON.stringify(message, null, 2),
-			output: JSON.stringify(
-				{
-					parts,
-					googleRole,
-				},
-				null,
-				2,
-			),
-		});
-
 		return {
 			role: googleRole,
 			parts: parts,
