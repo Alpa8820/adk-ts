@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { AxiosInstance } from "axios";
 import { BaseLLMConnection } from "./base-llm-connection";
 import type { LLMRequest, Message } from "./llm-request";
@@ -217,20 +218,15 @@ export class AnthropicLLMConnection extends BaseLLMConnection {
 		const toolUses: AnthropicToolUse[] = [];
 
 		for (const block of content) {
-			if (process.env.DEBUG === "true") {
-				console.log(
-					"Connection - Processing content block of type:",
-					block.type,
-				);
-			}
+			debugLog(
+				`[AnthropicLLMConnection] Processing content block of type: ${block.type}`,
+			);
 
 			if (block.type === "tool_use") {
-				if (process.env.DEBUG === "true") {
-					console.log(
-						"Connection - Found tool_use block:",
-						JSON.stringify(block, null, 2),
-					);
-				}
+				debugLog(
+					"[AnthropicLLMConnection] Found tool_use block:",
+					JSON.stringify(block, null, 2),
+				);
 
 				// Extract tool use directly from the block
 				toolUses.push({
@@ -241,14 +237,14 @@ export class AnthropicLLMConnection extends BaseLLMConnection {
 			}
 		}
 
-		if (process.env.DEBUG === "true") {
-			console.log(`Connection - Found ${toolUses.length} tool uses in content`);
-			if (toolUses.length > 0) {
-				console.log(
-					"Connection - Extracted tool uses:",
-					JSON.stringify(toolUses, null, 2),
-				);
-			}
+		debugLog(
+			`[AnthropicLLMConnection] Found ${toolUses.length} tool uses in content`,
+		);
+		if (toolUses.length > 0) {
+			debugLog(
+				"[AnthropicLLMConnection] Extracted tool uses:",
+				JSON.stringify(toolUses, null, 2),
+			);
 		}
 
 		return toolUses;
@@ -367,18 +363,9 @@ export class AnthropicLLMConnection extends BaseLLMConnection {
 			const toolUses = this.extractToolUses(apiResponse.content);
 			const toolCalls = this.convertToolCalls(toolUses);
 
-			if (process.env.DEBUG === "true") {
-				if (toolUses.length > 0) {
-					console.log(
-						"Connection - Extracted Tool Uses:",
-						JSON.stringify(toolUses, null, 2),
-					);
-					console.log(
-						"Connection - Converted Tool Calls:",
-						JSON.stringify(toolCalls, null, 2),
-					);
-				}
-			}
+			debugLog(
+				`[AnthropicLLMConnection] - Extracted ${toolUses.length} tool uses in content and converted ${toolCalls?.length || 0} tool calls`,
+			);
 
 			// Create LLM Response
 			const llmResponse = new LLMResponse({
@@ -388,32 +375,27 @@ export class AnthropicLLMConnection extends BaseLLMConnection {
 				raw_response: apiResponse,
 			});
 
-			if (process.env.DEBUG === "true") {
-				console.log(
-					"Connection - Final LLMResponse object:",
-					JSON.stringify(
-						{
-							role: llmResponse.role,
-							content:
-								llmResponse.content?.substring(0, 50) +
-								(llmResponse.content && llmResponse.content.length > 50
-									? "..."
-									: ""),
-							tool_calls: llmResponse.tool_calls
-								? `[${llmResponse.tool_calls.length} calls]`
-								: "undefined",
-						},
-						null,
-						2,
-					),
-				);
-			}
+			const logObject = {
+				role: llmResponse.role,
+				content:
+					llmResponse.content?.substring(0, 50) +
+					(llmResponse.content && llmResponse.content.length > 50 ? "..." : ""),
+				tool_calls: llmResponse.tool_calls
+					? `[${llmResponse.tool_calls.length} calls]`
+					: "undefined",
+			};
+
+			debugLog(
+				"[AnthropicLLMConnection] Final LLMResponse object:",
+				JSON.stringify(logObject, null, 2),
+			);
 
 			return llmResponse;
 		} catch (error) {
-			if (process.env.DEBUG === "true") {
-				console.error("Error sending message to Anthropic:", error);
-			}
+			debugLog(
+				"[AnthropicLLMConnection] Error sending message to Anthropic:",
+				error,
+			);
 			throw error;
 		}
 	}

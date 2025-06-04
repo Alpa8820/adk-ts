@@ -11,8 +11,6 @@ import {
 
 LLMRegistry.registerLLM(GoogleLLM);
 
-const DEBUG = process.env.DEBUG === "true" || true;
-
 /**
  * Demonstrates an agent using MCP tools from the @iqai/mcp-atp server.
  */

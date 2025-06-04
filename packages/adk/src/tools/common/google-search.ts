@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -52,9 +53,7 @@ export class GoogleSearch extends BaseTool {
 		},
 		_context: ToolContext,
 	): Promise<any> {
-		if (process.env.DEBUG === "true") {
-			console.log(`Executing Google search for: ${args.query}`);
-		}
+		debugLog(`[GoogleSearch] Executing Google search for: ${args.query}`);
 
 		// This would be replaced with an actual API call to Google Search API
 		return {

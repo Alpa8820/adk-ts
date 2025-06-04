@@ -112,9 +112,6 @@ Always include the weather condition, temperature, and humidity in your response
 			maxToolExecutionSteps: 3, // Allow more tool execution steps
 		});
 
-		// Enable debug logging
-		process.env.DEBUG = "true";
-
 		console.log("Google Gemini Agent initialized with weather tool");
 		console.log("---------------------------------------------------");
 

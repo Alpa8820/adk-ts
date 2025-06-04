@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { debugLog } from "@adk/lib/debug";
 import type { Session } from "../sessions/session";
 import type {
 	BaseMemoryService,
@@ -165,11 +166,9 @@ export class PersistentMemoryService implements BaseMemoryService {
 				}
 			}
 
-			if (process.env.DEBUG === "true") {
-				console.log(
-					`Loaded ${this.inMemoryService.getAllSessions().length} sessions from persistent storage`,
-				);
-			}
+			debugLog(
+				`Loaded ${this.inMemoryService.getAllSessions().length} sessions from persistent storage`,
+			);
 		} catch (error) {
 			console.error("Error loading memory files:", error);
 		}

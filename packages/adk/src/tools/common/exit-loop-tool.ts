@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -40,9 +41,7 @@ export class ExitLoopTool extends BaseTool {
 		_args: Record<string, any>,
 		context: ToolContext,
 	): Promise<any> {
-		if (process.env.DEBUG === "true") {
-			console.log("Executing exit loop tool");
-		}
+		debugLog("[ExitLoopTool] Executing exit loop tool");
 
 		// Set the escalate flag to true to indicate that the loop should exit
 		if (context.actions) {

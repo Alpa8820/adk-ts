@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type {
 	Message,
 	MessageContent,
@@ -211,11 +212,9 @@ export class LangGraphAgent extends BaseAgent {
 			if (targetNode.condition) {
 				const shouldExecute = await targetNode.condition(result, context);
 				if (!shouldExecute) {
-					if (process.env.DEBUG === "true") {
-						console.log(
-							`[LangGraphAgent] Skipping node "${targetName}" due to condition`,
-						);
-					}
+					debugLog(
+						`[LangGraphAgent] Skipping node "${targetName}" due to condition`,
+					);
 					continue;
 				}
 			}
@@ -256,11 +255,9 @@ export class LangGraphAgent extends BaseAgent {
 
 		const shouldExecute = await node.condition(mockResponse, mockContext);
 		if (!shouldExecute) {
-			if (process.env.DEBUG === "true") {
-				console.log(
-					`[LangGraphAgent] Skipping node "${targetName}" due to condition`,
-				);
-			}
+			debugLog(
+				`[LangGraphAgent] Skipping node "${targetName}" due to condition`,
+			);
 		}
 
 		return { shouldExecute };
@@ -280,11 +277,9 @@ export class LangGraphAgent extends BaseAgent {
 			config: options.config,
 		});
 
-		if (process.env.DEBUG === "true") {
-			console.log(
-				`[LangGraphAgent] Starting graph execution from root node "${this.rootNode}"`,
-			);
-		}
+		debugLog(
+			`[LangGraphAgent] Starting graph execution from root node "${this.rootNode}"`,
+		);
 
 		if (this.nodes.size === 0) {
 			return {
@@ -316,11 +311,9 @@ export class LangGraphAgent extends BaseAgent {
 
 			// Get next node to execute
 			const { node, messages } = nodesToExecute.shift()!;
-			if (process.env.DEBUG === "true") {
-				console.log(
-					`[LangGraphAgent] Step ${stepCount}: Executing node "${node.name}"`,
-				);
-			}
+			debugLog(
+				`[LangGraphAgent] Step ${stepCount}: Executing node "${node.name}"`,
+			);
 			executedNodes.push(node.name);
 
 			try {
@@ -429,11 +422,9 @@ export class LangGraphAgent extends BaseAgent {
 			config: options.config,
 		});
 
-		if (process.env.DEBUG === "true") {
-			console.log(
-				`[LangGraphAgent] Starting graph execution from root node "${this.rootNode}" (streaming)`,
-			);
-		}
+		debugLog(
+			`[LangGraphAgent] Starting graph execution from root node "${this.rootNode}" (streaming)`,
+		);
 
 		if (this.nodes.size === 0) {
 			yield {
@@ -474,11 +465,9 @@ export class LangGraphAgent extends BaseAgent {
 
 			// Get next node to execute
 			const { node, messages } = nodesToExecute.shift()!;
-			if (process.env.DEBUG === "true") {
-				console.log(
-					`[LangGraphAgent] Step ${stepCount}: Executing node "${node.name}" (streaming)`,
-				);
-			}
+			debugLog(
+				`[LangGraphAgent] Step ${stepCount}: Executing node "${node.name}" (streaming)`,
+			);
 			executedNodes.push(node.name);
 
 			try {

@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -46,9 +47,9 @@ export class LoadMemoryTool extends BaseTool {
 		},
 		context: ToolContext,
 	): Promise<any> {
-		if (process.env.DEBUG === "true") {
-			console.log(`Executing load_memory with query: ${args.query}`);
-		}
+		debugLog(
+			`[LoadMemoryTool] Executing load_memory with query: ${args.query}`,
+		);
 
 		// Check if memory service is available
 		if (!context.memoryService) {

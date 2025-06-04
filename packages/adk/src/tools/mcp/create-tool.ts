@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Tool as McpTool } from "@modelcontextprotocol/sdk/types.js";
 import type { FunctionDeclaration } from "../../models/function-declaration";
@@ -90,9 +91,10 @@ class McpToolAdapter extends BaseTool {
 		args: Record<string, any>,
 		_context: ToolContext,
 	): Promise<any> {
-		if (process.env.DEBUG === "true") {
-			console.log(`Executing MCP tool ${this.name} with args:`, args);
-		}
+		debugLog(
+			`[McpToolAdapter] Executing MCP tool ${this.name} with args:`,
+			args,
+		);
 
 		try {
 			if (typeof this.mcpTool.execute === "function") {

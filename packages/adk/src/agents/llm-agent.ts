@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
@@ -187,9 +188,8 @@ export class Agent extends BaseAgent {
 		context: InvocationContext,
 	): Promise<{ name: string; result: any }> {
 		const { name, arguments: argsString } = toolCall.function;
-		if (process.env.DEBUG === "true") {
-			console.log(`Executing tool: ${name}`);
-		}
+
+		debugLog(`Executing tool: ${name}`);
 
 		// Find the tool
 		const tool = this.findTool(name);
@@ -216,9 +216,8 @@ export class Agent extends BaseAgent {
 
 			// Execute the tool
 			const result = await tool.runAsync(args, toolContext);
-			if (process.env.DEBUG === "true") {
-				console.log(`Tool ${name} execution complete`);
-			}
+
+			debugLog(`Tool ${name} execution complete`);
 
 			return {
 				name,
@@ -440,9 +439,7 @@ export class Agent extends BaseAgent {
 			while (stepCount < this.maxToolExecutionSteps) {
 				stepCount++;
 
-				if (process.env.DEBUG === "true") {
-					console.log(`\n[Agent] Step ${stepCount}: Thinking...`);
-				}
+				debugLog(`Step ${stepCount}: Thinking...`);
 
 				// Request a response from the LLM
 				const llmRequest = new LLMRequest({
@@ -470,9 +467,7 @@ export class Agent extends BaseAgent {
 					currentResponse.tool_calls.length > 0
 				) {
 					// The LLM wants to use tools
-					if (process.env.DEBUG === "true") {
-						console.log("[Agent] Executing tools...");
-					}
+					debugLog(`Tool calls: ${JSON.stringify(currentResponse.tool_calls)}`);
 
 					// Add the assistant message with tool_calls to the conversation first
 					context.addMessage({
@@ -498,9 +493,7 @@ export class Agent extends BaseAgent {
 					}
 				} else {
 					// This is a final response without tool calls
-					if (process.env.DEBUG === "true") {
-						console.log("[Agent] No tool calls, finishing...");
-					}
+					debugLog("[Agent] No tool calls, finishing...");
 
 					// Add the final assistant message to the conversation
 					context.addMessage({
@@ -557,9 +550,7 @@ export class Agent extends BaseAgent {
 		let hadToolCalls = false;
 
 		while (stepCount < this.maxToolExecutionSteps) {
-			if (process.env.DEBUG === "true") {
-				console.log(`\n[Agent] Step ${stepCount + 1}: Thinking...`);
-			}
+			debugLog(`[Agent] Step ${stepCount}: Thinking...`);
 
 			// Get tool declarations
 			const toolDeclarations = this.tools
@@ -613,15 +604,11 @@ export class Agent extends BaseAgent {
 
 			// If no tool calls, we're done
 			if (!hadToolCalls) {
-				if (process.env.DEBUG === "true") {
-					console.log("[Agent] No tool calls, finishing...");
-				}
+				debugLog("[Agent] No tool calls, finishing...");
 				break;
 			}
 
-			if (process.env.DEBUG === "true") {
-				console.log("[Agent] Executing tools...");
-			}
+			debugLog(`[Agent] Step ${stepCount + 1}: Executing tools...`);
 			stepCount++;
 
 			// Execute function_call for backward compatibility
@@ -650,11 +637,9 @@ export class Agent extends BaseAgent {
 				finalResponse.tool_calls &&
 				finalResponse.tool_calls.length > 0
 			) {
-				if (process.env.DEBUG === "true") {
-					console.log(
-						`[Agent] Executing ${finalResponse.tool_calls.length} tool(s)...`,
-					);
-				}
+				debugLog(
+					`[Agent] Step ${stepCount + 1}: Executing ${finalResponse.tool_calls.length} tool(s)...`,
+				);
 
 				// Replace the assistant message with one that includes tool_calls
 				// First, remove the last message (which should be the assistant message we just added)

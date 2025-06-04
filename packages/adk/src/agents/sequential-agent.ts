@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { Message } from "../models/llm-request";
 import type { LLMResponse } from "../models/llm-response";
 import { BaseAgent } from "./base-agent";
@@ -60,12 +61,9 @@ export class SequentialAgent extends BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 	}): Promise<EnhancedLLMResponse> {
-		// Log execution
-		if (process.env.DEBUG === "true") {
-			console.log(
-				`[SequentialAgent] Running ${this.subAgents.length} sub-agents in sequence`,
-			);
-		}
+		debugLog(
+			`[SequentialAgent] Running ${this.subAgents.length} sub-agents in sequence`,
+		);
 
 		if (this.subAgents.length === 0) {
 			return {
@@ -86,11 +84,9 @@ export class SequentialAgent extends BaseAgent {
 		for (let i = 0; i < this.subAgents.length; i++) {
 			const agent = this.subAgents[i];
 
-			if (process.env.DEBUG === "true") {
-				console.log(
-					`[SequentialAgent] Running sub-agent ${i + 1}/${this.subAgents.length}: ${agent.name}`,
-				);
-			}
+			debugLog(
+				`[SequentialAgent] Running sub-agent ${i + 1}/${this.subAgents.length}: ${agent.name}`,
+			);
 
 			try {
 				// Run the current agent with the messages
@@ -160,12 +156,9 @@ export class SequentialAgent extends BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 	}): AsyncIterable<EnhancedLLMResponse> {
-		// Log execution
-		if (process.env.DEBUG === "true") {
-			console.log(
-				`[SequentialAgent] Streaming ${this.subAgents.length} sub-agents in sequence`,
-			);
-		}
+		debugLog(
+			`[SequentialAgent] Streaming ${this.subAgents.length} sub-agents in sequence`,
+		);
 
 		if (this.subAgents.length === 0) {
 			yield {
@@ -186,11 +179,9 @@ export class SequentialAgent extends BaseAgent {
 		for (let i = 0; i < this.subAgents.length; i++) {
 			const agent = this.subAgents[i];
 
-			if (process.env.DEBUG === "true") {
-				console.log(
-					`[SequentialAgent] Streaming sub-agent ${i + 1}/${this.subAgents.length}: ${agent.name}`,
-				);
-			}
+			debugLog(
+				`[SequentialAgent] Streaming sub-agent ${i + 1}/${this.subAgents.length}: ${agent.name}`,
+			);
 
 			try {
 				// Run the current agent with streaming

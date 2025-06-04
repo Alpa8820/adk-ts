@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -59,13 +60,13 @@ export class GetUserChoiceTool extends BaseTool {
 		},
 		context: ToolContext,
 	): Promise<any> {
-		if (process.env.DEBUG === "true") {
-			console.log(
-				`Executing get_user_choice with options: ${args.options.join(", ")}`,
-			);
-			if (args.question) {
-				console.log(`Question: ${args.question}`);
-			}
+		debugLog(
+			`[GetUserChoiceTool] Executing get_user_choice with options: ${args.options.join(
+				", ",
+			)}`,
+		);
+		if (args.question) {
+			debugLog(`[GetUserChoiceTool] Question: ${args.question}`);
 		}
 
 		// Set skip_summarization flag to true

@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -46,9 +47,9 @@ export class TransferToAgentTool extends BaseTool {
 		},
 		context: ToolContext,
 	): Promise<any> {
-		if (process.env.DEBUG === "true") {
-			console.log(`Executing transfer to agent: ${args.agent_name}`);
-		}
+		debugLog(
+			`[TransferToAgentTool] Executing transfer to agent: ${args.agent_name}`,
+		);
 
 		// Set the transfer_to_agent flag with the agent name
 		if (context.actions) {

@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { Message } from "../models/llm-request";
 import type { LLMResponse } from "../models/llm-response";
 import { BaseAgent } from "./base-agent";
@@ -53,12 +54,9 @@ export class ParallelAgent extends BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 	}): Promise<LLMResponse> {
-		// Log execution
-		if (process.env.DEBUG === "true") {
-			console.log(
-				`[ParallelAgent] Running ${this.subAgents.length} sub-agents in parallel`,
-			);
-		}
+		debugLog(
+			`[ParallelAgent] Running ${this.subAgents.length} sub-agents in parallel`,
+		);
 
 		if (this.subAgents.length === 0) {
 			return {
@@ -114,12 +112,9 @@ export class ParallelAgent extends BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 	}): AsyncIterable<LLMResponse> {
-		// Log execution
-		if (process.env.DEBUG === "true") {
-			console.log(
-				`[ParallelAgent] Streaming ${this.subAgents.length} sub-agents in parallel`,
-			);
-		}
+		debugLog(
+			`[ParallelAgent] Streaming ${this.subAgents.length} sub-agents in parallel`,
+		);
 
 		if (this.subAgents.length === 0) {
 			yield {

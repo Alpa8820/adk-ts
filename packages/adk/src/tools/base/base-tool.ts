@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import type { ToolContext } from "../tool-context";
 
@@ -168,11 +169,9 @@ export abstract class BaseTool {
 		) {
 			try {
 				if (attempts > 0) {
-					if (process.env.DEBUG === "true") {
-						console.log(
-							`Retrying tool ${this.name} (attempt ${attempts} of ${this.maxRetryAttempts})...`,
-						);
-					}
+					debugLog(
+						`[BaseTool] Retrying tool ${this.name} (attempt ${attempts} of ${this.maxRetryAttempts})...`,
+					);
 
 					const delay = Math.min(
 						this.baseRetryDelay * 2 ** (attempts - 1) + Math.random() * 1000,

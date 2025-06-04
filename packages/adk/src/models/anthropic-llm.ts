@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import axios from "axios";
 import { AnthropicLLMConnection } from "./anthropic-llm-connection";
 import { BaseLLM } from "./base-llm";
@@ -284,14 +285,14 @@ export class AnthropicLLM extends BaseLLM {
 		const toolUses: AnthropicToolUse[] = [];
 
 		for (const block of content) {
-			if (process.env.DEBUG === "true") {
-				console.log("Processing content block of type:", block.type);
-			}
+			debugLog(
+				`[AnthropicLLM] Processing content block of type: ${block.type}`,
+			);
 
 			if (block.type === "tool_use") {
-				if (process.env.DEBUG === "true") {
-					console.log("Found tool_use block:", JSON.stringify(block, null, 2));
-				}
+				debugLog(
+					`[AnthropicLLM] Found tool_use block: ${JSON.stringify(block, null, 2)}`,
+				);
 
 				// Extract tool use directly from the block
 				toolUses.push({
@@ -302,12 +303,10 @@ export class AnthropicLLM extends BaseLLM {
 			}
 		}
 
-		if (process.env.DEBUG === "true") {
-			console.log(`Found ${toolUses.length} tool uses in content`);
-			if (toolUses.length > 0) {
-				console.log("Extracted tool uses:", JSON.stringify(toolUses, null, 2));
-			}
-		}
+		debugLog(
+			`[AnthropicLLM] Found ${toolUses.length} tool uses in content`,
+			toolUses,
+		);
 
 		return toolUses;
 	}
@@ -332,16 +331,14 @@ export class AnthropicLLM extends BaseLLM {
 				responseType: stream ? "stream" : "json",
 			});
 
-			if (process.env.DEBUG === "true") {
-				console.log("Anthropic API Response Status:", response.status);
-				if (!stream) {
-					console.log("Response Data Structure:", Object.keys(response.data));
-					console.log(
-						"Response Content Structure:",
-						response.data.content.map((block: any) => ({ type: block.type })),
-					);
-				}
-			}
+			debugLog(
+				`[AnthropicLLM] API Response done with ${response.status}:`,
+				response.data,
+			);
+			debugLog(
+				"[AnthropicLLM] API Response content:",
+				response.data.content.map((block: any) => ({ type: block.type })),
+			);
 
 			return response.data;
 		} catch (error) {
@@ -384,15 +381,12 @@ export class AnthropicLLM extends BaseLLM {
 				tools: tools?.length ? tools : undefined,
 			};
 
-			// Only log when DEBUG is explicitly set to 'true'
-			if (process.env.DEBUG === "true") {
-				console.log("Anthropic API Request:", {
-					model: params.model,
-					messageCount: params.messages.length,
-					systemMessage: params.system ? "present" : "none",
-					tools: params.tools ? params.tools.map((t) => t.name) : "none",
-				});
-			}
+			debugLog("[AnthropicLLM] API Request:", {
+				model: params.model,
+				messageCount: params.messages.length,
+				systemMessage: params.system ? "present" : "none",
+				tools: params.tools ? params.tools.map((t) => t.name) : "none",
+			});
 
 			if (stream) {
 				// TODO: Implement streaming if needed
@@ -401,12 +395,7 @@ export class AnthropicLLM extends BaseLLM {
 			// Make direct API call
 			const response = await this.callAnthropicAPI(params);
 
-			if (process.env.DEBUG === "true") {
-				console.log(
-					"Full Response Content:",
-					JSON.stringify(response.content, null, 2),
-				);
-			}
+			debugLog("[AnthropicLLM] Full Response Content:", response.content);
 
 			// Extract text content
 			let content = "";
@@ -420,18 +409,8 @@ export class AnthropicLLM extends BaseLLM {
 			const toolUses = this.extractToolUses(response.content);
 			const toolCalls = this.convertToolUses(toolUses);
 
-			if (process.env.DEBUG === "true") {
-				if (toolUses.length > 0) {
-					console.log(
-						"Extracted Tool Uses:",
-						JSON.stringify(toolUses, null, 2),
-					);
-					console.log(
-						"Converted Tool Calls:",
-						JSON.stringify(toolCalls, null, 2),
-					);
-				}
-			}
+			debugLog("[AnthropicLLM] Extracted Tool Uses:", toolUses);
+			debugLog("[AnthropicLLM] Converted Tool Calls:", toolCalls);
 
 			// Only yield a response with tool_calls if there are any
 			const llmResponse = new LLMResponse({
@@ -441,32 +420,24 @@ export class AnthropicLLM extends BaseLLM {
 				raw_response: response,
 			});
 
-			if (process.env.DEBUG === "true") {
-				console.log(
-					"Final LLMResponse object:",
-					JSON.stringify(
-						{
-							role: llmResponse.role,
-							content:
-								llmResponse.content?.substring(0, 50) +
-								(llmResponse.content && llmResponse.content.length > 50
-									? "..."
-									: ""),
-							tool_calls: llmResponse.tool_calls
-								? `[${llmResponse.tool_calls.length} calls]`
-								: "undefined",
-						},
-						null,
-						2,
-					),
-				);
-			}
+			const logObject = {
+				role: llmResponse.role,
+				content:
+					llmResponse.content?.substring(0, 50) +
+					(llmResponse.content && llmResponse.content.length > 50 ? "..." : ""),
+				tool_calls: llmResponse.tool_calls
+					? `[${llmResponse.tool_calls.length} calls]`
+					: "undefined",
+			};
+
+			debugLog(
+				"[AnthropicLLM] Final LLMResponse object:",
+				JSON.stringify(logObject, null, 2),
+			);
 
 			yield llmResponse;
 		} catch (error) {
-			if (process.env.DEBUG === "true") {
-				console.error("Error calling Anthropic:", error);
-			}
+			debugLog("[AnthropicLLM] Error:", error);
 			throw error;
 		}
 	}

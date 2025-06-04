@@ -1,3 +1,4 @@
+import { debugLog } from "@adk/lib/debug";
 import type { BaseLLM } from "./base-llm";
 
 /**
@@ -75,11 +76,9 @@ export class LLMRegistry {
 	 * Logs all registered models for debugging
 	 */
 	static logRegisteredModels(): void {
-		if (process.env.DEBUG === "true") {
-			console.log("Registered LLM models:");
-			for (const [regex, llmClass] of LLMRegistry.llmRegistry.entries()) {
-				console.log(`  - Pattern: ${regex.toString()}`);
-			}
-		}
+		debugLog(
+			"Registered LLM models:",
+			[...LLMRegistry.llmRegistry.entries()].map(([regex]) => regex.toString()),
+		);
 	}
 }
