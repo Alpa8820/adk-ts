@@ -268,12 +268,6 @@ ADK TypeScript is currently in an **alpha development stage**. While core functi
 
 We encourage users to report issues, suggest features, and contribute to the project via the [GitHub issues page](https://github.com/IQAIcom/adk-ts/issues).
 
-## 📖 Comprehensive Documentation
-
-For detailed API references, architectural overviews, integration guides, and advanced usage patterns, please consult the full ADK TypeScript documentation:
-
-**[➡️ View Full Documentation](https://iqai.com.github.io/adk-ts/)**
-
 ## 🤝 Contributing to ADK TypeScript
 
 Contributions from the open-source community are highly welcome. Whether it involves reporting bugs, proposing new features, enhancing documentation, or submitting code, your input is valuable.
