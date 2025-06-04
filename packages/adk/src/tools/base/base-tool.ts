@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/lib/debug";
+import { debugLog } from "@adk/helpers/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import type { ToolContext } from "../tool-context";
 
