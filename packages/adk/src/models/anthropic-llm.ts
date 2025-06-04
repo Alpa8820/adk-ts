@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/lib/debug";
+import { debugLog } from "@adk/helpers/debug";
 import axios from "axios";
 import { AnthropicLLMConnection } from "./anthropic-llm-connection";
 import { BaseLLM } from "./base-llm";

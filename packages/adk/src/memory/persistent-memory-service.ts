@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { debugLog } from "@adk/lib/debug";
+import { debugLog } from "@adk/helpers/debug";
 import type { Session } from "../sessions/session";
 import type {
 	BaseMemoryService,

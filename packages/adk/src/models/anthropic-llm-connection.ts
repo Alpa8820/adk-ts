@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/lib/debug";
+import { debugLog } from "@adk/helpers/debug";
 import type { AxiosInstance } from "axios";
 import { BaseLLMConnection } from "./base-llm-connection";
 import type { LLMRequest, Message } from "./llm-request";

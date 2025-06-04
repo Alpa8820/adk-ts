@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/lib/debug";
+import { debugLog } from "@adk/helpers/debug";
 import type { Message } from "../models/llm-request";
 import type { LLMResponse } from "../models/llm-response";
 import { BaseAgent } from "./base-agent";
