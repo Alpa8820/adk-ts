@@ -5,6 +5,7 @@
 	"scripts": {
 		"start": "tsx ./src/index.ts"
 	},
+	"private": true,
 	"author": "IQAI",
 	"license": "MIT",
 	"dependencies": {
