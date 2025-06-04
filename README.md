@@ -1,44 +1,52 @@
-<div align="center">
-  <img src="adk-typescript.jpg" alt="ADK TypeScript Logo" width="100%"/>
+# ADK TypeScript: Agent Development Kit
 
-  <p align="center">
-    A robust framework for building AI agents with multi-provider LLM support
-  </p>
+The Agent Development Kit (ADK) for TypeScript provides a robust and flexible framework for building sophisticated AI agents. It enables developers to create intelligent, autonomous systems capable of leveraging multiple Large Language Models (LLMs) with advanced tool integration and memory capabilities.
 
-  <p align="center">
-    <a href="https://www.npmjs.com/package/@iqai/adk">
-      <img src="https://img.shields.io/npm/v/@iqai/adk" alt="npm version" />
-    </a>
-    <a href="https://www.npmjs.com/package/@iqai/adk">
-      <img src="https://img.shields.io/npm/dm/@iqai/adk" alt="npm downloads" />
-    </a>
-    <a href="https://github.com/IQAIcom/adk-ts/blob/main/LICENSE.md">
-      <img src="https://img.shields.io/npm/l/@iqai/adk" alt="license" />
-    </a>
-    <a href="https://github.com/IQAIcom/adk-ts">
-      <img src="https://img.shields.io/github/stars/IQAIcom/adk-ts?style=social" alt="github stars" />
-    </a>
-  </p>
-  
-  <p align="center">
-    <a href="https://pontus-devoteam.github.io/adk-typescript/" target="_blank">
-      <img src="https://img.shields.io/badge/Docs-View_Documentation-blue?style=for-the-badge&logo=readthedocs" alt="View Documentation" />
-    </a>
-  </p>
-</div>
+This project is structured as a **Turborepo**, facilitating efficient management of the core ADK package and its accompanying example applications.
 
-## 🚀 Features
+<p align="center">
+  <a href="https://www.npmjs.com/package/@iqai/adk">
+    <img src="https://img.shields.io/npm/v/@iqai/adk" alt="NPM Version" />
+  </a>
+  <a href="https://www.npmjs.com/package/@iqai/adk">
+    <img src="https://img.shields.io/npm/dm/@iqai/adk" alt="NPM Downloads" />
+  </a>
+  <a href="https://github.com/IQAIcom/adk-ts/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/npm/l/@iqai/adk" alt="License" />
+  </a>
+  <a href="https://github.com/IQAIcom/adk-ts">
+    <img src="https://img.shields.io/github/stars/IQAIcom/adk-ts?style=social" alt="GitHub Stars" />
+  </a>
+</p>
 
-- **🤖 Multi-provider Support**: Seamlessly switch between OpenAI, Anthropic, or Google LLMs
-- **🛠️ Tool System**: Create and use custom tools with declarative schemas
-- **🔄 Agent Loop**: Complete implementation of the agent reasoning loop with tool execution
-- **📡 Streaming Support**: Real-time streaming responses from LLMs
-- **🔒 Authentication**: Flexible auth system for secure API access
-- **💾 Memory Systems**: Persistent memory capabilities for stateful agents
+## 🚀 Core Capabilities
 
-## 📚 Quick Start
+ADK TypeScript is engineered to empower developers in building advanced AI applications through a comprehensive feature set:
 
-### 1. Installation
+*   **Multi-Provider LLM Support:** Seamlessly integrate with and switch between leading LLM providers, including OpenAI, Anthropic, and Google, avoiding vendor lock-in and optimizing for specific task requirements.
+*   **Extensible Tool System:** Enhance agent capabilities by creating and integrating custom tools. Define tool functionalities via declarative schemas, enabling LLMs to intelligently select and utilize them.
+*   **Advanced Agent Reasoning Loop:** Features a complete implementation of the agent reasoning loop, facilitating complex task decomposition, iterative problem-solving, and effective tool execution.
+*   **Real-Time Streaming:** Support for real-time streaming responses from LLMs, enabling dynamic and interactive user experiences.
+*   **Flexible Authentication:** Incorporates a versatile authentication system to secure API access and protect agent communications.
+*   **Persistent Memory Systems:** Equip agents with stateful memory, allowing them to retain context from previous interactions for more coherent and personalized engagements.
+
+## 🔧 Repository Structure
+
+This repository leverages Turborepo for streamlined monorepo management. The primary components include:
+
+*   `packages/adk`: Contains the core `@iqai/adk` library, which is the fundamental package for building agents.
+*   `apps/examples`: Provides a suite of practical example applications demonstrating various ADK features and best practices.
+
+## 🚦 Getting Started
+
+Begin developing AI agents with ADK TypeScript by following these steps:
+
+### 1. Prerequisites
+*   Node.js (LTS version recommended; refer to `package.json` `engines` for specific version requirements).
+*   Valid API keys for your selected LLM provider(s) (e.g., OpenAI, Anthropic, Google).
+
+### 2. Package Installation
+Integrate the `@iqai/adk` package into your project using your preferred package manager:
 
 ```bash
 # Using npm
@@ -51,98 +59,73 @@ yarn add @iqai/adk
 pnpm add @iqai/adk
 ```
 
-### 2. Configure Environment
-
-Create a `.env` file in your project root with your API keys:
+### 3. Environment Configuration
+Create a `.env` file in your project's root directory. Add your API keys to this file; ADK will automatically load these environment variables.
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-GOOGLE_API_KEY=your_google_api_key_here
+OPENAI_API_KEY=your_openai_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
+GOOGLE_API_KEY=your_google_api_key
 ```
 
-### 3. Create Your First Agent
+### 4. Your First Agent Implementation
+Below is a basic example demonstrating how to create and run a simple agent:
 
 ```typescript
 import { Agent } from '@iqai/adk';
 import dotenv from 'dotenv';
 
-// Load environment variables
-;
+// Load environment variables from .env
+dotenv.config();
 
-// Create a basic agent
-const agent = new Agent({
-  name: "simple_assistant",
-  model: "gemini-2.5-flash-preview-05-20", // Or "gpt-4-turbo" or "claude-3-opus"
-  description: "A simple assistant",
-  instructions: "You are a helpful assistant. Answer questions concisely."
+// Instantiate the agent
+const basicAgent = new Agent({
+  name: "introductory_assistant",
+  // Supported models include "gpt-4-turbo", "claude-3-opus", etc.
+  model: "gemini-2.5-flash-preview-05-20",
+  description: "A foundational assistant agent.",
+  instructions: "You are an AI assistant. Please provide concise and accurate responses."
 });
 
-// Run the agent
-async function main() {
-  const response = await agent.run({
-    messages: [{ role: 'user', content: 'Hello, who are you?' }]
-  });
+// Asynchronously run the agent
+async function executeAgent() {
+  try {
+    const userQuery = "What is the primary function of an AI agent?";
+    console.log(`User Input: ${userQuery}`);
 
-  console.log(response.content);
+    const agentResponse = await basicAgent.run({
+      messages: [{ role: 'user', content: userQuery }]
+    });
+
+    console.log(`Agent Output: ${agentResponse.content}`);
+  } catch (error) {
+    console.error("An error occurred during agent execution:", error);
+  }
 }
 
-main().catch(console.error);
+// Invoke the agent execution
+executeAgent();
 ```
 
-## 📖 Documentation
+## 🛠️ Advanced Usage Examples
 
-**[View Full Documentation](https://pontus-devoteam.github.io/adk-typescript/)**
+ADK supports the development of more complex agents with specialized functionalities.
 
-Our comprehensive documentation includes:
-
-- Complete API reference
-- Architecture overview
-- Integration guides
-- Advanced usage examples
-- Provider-specific configurations
-
-## 🏗️ Project Status
-
-⚠️ **Early Development Stage**
-
-This project is currently in early development and should be considered alpha software. While it's functional and can be used in projects, you may encounter:
-
-- Breaking changes between versions
-- APIs that may evolve based on user feedback
-- Features that are still being stabilized
-
-Current development status:
-
-- ✅ Core agent framework
-- ✅ Basic OpenAI implementation
-- ✅ Initial Anthropic integration
-- ✅ Initial Google/Gemini integration
-- ✅ Tool system foundation
-- ✅ Basic memory system
-- 🚧 Enhanced error handling
-- 🚧 Improved type safety
-- 🚧 Extended provider features
-- 🚧 Advanced memory capabilities
-- ⬜ Comprehensive testing suite
-- ⬜ Performance optimizations
-- ⬜ Advanced streaming features
-
-We welcome feedback, bug reports, and contributions! Please check the [issues page](https://github.com/IQAIcom/adk-ts/issues) for known issues or to report new ones.
-
-## 📚 Usage Examples
-
-### Agent with Tools
+### Agent with Custom Tools
+Enable agents to perform specific actions or interact with external services using custom-defined tools.
 
 ```typescript
 import { Agent, BaseTool } from '@iqai/adk';
+import dotenv from 'dotenv';
 
-// Create a custom calculator tool
-class CalculatorTool extends BaseTool {
+dotenv.config();
+
+// Define a custom tool for currency conversion
+class CurrencyConverterTool extends BaseTool {
   constructor() {
     super({
-      name: 'calculator',
-      description: 'Perform basic calculations'
+      name: 'currency_converter',
+      description: 'Converts an amount from one currency to another.'
     });
   }
 
@@ -153,108 +136,161 @@ class CalculatorTool extends BaseTool {
       parameters: {
         type: 'object',
         properties: {
-          operation: {
-            type: 'string',
-            enum: ['add', 'subtract', 'multiply', 'divide']
-          },
-          a: { type: 'number' },
-          b: { type: 'number' }
+          amount: { type: 'number' },
+          fromCurrency: { type: 'string', description: 'Source currency code (e.g., USD)' },
+          toCurrency: { type: 'string', description: 'Target currency code (e.g., EUR)' }
         },
-        required: ['operation', 'a', 'b']
+        required: ['amount', 'fromCurrency', 'toCurrency']
       }
     };
   }
 
-  async runAsync(args) {
-    const { operation, a, b } = args;
-    
-    switch(operation) {
-      case 'add': return { result: a + b };
-      case 'subtract': return { result: a - b };
-      case 'multiply': return { result: a * b };
-      case 'divide': return { result: a / b };
-      default: throw new Error(`Unknown operation: ${operation}`);
+  async runAsync(args: { amount: number; fromCurrency: string; toCurrency: string }) {
+    // Placeholder for actual conversion logic (e.g., API call to a finance service)
+    // This example uses a mock conversion rate.
+    if (args.fromCurrency === 'USD' && args.toCurrency === 'EUR') {
+      return { convertedAmount: args.amount * 0.92, currency: 'EUR' };
     }
+    return { error: 'Conversion rate not available for the specified currencies.' };
   }
 }
 
-// Create an agent with the tool
-const agent = new Agent({
-  name: "calculator_assistant",
-  model: "gpt-4-turbo",
-  instructions: "You can perform calculations. Use the calculator tool when asked about math.",
-  tools: [new CalculatorTool()]
+const financialAgent = new Agent({
+  name: "currency_conversion_assistant",
+  model: "gpt-4-turbo", // A model proficient in tool usage is recommended
+  instructions:
+    "You are a financial assistant. Use the currency_converter tool for currency conversions.",
+  tools: [new CurrencyConverterTool()]
 });
 
-// Run the agent
-const response = await agent.run({
-  messages: [{ role: 'user', content: 'What is 24 * 7?' }]
-});
+async function main() {
+  const response = await financialAgent.run({
+    messages: [
+      { role: 'user', content: 'Convert 100 USD to EUR.' }
+    ]
+  });
+  console.log(response.content);
+}
+
+main().catch(console.error);
 ```
 
-### Agent with Memory
+### Agent with Persistent Memory
+Implement agents that can retain information across multiple sessions, enabling more contextual and personalized interactions.
 
 ```typescript
 import { Agent, PersistentMemoryService } from '@iqai/adk';
 import path from 'path';
+import dotenv from 'dotenv';
 
-// Create a memory service
+dotenv.config();
+
+// Initialize the persistent memory service
 const memoryService = new PersistentMemoryService({
-  storageDir: path.join(__dirname, '.memory'),
-  createDir: true
+  storageDir: path.join(process.cwd(), '.agent_memory_data'), // Specify a writable directory
+  createDir: true // Automatically create the directory if it doesn't exist
 });
 
-// Create an agent with memory
-const agent = new Agent({
-  name: "memory_assistant",
+const contextualAgent = new Agent({
+  name: "context_aware_assistant",
   model: "gemini-2.5-flash-preview-05-20",
-  instructions: "You have persistent memory. Remember user preferences.",
+  instructions:
+    "You are equipped with persistent memory. Recall user preferences and past conversation details.",
   memoryService,
-  userId: 'user-123'
+  userId: 'user_profile_001' // Assign a unique identifier for the user
 });
 
-// Run the agent with a session ID for persistence
-const response = await agent.run({
-  messages: [{ role: 'user', content: 'Remember that I like blue.' }],
-  sessionId: 'persistent-session-1'
-});
+async function main() {
+  const userSessionId = 'chat_session_xyz789';
+
+  await contextualAgent.run({
+    messages: [
+      { role: 'user', content: 'My preferred language for technical docs is Python.' }
+    ],
+    sessionId: userSessionId // Use a consistent session ID for memory linkage
+  });
+  console.log("Agent has recorded the user's language preference.");
+
+  const followUp = await contextualAgent.run({
+    messages: [
+      { role: 'user', content: 'What was the language preference I mentioned?' }
+    ],
+    sessionId: userSessionId
+  });
+  console.log(`Agent's response regarding preference: ${followUp.content}`);
+}
+
+main().catch(console.error);
 ```
 
-## 🧪 Example Projects
+## 🧪 Running Example Applications
 
-The `examples/` directory contains several example implementations:
+The `apps/examples` directory within this Turborepo contains a collection of executable examples that illustrate ADK's features.
 
-```bash
-# Run simple agent example
-npm run example:simple
+To run these examples:
 
-# Run tool usage example
-npm run example:tool
+1.  Ensure the repository is cloned locally.
+2.  Navigate to the examples directory:
+    ```bash
+    cd apps/examples
+    ```
+3.  Install dependencies (if not already done from the repository root via `pnpm install`):
+    ```bash
+    pnpm install
+    ```
+4.  Execute the interactive example runner:
+    ```bash
+    pnpm start
+    ```
+    This will launch a menu, enabling you to select and run individual examples. Ensure your `.env` file (configured as per "Environment Configuration") is located at the **root of the repository** for the examples to access the necessary API keys.
 
-# Run memory usage example
-npm run example:memory
+## 📈 Project Status and Roadmap
 
-# Run multi-provider example
-npm run example:multi
+ADK TypeScript is currently in an **alpha development stage**. While core functionalities are operational and can be utilized in projects, users should anticipate potential breaking changes and API refinements as the framework matures based on community feedback and ongoing development.
 
-# Run Anthropic tool example
-npm run example:anthropic
-```
+**Current Milestones Achieved:**
+*   ✅ Robust core agent framework and reasoning loop.
+*   ✅ Foundational integration with OpenAI, Anthropic, and Google/Gemini LLMs.
+*   ✅ Flexible tool system with declarative schema support.
+*   ✅ Initial implementation of persistent memory systems.
+*   ✅ Basic support for streaming and authentication.
 
-## 🤝 Contributing
+**Active Development Focus:**
+*   🚧 Enhancing error handling and diagnostic capabilities.
+*   🚧 Improving overall type safety and the developer experience.
+*   🚧 Expanding support for provider-specific features and optimizing performance.
+*   🚧 Developing more advanced and configurable memory solutions.
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+**Future Development Goals:**
+*   ⬜ Implementation of a comprehensive testing suite for enhanced reliability.
+*   ⬜ Performance optimization for high-throughput agent operations.
+*   ⬜ Advanced features for streaming control and management.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+We encourage users to report issues, suggest features, and contribute to the project via the [GitHub issues page](https://github.com/IQAIcom/adk-ts/issues).
 
-## 📄 License
+## 📖 Comprehensive Documentation
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+For detailed API references, architectural overviews, integration guides, and advanced usage patterns, please consult the full ADK TypeScript documentation:
 
-## 🌟 Show your support
+**[➡️ View Full Documentation](https://iqai.com.github.io/adk-ts/)**
 
-Give a ⭐️ if this project helped you!
+## 🤝 Contributing to ADK TypeScript
+
+Contributions from the open-source community are highly welcome. Whether it involves reporting bugs, proposing new features, enhancing documentation, or submitting code, your input is valuable.
+
+*   **Identify Opportunities:** Review the [GitHub issues page](https://github.com/IQAIcom/adk-ts/issues) for existing tasks or to propose new ideas.
+*   **Contribution Guidelines:** Please refer to our [Contributing Guide](CONTRIBUTING.md) for detailed information on the development process, coding standards, and pull request procedures.
+*   **Standard Workflow:**
+    1.  Fork the repository.
+    2.  Create a dedicated branch for your feature or bugfix (e.g., `git checkout -b feature/new-integration` or `fix/memory-leak-issue`).
+    3.  Implement your changes and commit them with clear, concise messages.
+    4.  Push the branch to your forked repository.
+    5.  Submit a Pull Request against the `main` branch of the upstream repository.
+
+## 📜 Licensing
+
+ADK TypeScript is distributed under the [MIT License](LICENSE). Users are permitted to use, modify, and distribute the software in accordance with the license terms.
+
+## 🌟 Support the Project
+
+If ADK TypeScript proves beneficial to your work or if you are enthusiastic about its development, consider starring the project on GitHub. Your support helps increase visibility and encourages continued development.
