@@ -49,7 +49,7 @@ async function main() {
 		const mcpConfig: McpConfig = {
 			name: "ATP MCP Client",
 			description: "Client for the @iqai/mcp-atp server",
-			debug: DEBUG,
+			debug: process.env.DEBUG === "true",
 			retryOptions: {
 				maxRetries: 2,
 				initialDelay: 200,
