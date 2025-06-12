@@ -5,48 +5,14 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import type { Message as ADKMessage } from "../../models/llm-request";
 import {
+	type ADKSamplingHandler,
+	type ADKSamplingRequest,
+	type ADKSamplingResponse,
 	McpError,
 	McpErrorType,
 	type SamplingRequest,
 	type SamplingResponse,
 } from "./types";
-
-/**
- * ADK sampling request format - what we pass to the user's handler
- */
-export interface ADKSamplingRequest {
-	messages: ADKMessage[];
-	systemPrompt?: string;
-	modelPreferences?: {
-		hints?: Array<{
-			name?: string; // Suggested model name/family
-		}>;
-		costPriority?: number; // 0-1, importance of minimizing cost
-		speedPriority?: number; // 0-1, importance of low latency
-		intelligencePriority?: number; // 0-1, importance of capabilities
-	};
-	includeContext?: "none" | "thisServer" | "allServers";
-	temperature?: number;
-	maxTokens: number;
-	stopSequences?: string[];
-	metadata?: Record<string, unknown>;
-}
-
-/**
- * ADK sampling response format - what we expect from the user's handler
- */
-export interface ADKSamplingResponse {
-	model: string; // Name of the model used
-	stopReason?: "endTurn" | "stopSequence" | "maxTokens" | string;
-	content: string | null;
-}
-
-/**
- * ADK sampling handler function type - receives ADK formatted messages
- */
-export type ADKSamplingHandler = (
-	request: ADKSamplingRequest,
-) => Promise<ADKSamplingResponse>;
 
 /**
  * MCP Sampling Handler class that handles message format conversion
@@ -67,6 +33,17 @@ export class McpSamplingHandler {
 		request: SamplingRequest,
 	): Promise<SamplingResponse> {
 		try {
+			// Ensure we're only processing sampling/createMessage requests
+			if (request.method !== "sampling/createMessage") {
+				this.logger.error(
+					`Invalid method for sampling handler: ${request.method}. Expected: sampling/createMessage`,
+				);
+				throw new McpError(
+					`Invalid method: ${request.method}. This handler only processes sampling/createMessage requests.`,
+					McpErrorType.INVALID_REQUEST_ERROR,
+				);
+			}
+
 			// Validate the request using MCP schema
 			const validationResult = CreateMessageRequestSchema.safeParse(request);
 
@@ -251,4 +228,45 @@ export class McpSamplingHandler {
 		this.adkHandler = handler;
 		this.logger.debug("ADK sampling handler updated");
 	}
+}
+
+/**
+ * Helper function to create a sampling handler with proper TypeScript types.
+ *
+ * @param handler - Function that handles sampling requests
+ * @returns Properly typed ADK sampling handler
+ *
+ * @example
+ * ```typescript
+ * import { createSamplingHandler, GoogleLLM, LLMRequest } from "@iqai/adk";
+ *
+ * const llm = new GoogleLLM("gemini-2.5-flash-preview-05-20");
+ *
+ * const samplingHandler = createSamplingHandler(async (request) => {
+ *   // request is properly typed with all the fields
+ *   const llmRequest = new LLMRequest({
+ *     messages: request.messages,
+ *     config: {
+ *       temperature: request.temperature || 0.7,
+ *       max_tokens: request.maxTokens,
+ *     }
+ *   });
+ *
+ *   const responses = [];
+ *   for await (const response of llm.generateContentAsync(llmRequest)) {
+ *     responses.push(response);
+ *   }
+ *
+ *   return {
+ *     model: llm.model,
+ *     content: responses[responses.length - 1].content,
+ *     stopReason: "endTurn"
+ *   };
+ * });
+ * ```
+ */
+export function createSamplingHandler(
+	handler: (request: ADKSamplingRequest) => Promise<ADKSamplingResponse>,
+): ADKSamplingHandler {
+	return handler;
 }

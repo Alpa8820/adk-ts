@@ -9,7 +9,7 @@ import {
 	mcpSchemaToParameters,
 	normalizeJsonSchema,
 } from "./schema-conversion";
-import type { McpConfig } from "./types";
+import type { ADKSamplingHandler, McpConfig } from "./types";
 import { McpError, McpErrorType } from "./types";
 
 // Export schema conversion utilities and error types
@@ -21,8 +21,9 @@ export {
 	McpError,
 	McpErrorType,
 };
-
 export * from "./types";
+export * from "./sampling-handler";
+
 /**
  * A class for managing MCP tools similar to Python's MCPToolset.
  * Provides functionality to retrieve and use tools from an MCP server.
@@ -85,6 +86,37 @@ export class McpToolset {
 		}
 		await this.clientService.initialize();
 		return this.clientService;
+	}
+
+	/**
+	 * Set a sampling handler for this MCP toolset.
+	 * This allows MCP servers to request LLM completions through your ADK agent.
+	 *
+	 * @param handler - ADK sampling handler that receives ADK-formatted messages
+	 */
+	setSamplingHandler(handler: ADKSamplingHandler): void {
+		if (!this.clientService) {
+			this.clientService = new McpClientService(this.config);
+		}
+
+		this.clientService.setSamplingHandler(handler);
+
+		if (this.config.debug) {
+			console.log("🎯 Sampling handler set for MCP toolset");
+		}
+	}
+
+	/**
+	 * Remove the sampling handler
+	 */
+	removeSamplingHandler(): void {
+		if (this.clientService) {
+			this.clientService.removeSamplingHandler();
+
+			if (this.config.debug) {
+				console.log("🚫 Sampling handler removed from MCP toolset");
+			}
+		}
 	}
 
 	/**
