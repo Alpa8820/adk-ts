@@ -31,8 +31,8 @@
 		"@google-cloud/vertexai": "^0.5.0",
 		"@google/genai": "^1.0.0",
 		"@modelcontextprotocol/sdk": "^1.11.1",
-		"@types/better-sqlite3": "^7.6.13",
 		"axios": "^1.6.2",
+		"better-sqlite3": "^11.10.0",
 		"dotenv": "^16.4.7",
 		"drizzle-orm": "^0.43.1",
 		"openai": "^4.93.0",
@@ -41,6 +41,7 @@
 	},
 	"devDependencies": {
 		"@iqai/tsconfig": "workspace:*",
+		"@types/better-sqlite3": "^7.6.13",
 		"@types/node": "^20.17.30",
 		"tsup": "^8.4.0",
 		"typescript": "^5.3.2",

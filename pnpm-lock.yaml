@@ -78,12 +78,12 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.11.1
         version: 1.11.3
-      '@types/better-sqlite3':
-        specifier: ^7.6.13
-        version: 7.6.13
       axios:
         specifier: ^1.6.2
         version: 1.9.0
+      better-sqlite3:
+        specifier: ^11.10.0
+        version: 11.10.0
       dotenv:
         specifier: ^16.4.7
         version: 16.5.0
@@ -103,6 +103,9 @@ importers:
       '@iqai/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@types/better-sqlite3':
+        specifier: ^7.6.13
+        version: 7.6.13
       '@types/node':
         specifier: ^20.17.30
         version: 20.17.57
