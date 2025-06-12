@@ -7,6 +7,8 @@ import type { z } from "zod";
 export type McpConfig = {
 	// Basic configuration
 	name: string;
+	description: string;
+
 	transport: McpTransportType;
 
 	// Optional configurations
