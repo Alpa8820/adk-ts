@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.0.11
+
+### Patch Changes
+
+- 9c7a7a7: Adds proper input and output conversion from LLMRequest and LLMResponse types
+
 ## 0.0.10
 
 ### Patch Changes
