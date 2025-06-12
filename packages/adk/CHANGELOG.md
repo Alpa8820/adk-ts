@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.0.13
+
+### Patch Changes
+
+- 93b982b: Adds better sqlite3 dependency
+
 ## 0.0.12
 
 ### Patch Changes
