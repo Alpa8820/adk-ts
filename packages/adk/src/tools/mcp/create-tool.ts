@@ -1,4 +1,4 @@
-import { Logger } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import type { Tool as McpTool } from "@modelcontextprotocol/sdk/types.js";
 import type { FunctionDeclaration } from "../../models/function-declaration";

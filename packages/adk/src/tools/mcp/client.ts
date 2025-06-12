@@ -1,4 +1,4 @@
-import { Logger } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";

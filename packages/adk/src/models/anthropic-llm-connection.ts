@@ -1,4 +1,4 @@
-import { Logger } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { AxiosInstance } from "axios";
 import { BaseLLMConnection } from "./base-llm-connection";
 import type { LLMRequest, Message } from "./llm-request";
@@ -41,7 +41,7 @@ interface AnthropicToolUse {
 /**
  * Anthropic LLM Connection for live chat with Claude models
  */
-export class AnthropicLlmConnection extends BaseLLMConnection {
+export class AnthropicLLMConnection extends BaseLLMConnection {
 	/**
 	 * Axios instance for API calls
 	 */

@@ -12,7 +12,7 @@ export class Logger {
 	debug(message: string, ...args: any[]) {
 		const time = new Date().toLocaleDateString();
 
-		if (isDebugEnabled) {
+		if (this.isDebugEnabled) {
 			console.log(`[${time}] 🐛 [DEBUG] ✨ [${this.name}] ${message}`, ...args);
 		}
 	}

@@ -1,4 +1,4 @@
-import { Logger } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import OpenAI from "openai";
 import { BaseLLM } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";

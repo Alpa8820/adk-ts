@@ -1,4 +1,4 @@
-import { Logger } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type {
 	Message,
 	MessageContent,

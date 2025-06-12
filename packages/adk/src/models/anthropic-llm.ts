@@ -1,6 +1,6 @@
-import { Logger } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import axios from "axios";
-import { AnthropicLlmConnection } from "./anthropic-llm-connection";
+import { AnthropicLLMConnection } from "./anthropic-llm-connection";
 import { BaseLLM } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LLMRequest, Message } from "./llm-request";
@@ -454,7 +454,7 @@ export class AnthropicLLM extends BaseLLM {
 				"anthropic-version": "2023-06-01",
 			},
 		});
-		return new AnthropicLlmConnection(
+		return new AnthropicLLMConnection(
 			axiosInstance,
 			this.model,
 			llmRequest,
