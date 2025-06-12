@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.0.10
+
+### Patch Changes
+
+- cb16b0c: Adds helper functions for creating sampling handlers
+
 ## 0.0.9
 
 ### Patch Changes
