@@ -5,7 +5,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { CreateMessageRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { McpSamplingHandler } from "./sampling-handler";
-import type { ADKSamplingHandler, McpConfig } from "./types";
+import type { McpConfig, SamplingHandler } from "./types";
 import { McpError, McpErrorType } from "./types";
 import { withRetry } from "./utils";
 
@@ -314,7 +314,7 @@ export class McpClientService {
 	/**
 	 * Set a new ADK sampling handler
 	 */
-	setSamplingHandler(handler: ADKSamplingHandler): void {
+	setSamplingHandler(handler: SamplingHandler): void {
 		this.mcpSamplingHandler = new McpSamplingHandler(handler);
 
 		if (this.client) {

@@ -1,17 +1,19 @@
 import { Logger } from "@adk/helpers/logger";
+import type { LLMResponse } from "@adk/models";
 import {
 	CreateMessageRequestSchema,
 	CreateMessageResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import type { Message as ADKMessage } from "../../models/llm-request";
+import type {
+	Message as ADKMessage,
+	LLMRequest,
+} from "../../models/llm-request";
 import {
-	type ADKSamplingHandler,
-	type ADKSamplingRequest,
-	type ADKSamplingResponse,
 	McpError,
 	McpErrorType,
-	type SamplingRequest,
-	type SamplingResponse,
+	type McpSamplingRequest,
+	type McpSamplingResponse,
+	type SamplingHandler,
 } from "./types";
 
 /**
@@ -20,18 +22,18 @@ import {
  */
 export class McpSamplingHandler {
 	private logger = new Logger({ name: "McpSamplingHandler" });
-	private adkHandler: ADKSamplingHandler;
+	private samplingHandler: SamplingHandler;
 
-	constructor(adkHandler: ADKSamplingHandler) {
-		this.adkHandler = adkHandler;
+	constructor(samplingHandler: SamplingHandler) {
+		this.samplingHandler = samplingHandler;
 	}
 
 	/**
 	 * Handle MCP sampling request and convert between formats
 	 */
 	async handleSamplingRequest(
-		request: SamplingRequest,
-	): Promise<SamplingResponse> {
+		request: McpSamplingRequest,
+	): Promise<McpSamplingResponse> {
 		try {
 			// Ensure we're only processing sampling/createMessage requests
 			if (request.method !== "sampling/createMessage") {
@@ -78,24 +80,24 @@ export class McpSamplingHandler {
 			this.logger.debug("Converting MCP request to ADK format");
 
 			// Convert MCP messages to ADK format
-			const adkMessages = this.convertMcpMessagesToADK(mcpParams.messages);
+			const adkMessages = this.convertMcpMessagesToADK(
+				mcpParams.messages,
+				mcpParams.systemPrompt,
+			);
 
 			// Prepare ADK request
-			const adkRequest: ADKSamplingRequest = {
+			const adkRequest: LLMRequest = {
 				messages: adkMessages,
-				systemPrompt: mcpParams.systemPrompt,
-				modelPreferences: mcpParams.modelPreferences,
-				includeContext: mcpParams.includeContext,
-				temperature: mcpParams.temperature,
-				maxTokens: mcpParams.maxTokens,
-				stopSequences: mcpParams.stopSequences,
-				metadata: mcpParams.metadata,
+				config: {
+					temperature: mcpParams.temperature,
+					max_tokens: mcpParams.maxTokens,
+				},
 			};
 
 			this.logger.debug("Calling ADK sampling handler");
 
 			// Call the ADK handler
-			const adkResponse = await this.adkHandler(adkRequest);
+			const adkResponse = await this.samplingHandler(adkRequest);
 
 			this.logger.debug("Converting ADK response to MCP format");
 
@@ -137,76 +139,99 @@ export class McpSamplingHandler {
 	 * Convert MCP messages to ADK message format
 	 */
 	private convertMcpMessagesToADK(
-		mcpMessages: SamplingRequest["params"]["messages"],
+		mcpMessages: McpSamplingRequest["params"]["messages"],
+		systemPrompt: string,
 	): ADKMessage[] {
-		return mcpMessages.map((mcpMessage) => {
-			// Map MCP role to ADK role - MCP only supports "user" and "assistant"
-			const adkRole = mcpMessage.role === "assistant" ? "assistant" : "user";
+		const transformedMessages = mcpMessages.map((mcpMessage) =>
+			this.convertSingleMcpMessageToADK(mcpMessage),
+		);
 
-			// Convert content based on type
-			let adkContent: string | Array<any>;
+		// Add system prompt at the beginning
+		transformedMessages.unshift({
+			role: "system",
+			content: systemPrompt,
+		});
 
-			if (mcpMessage.content.type === "text") {
-				// Simple text content
-				adkContent = mcpMessage.content.text || "";
-			} else if (mcpMessage.content.type === "image") {
-				// Multimodal content with image
-				const contentParts: Array<any> = [];
+		return transformedMessages;
+	}
 
-				// Add text part if present
-				if (mcpMessage.content.text) {
-					contentParts.push({
-						type: "text",
-						text: mcpMessage.content.text,
-					});
-				}
+	/**
+	 * Convert a single MCP message to ADK message format
+	 */
+	private convertSingleMcpMessageToADK(
+		mcpMessage: McpSamplingRequest["params"]["messages"][0],
+	): ADKMessage {
+		// Map MCP role to ADK role - MCP only supports "user" and "assistant"
+		const adkRole = mcpMessage.role === "assistant" ? "assistant" : "user";
 
-				// Add image part
-				if (mcpMessage.content.data) {
-					// Convert base64 data to data URL format expected by ADK
-					const mimeType = mcpMessage.content.mimeType || "image/jpeg";
-					const dataUrl = `data:${mimeType};base64,${mcpMessage.content.data}`;
+		// Convert content based on type
+		const adkContent = this.convertMcpContentToADK(mcpMessage.content);
 
-					contentParts.push({
-						type: "image",
-						image_url: {
-							url: dataUrl,
-						},
-					});
-				}
+		const adkMessage: ADKMessage = {
+			role: adkRole,
+			content: adkContent,
+		};
 
-				adkContent = contentParts.length > 0 ? contentParts : "";
-			} else {
-				// Fallback for unknown content types
-				this.logger.warn(
-					`Unknown MCP content type: ${mcpMessage.content.type}`,
-				);
-				adkContent = mcpMessage.content.data || "";
+		this.logger.debug(
+			`Converted MCP message - role: ${mcpMessage.role} -> ${adkRole}, content type: ${mcpMessage.content.type}`,
+		);
+
+		return adkMessage;
+	}
+
+	/**
+	 * Convert MCP message content to ADK content format
+	 */
+	private convertMcpContentToADK(
+		mcpContent: McpSamplingRequest["params"]["messages"][0]["content"],
+	): string | Array<any> {
+		if (mcpContent.type === "text") {
+			// Simple text content
+			return mcpContent.text || "";
+		}
+
+		if (mcpContent.type === "image") {
+			// Multimodal content with image
+			const contentParts: Array<any> = [];
+
+			// Add text part if present
+			if (mcpContent.text) {
+				contentParts.push({
+					type: "text",
+					text: mcpContent.text,
+				});
 			}
 
-			const adkMessage: ADKMessage = {
-				role: adkRole,
-				content: adkContent,
-			};
+			// Add image part
+			if (mcpContent.data) {
+				// Convert base64 data to data URL format expected by ADK
+				const mimeType = mcpContent.mimeType || "image/jpeg";
+				const dataUrl = `data:${mimeType};base64,${mcpContent.data}`;
 
-			this.logger.debug(
-				`Converted MCP message - role: ${mcpMessage.role} -> ${adkRole}, content type: ${mcpMessage.content.type}`,
-			);
+				contentParts.push({
+					type: "image",
+					image_url: {
+						url: dataUrl,
+					},
+				});
+			}
 
-			return adkMessage;
-		});
+			return contentParts.length > 0 ? contentParts : "";
+		}
+
+		// Fallback for unknown content types
+		this.logger.warn(`Unknown MCP content type: ${mcpContent.type}`);
+		return mcpContent.data || "";
 	}
 
 	/**
 	 * Convert ADK response to MCP response format
 	 */
 	private convertADKResponseToMcp(
-		adkResponse: ADKSamplingResponse,
-	): SamplingResponse {
+		adkResponse: LLMResponse,
+	): McpSamplingResponse {
 		// Create MCP response
-		const mcpResponse: SamplingResponse = {
-			model: adkResponse.model,
-			stopReason: adkResponse.stopReason,
+		const mcpResponse: McpSamplingResponse = {
 			role: "assistant", // ADK responses are always from assistant
 			content: {
 				type: "text",
@@ -214,9 +239,7 @@ export class McpSamplingHandler {
 			},
 		};
 
-		this.logger.debug(
-			`Converted ADK response - model: ${adkResponse.model}, content length: ${adkResponse.content?.length || 0}`,
-		);
+		this.logger.debug(`Received content: ${adkResponse.content}`);
 
 		return mcpResponse;
 	}
@@ -224,8 +247,8 @@ export class McpSamplingHandler {
 	/**
 	 * Update the ADK handler
 	 */
-	updateHandler(handler: ADKSamplingHandler): void {
-		this.adkHandler = handler;
+	updateHandler(handler: SamplingHandler): void {
+		this.samplingHandler = handler;
 		this.logger.debug("ADK sampling handler updated");
 	}
 }
@@ -265,8 +288,6 @@ export class McpSamplingHandler {
  * });
  * ```
  */
-export function createSamplingHandler(
-	handler: (request: ADKSamplingRequest) => Promise<ADKSamplingResponse>,
-): ADKSamplingHandler {
+export function createSamplingHandler(handler: SamplingHandler) {
 	return handler;
 }

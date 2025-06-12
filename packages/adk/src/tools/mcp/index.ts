@@ -9,7 +9,7 @@ import {
 	mcpSchemaToParameters,
 	normalizeJsonSchema,
 } from "./schema-conversion";
-import type { ADKSamplingHandler, McpConfig } from "./types";
+import type { McpConfig, SamplingHandler } from "./types";
 import { McpError, McpErrorType } from "./types";
 
 // Export schema conversion utilities and error types
@@ -94,7 +94,7 @@ export class McpToolset {
 	 *
 	 * @param handler - ADK sampling handler that receives ADK-formatted messages
 	 */
-	setSamplingHandler(handler: ADKSamplingHandler): void {
+	setSamplingHandler(handler: SamplingHandler): void {
 		if (!this.clientService) {
 			this.clientService = new McpClientService(this.config);
 		}
