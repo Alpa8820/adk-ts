@@ -4,11 +4,8 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { CreateMessageRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import {
-	type ADKSamplingHandler,
-	McpSamplingHandler,
-} from "./sampling-handler";
-import type { McpConfig } from "./types";
+import { McpSamplingHandler } from "./sampling-handler";
+import type { ADKSamplingHandler, McpConfig } from "./types";
 import { McpError, McpErrorType } from "./types";
 import { withRetry } from "./utils";
 
@@ -23,6 +20,11 @@ export class McpClientService {
 
 	constructor(config: McpConfig) {
 		this.config = config;
+
+		// Initialize sampling handler from config if provided
+		if (config.samplingHandler) {
+			this.mcpSamplingHandler = new McpSamplingHandler(config.samplingHandler);
+		}
 	}
 
 	/**
@@ -56,6 +58,7 @@ export class McpClientService {
 						prompts: {},
 						resources: {},
 						tools: {},
+						sampling: {}, // Enable sampling capability
 					},
 				},
 			);
@@ -309,14 +312,14 @@ export class McpClientService {
 	}
 
 	/**
-	 * Set an ADK sampling handler
+	 * Set a new ADK sampling handler
 	 */
 	setSamplingHandler(handler: ADKSamplingHandler): void {
 		this.mcpSamplingHandler = new McpSamplingHandler(handler);
 
 		if (this.client) {
 			this.setupSamplingHandler(this.client).catch((error) => {
-				console.error("Failed to update sampling handler:", error);
+				console.error("Failed to update ADK sampling handler:", error);
 			});
 		}
 	}

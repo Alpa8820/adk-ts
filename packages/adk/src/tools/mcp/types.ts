@@ -3,12 +3,12 @@ import type {
 	CreateMessageResultSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import type { z } from "zod";
+import type { Message as ADKMessage } from "../../models/llm-request";
 
 export type McpConfig = {
 	// Basic configuration
 	name: string;
 	description: string;
-
 	transport: McpTransportType;
 
 	// Optional configurations
@@ -25,6 +25,12 @@ export type McpConfig = {
 		maxSize?: number; // Maximum number of tools to cache
 	};
 	debug?: boolean;
+
+	/**
+	 * Sampling handler for processing MCP sampling requests.
+	 * This allows MCP servers to request LLM completions through your ADK agent.
+	 */
+	samplingHandler?: ADKSamplingHandler;
 };
 
 export type McpTransportType =
@@ -68,6 +74,46 @@ export class McpError extends Error {
 	}
 }
 
-// MCP request and response types from the SDK
 export type SamplingRequest = z.infer<typeof CreateMessageRequestSchema>;
 export type SamplingResponse = z.infer<typeof CreateMessageResultSchema>;
+
+export type SamplingHandler = (
+	request: SamplingRequest,
+) => Promise<SamplingResponse>;
+
+/**
+ * ADK sampling request format - what we pass to the user's handler
+ */
+export interface ADKSamplingRequest {
+	messages: ADKMessage[];
+	systemPrompt?: string;
+	modelPreferences?: {
+		hints?: Array<{
+			name?: string; // Suggested model name/family
+		}>;
+		costPriority?: number; // 0-1, importance of minimizing cost
+		speedPriority?: number; // 0-1, importance of low latency
+		intelligencePriority?: number; // 0-1, importance of capabilities
+	};
+	includeContext?: "none" | "thisServer" | "allServers";
+	temperature?: number;
+	maxTokens: number;
+	stopSequences?: string[];
+	metadata?: Record<string, unknown>;
+}
+
+/**
+ * ADK sampling response format - what we expect from the user's handler
+ */
+export interface ADKSamplingResponse {
+	model: string; // Name of the model used
+	stopReason?: "endTurn" | "stopSequence" | "maxTokens" | string;
+	content: string | null;
+}
+
+/**
+ * ADK sampling handler function type - receives ADK formatted messages
+ */
+export type ADKSamplingHandler = (
+	request: ADKSamplingRequest,
+) => Promise<ADKSamplingResponse>;
