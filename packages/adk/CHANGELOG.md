@@ -1,5 +1,12 @@
 # @iqai/adk
 
+## 0.0.9
+
+### Patch Changes
+
+- b0b2f93: Adds description back to mcp config
+- 6cf2ba0: Adds proper type to convertMcpMessagesToADK method
+
 ## 0.0.8
 
 ### Patch Changes
