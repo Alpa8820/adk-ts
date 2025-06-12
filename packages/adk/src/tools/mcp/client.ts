@@ -4,7 +4,11 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { CreateMessageRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import type { McpConfig, SamplingHandler } from "./types";
+import {
+	type ADKSamplingHandler,
+	McpSamplingHandler,
+} from "./sampling-handler";
+import type { McpConfig } from "./types";
 import { McpError, McpErrorType } from "./types";
 import { withRetry } from "./utils";
 
@@ -13,13 +17,12 @@ export class McpClientService {
 	private client: Client | null = null;
 	private transport: Transport | null = null;
 	private isClosing = false;
-	private samplingHandler: SamplingHandler | null = null;
+	private mcpSamplingHandler: McpSamplingHandler | null = null;
 
 	private logger = new Logger({ name: "McpClientService" });
 
 	constructor(config: McpConfig) {
 		this.config = config;
-		this.samplingHandler = config.samplingHandler || null;
 	}
 
 	/**
@@ -264,7 +267,7 @@ export class McpClientService {
 	}
 
 	private async setupSamplingHandler(client: Client): Promise<void> {
-		if (!this.samplingHandler) {
+		if (!this.mcpSamplingHandler) {
 			if (this.config.debug) {
 				console.log(
 					"⚠️ No sampling handler provided - sampling requests will be rejected",
@@ -276,29 +279,9 @@ export class McpClientService {
 		client.setRequestHandler(CreateMessageRequestSchema, async (request) => {
 			try {
 				this.logger.debug("Received sampling request:", request);
-				const samplingRequest = request.params;
 
-				if (
-					!samplingRequest.messages ||
-					!Array.isArray(samplingRequest.messages)
-				) {
-					throw new McpError(
-						"Invalid sampling request: messages array is required",
-						McpErrorType.INVALID_REQUEST_ERROR,
-					);
-				}
-
-				if (!samplingRequest.maxTokens || samplingRequest.maxTokens <= 0) {
-					throw new McpError(
-						"Invalid sampling request: maxTokens must be a positive number",
-						McpErrorType.INVALID_REQUEST_ERROR,
-					);
-				}
-
-				const response = await this.samplingHandler({
-					method: request.method,
-					params: request.params,
-				});
+				const response =
+					await this.mcpSamplingHandler!.handleSamplingRequest(request);
 
 				if (this.config.debug) {
 					console.log("✅ Sampling request completed successfully");
@@ -325,8 +308,11 @@ export class McpClientService {
 		}
 	}
 
-	setSamplingHandler(handler: SamplingHandler): void {
-		this.samplingHandler = handler;
+	/**
+	 * Set an ADK sampling handler
+	 */
+	setSamplingHandler(handler: ADKSamplingHandler): void {
+		this.mcpSamplingHandler = new McpSamplingHandler(handler);
 
 		if (this.client) {
 			this.setupSamplingHandler(this.client).catch((error) => {
@@ -335,8 +321,11 @@ export class McpClientService {
 		}
 	}
 
+	/**
+	 * Remove the sampling handler
+	 */
 	removeSamplingHandler(): void {
-		this.samplingHandler = null;
+		this.mcpSamplingHandler = null;
 
 		if (this.client) {
 			try {
