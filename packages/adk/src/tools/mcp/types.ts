@@ -7,7 +7,6 @@ import type { z } from "zod";
 export type McpConfig = {
 	// Basic configuration
 	name: string;
-	description: string;
 	transport: McpTransportType;
 
 	// Optional configurations
@@ -24,7 +23,6 @@ export type McpConfig = {
 		maxSize?: number; // Maximum number of tools to cache
 	};
 	debug?: boolean;
-	samplingHandler?: SamplingHandler;
 };
 
 export type McpTransportType =
@@ -68,9 +66,6 @@ export class McpError extends Error {
 	}
 }
 
+// MCP request and response types from the SDK
 export type SamplingRequest = z.infer<typeof CreateMessageRequestSchema>;
 export type SamplingResponse = z.infer<typeof CreateMessageResultSchema>;
-
-export type SamplingHandler = (
-	request: SamplingRequest,
-) => Promise<SamplingResponse>;
