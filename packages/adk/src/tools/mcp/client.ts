@@ -185,8 +185,8 @@ export class McpClientService {
 			// Close client if it exists
 			if (this.client) {
 				try {
-					if (typeof (this.client as any).close === "function") {
-						await (this.client as any).close();
+					if (typeof this.client.close === "function") {
+						await this.client.close();
 					}
 				} catch (err) {
 					// Ignore
@@ -340,7 +340,7 @@ export class McpClientService {
 
 		if (this.client) {
 			try {
-				(this.client as any).removeRequestHandler?.("sampling/createMessage");
+				this.client.removeRequestHandler?.("sampling/createMessage");
 			} catch (error) {
 				console.error("Failed to remove sampling handler:", error);
 			}
