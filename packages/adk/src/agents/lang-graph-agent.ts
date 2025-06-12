@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type {
 	Message,
 	MessageContent,
@@ -91,6 +91,8 @@ export class LangGraphAgent extends BaseAgent {
 	 * Results from node executions
 	 */
 	private results: Array<{ node: string; result: any }> = [];
+
+	private logger = new Logger({ name: "LangGraphAgent" });
 
 	/**
 	 * Constructor for LangGraphAgent
@@ -204,7 +206,7 @@ export class LangGraphAgent extends BaseAgent {
 		for (const targetName of currentNode.targets) {
 			const targetNode = this.nodes.get(targetName);
 			if (!targetNode) {
-				console.error(`[LangGraphAgent] Target node "${targetName}" not found`);
+				console.error(`Target node "${targetName}" not found`);
 				continue;
 			}
 
@@ -212,9 +214,7 @@ export class LangGraphAgent extends BaseAgent {
 			if (targetNode.condition) {
 				const shouldExecute = await targetNode.condition(result, context);
 				if (!shouldExecute) {
-					debugLog(
-						`[LangGraphAgent] Skipping node "${targetName}" due to condition`,
-					);
+					this.logger.debug(`Skipping node "${targetName}" due to condition`);
 					continue;
 				}
 			}
@@ -255,9 +255,7 @@ export class LangGraphAgent extends BaseAgent {
 
 		const shouldExecute = await node.condition(mockResponse, mockContext);
 		if (!shouldExecute) {
-			debugLog(
-				`[LangGraphAgent] Skipping node "${targetName}" due to condition`,
-			);
+			this.logger.debug(`Skipping node "${targetName}" due to condition`);
 		}
 
 		return { shouldExecute };
@@ -277,8 +275,8 @@ export class LangGraphAgent extends BaseAgent {
 			config: options.config,
 		});
 
-		debugLog(
-			`[LangGraphAgent] Starting graph execution from root node "${this.rootNode}"`,
+		this.logger.debug(
+			`Starting graph execution from root node "${this.rootNode}"`,
 		);
 
 		if (this.nodes.size === 0) {
@@ -311,9 +309,7 @@ export class LangGraphAgent extends BaseAgent {
 
 			// Get next node to execute
 			const { node, messages } = nodesToExecute.shift()!;
-			debugLog(
-				`[LangGraphAgent] Step ${stepCount}: Executing node "${node.name}"`,
-			);
+			this.logger.debug(`Step ${stepCount}: Executing node "${node.name}"`);
 			executedNodes.push(node.name);
 
 			try {
@@ -382,7 +378,7 @@ export class LangGraphAgent extends BaseAgent {
 					});
 				}
 			} catch (error) {
-				console.error(`[LangGraphAgent] Error in node "${node.name}":`, error);
+				console.error(`Error in node "${node.name}":`, error);
 				return {
 					content: `Error in node "${node.name}": ${error instanceof Error ? error.message : String(error)}`,
 					role: "assistant",
@@ -422,8 +418,8 @@ export class LangGraphAgent extends BaseAgent {
 			config: options.config,
 		});
 
-		debugLog(
-			`[LangGraphAgent] Starting graph execution from root node "${this.rootNode}" (streaming)`,
+		this.logger.debug(
+			`Starting graph execution from root node "${this.rootNode}" (streaming)`,
 		);
 
 		if (this.nodes.size === 0) {
@@ -465,8 +461,8 @@ export class LangGraphAgent extends BaseAgent {
 
 			// Get next node to execute
 			const { node, messages } = nodesToExecute.shift()!;
-			debugLog(
-				`[LangGraphAgent] Step ${stepCount}: Executing node "${node.name}" (streaming)`,
+			this.logger.debug(
+				`Step ${stepCount}: Executing node "${node.name}" (streaming)`,
 			);
 			executedNodes.push(node.name);
 
@@ -547,7 +543,7 @@ export class LangGraphAgent extends BaseAgent {
 					});
 				}
 			} catch (error) {
-				console.error(`[LangGraphAgent] Error in node "${node.name}":`, error);
+				console.error(`Error in node "${node.name}":`, error);
 				yield {
 					content: `Error in node "${node.name}": ${error instanceof Error ? error.message : String(error)}`,
 					role: "assistant",

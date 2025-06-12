@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { Session } from "../sessions/session";
 import type {
 	BaseMemoryService,
@@ -48,6 +48,8 @@ export class PersistentMemoryService implements BaseMemoryService {
 	 * File prefix for memory files
 	 */
 	private filePrefix: string;
+
+	private logger = new Logger({ name: "PersistentMemoryService" });
 
 	/**
 	 * Constructor for PersistentMemoryService
@@ -166,7 +168,7 @@ export class PersistentMemoryService implements BaseMemoryService {
 				}
 			}
 
-			debugLog(
+			this.logger.debug(
 				`Loaded ${this.inMemoryService.getAllSessions().length} sessions from persistent storage`,
 			);
 		} catch (error) {

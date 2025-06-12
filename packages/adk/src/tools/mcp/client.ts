@@ -1,8 +1,10 @@
+import { Logger } from "@adk/helpers/logger";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import type { McpConfig } from "./types";
+import { CreateMessageRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import type { McpConfig, SamplingHandler } from "./types";
 import { McpError, McpErrorType } from "./types";
 import { withRetry } from "./utils";
 
@@ -11,9 +13,13 @@ export class McpClientService {
 	private client: Client | null = null;
 	private transport: Transport | null = null;
 	private isClosing = false;
+	private samplingHandler: SamplingHandler | null = null;
+
+	private logger = new Logger({ name: "McpClientService" });
 
 	constructor(config: McpConfig) {
 		this.config = config;
+		this.samplingHandler = config.samplingHandler || null;
 	}
 
 	/**
@@ -73,6 +79,8 @@ export class McpClientService {
 				// No timeout, just wait for connection
 				await connectPromise;
 			}
+
+			await this.setupSamplingHandler(client);
 
 			if (this.config.debug) {
 				console.log("✅ MCP client connected successfully");
@@ -177,8 +185,8 @@ export class McpClientService {
 			// Close client if it exists
 			if (this.client) {
 				try {
-					if (typeof (this.client as any).close === "function") {
-						await (this.client as any).close();
+					if (typeof this.client.close === "function") {
+						await this.client.close();
 					}
 				} catch (err) {
 					// Ignore
@@ -253,5 +261,89 @@ export class McpClientService {
 	 */
 	isConnected(): boolean {
 		return !!this.client && !this.isClosing;
+	}
+
+	private async setupSamplingHandler(client: Client): Promise<void> {
+		if (!this.samplingHandler) {
+			if (this.config.debug) {
+				console.log(
+					"⚠️ No sampling handler provided - sampling requests will be rejected",
+				);
+			}
+			return;
+		}
+
+		client.setRequestHandler(CreateMessageRequestSchema, async (request) => {
+			try {
+				this.logger.debug("Received sampling request:", request);
+				const samplingRequest = request.params;
+
+				if (
+					!samplingRequest.messages ||
+					!Array.isArray(samplingRequest.messages)
+				) {
+					throw new McpError(
+						"Invalid sampling request: messages array is required",
+						McpErrorType.INVALID_REQUEST_ERROR,
+					);
+				}
+
+				if (!samplingRequest.maxTokens || samplingRequest.maxTokens <= 0) {
+					throw new McpError(
+						"Invalid sampling request: maxTokens must be a positive number",
+						McpErrorType.INVALID_REQUEST_ERROR,
+					);
+				}
+
+				const response = await this.samplingHandler({
+					method: request.method,
+					params: request.params,
+				});
+
+				if (this.config.debug) {
+					console.log("✅ Sampling request completed successfully");
+				}
+
+				return response;
+			} catch (error) {
+				console.error("❌ Error handling sampling request:", error);
+
+				if (error instanceof McpError) {
+					throw error;
+				}
+
+				throw new McpError(
+					`Sampling request failed: ${error instanceof Error ? error.message : String(error)}`,
+					McpErrorType.SAMPLING_ERROR,
+					error instanceof Error ? error : undefined,
+				);
+			}
+		});
+
+		if (this.config.debug) {
+			console.log("🎯 Sampling handler registered successfully");
+		}
+	}
+
+	setSamplingHandler(handler: SamplingHandler): void {
+		this.samplingHandler = handler;
+
+		if (this.client) {
+			this.setupSamplingHandler(this.client).catch((error) => {
+				console.error("Failed to update sampling handler:", error);
+			});
+		}
+	}
+
+	removeSamplingHandler(): void {
+		this.samplingHandler = null;
+
+		if (this.client) {
+			try {
+				this.client.removeRequestHandler?.("sampling/createMessage");
+			} catch (error) {
+				console.error("Failed to remove sampling handler:", error);
+			}
+		}
 	}
 }

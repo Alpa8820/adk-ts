@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { Message } from "../models/llm-request";
 import type { LLMResponse } from "../models/llm-response";
 import { BaseAgent } from "./base-agent";
@@ -36,6 +36,8 @@ interface EnhancedLLMResponse extends LLMResponse {
  * Each sub-agent's output becomes input to the next agent
  */
 export class SequentialAgent extends BaseAgent {
+	private logger = new Logger({ name: "SequentialAgent" });
+
 	/**
 	 * Constructor for SequentialAgent
 	 */
@@ -61,8 +63,8 @@ export class SequentialAgent extends BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 	}): Promise<EnhancedLLMResponse> {
-		debugLog(
-			`[SequentialAgent] Running ${this.subAgents.length} sub-agents in sequence`,
+		this.logger.debug(
+			`Running ${this.subAgents.length} sub-agents in sequence`,
 		);
 
 		if (this.subAgents.length === 0) {
@@ -84,8 +86,8 @@ export class SequentialAgent extends BaseAgent {
 		for (let i = 0; i < this.subAgents.length; i++) {
 			const agent = this.subAgents[i];
 
-			debugLog(
-				`[SequentialAgent] Running sub-agent ${i + 1}/${this.subAgents.length}: ${agent.name}`,
+			this.logger.debug(
+				`Running sub-agent ${i + 1}/${this.subAgents.length}: ${agent.name}`,
 			);
 
 			try {
@@ -107,10 +109,7 @@ export class SequentialAgent extends BaseAgent {
 					});
 				}
 			} catch (error) {
-				console.error(
-					`[SequentialAgent] Error in sub-agent ${agent.name}:`,
-					error,
-				);
+				console.error(`Error in sub-agent ${agent.name}:`, error);
 				return {
 					content: `Error in sub-agent ${agent.name}: ${error instanceof Error ? error.message : String(error)}`,
 					role: "assistant",
@@ -156,8 +155,8 @@ export class SequentialAgent extends BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 	}): AsyncIterable<EnhancedLLMResponse> {
-		debugLog(
-			`[SequentialAgent] Streaming ${this.subAgents.length} sub-agents in sequence`,
+		this.logger.debug(
+			`Streaming ${this.subAgents.length} sub-agents in sequence`,
 		);
 
 		if (this.subAgents.length === 0) {
@@ -179,8 +178,8 @@ export class SequentialAgent extends BaseAgent {
 		for (let i = 0; i < this.subAgents.length; i++) {
 			const agent = this.subAgents[i];
 
-			debugLog(
-				`[SequentialAgent] Streaming sub-agent ${i + 1}/${this.subAgents.length}: ${agent.name}`,
+			this.logger.debug(
+				`Streaming sub-agent ${i + 1}/${this.subAgents.length}: ${agent.name}`,
 			);
 
 			try {
@@ -223,10 +222,7 @@ export class SequentialAgent extends BaseAgent {
 					});
 				}
 			} catch (error) {
-				console.error(
-					`[SequentialAgent] Error in streaming sub-agent ${agent.name}:`,
-					error,
-				);
+				console.error(`Error in streaming sub-agent ${agent.name}:`, error);
 				yield {
 					content: `Error in sub-agent ${agent.name}: ${error instanceof Error ? error.message : String(error)}`,
 					role: "assistant",

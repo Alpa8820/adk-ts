@@ -1,6 +1,8 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import type { ToolContext } from "../tool-context";
+
+const logger = new Logger({ name: "BaseTool" });
 
 /**
  * Configuration for tool initialization
@@ -169,8 +171,8 @@ export abstract class BaseTool {
 		) {
 			try {
 				if (attempts > 0) {
-					debugLog(
-						`[BaseTool] Retrying tool ${this.name} (attempt ${attempts} of ${this.maxRetryAttempts})...`,
+					logger.debug(
+						`Retrying tool ${this.name} (attempt ${attempts} of ${this.maxRetryAttempts})...`,
 					);
 
 					const delay = Math.min(

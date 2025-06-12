@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -8,6 +8,8 @@ import "../tool-context-extensions";
  * Tool that allows an agent to transfer control to another agent
  */
 export class TransferToAgentTool extends BaseTool {
+	private logger = new Logger({ name: "TransferToAgentTool" });
+
 	/**
 	 * Constructor for TransferToAgentTool
 	 */
@@ -47,9 +49,7 @@ export class TransferToAgentTool extends BaseTool {
 		},
 		context: ToolContext,
 	): Promise<any> {
-		debugLog(
-			`[TransferToAgentTool] Executing transfer to agent: ${args.agent_name}`,
-		);
+		this.logger.debug(`Executing transfer to agent: ${args.agent_name}`);
 
 		// Set the transfer_to_agent flag with the agent name
 		if (context.actions) {

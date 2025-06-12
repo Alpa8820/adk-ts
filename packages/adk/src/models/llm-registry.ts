@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { BaseLLM } from "./base-llm";
 
 /**
@@ -8,6 +8,8 @@ interface LLMClass {
 	new (model: string): BaseLLM;
 	supportedModels(): string[];
 }
+
+const logger = new Logger({ name: "LLMRegistry" });
 
 /**
  * Registry for LLMs
@@ -76,7 +78,7 @@ export class LLMRegistry {
 	 * Logs all registered models for debugging
 	 */
 	static logRegisteredModels(): void {
-		debugLog(
+		logger.debug(
 			"Registered LLM models:",
 			[...LLMRegistry.llmRegistry.entries()].map(([regex]) => regex.toString()),
 		);

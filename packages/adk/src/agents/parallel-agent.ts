@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { Message } from "../models/llm-request";
 import type { LLMResponse } from "../models/llm-response";
 import { BaseAgent } from "./base-agent";
@@ -29,6 +29,8 @@ export interface ParallelAgentConfig {
  * All sub-agents execute independently with the same input
  */
 export class ParallelAgent extends BaseAgent {
+	private logger = new Logger({ name: "ParallelAgent" });
+
 	/**
 	 * Constructor for ParallelAgent
 	 */
@@ -54,8 +56,8 @@ export class ParallelAgent extends BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 	}): Promise<LLMResponse> {
-		debugLog(
-			`[ParallelAgent] Running ${this.subAgents.length} sub-agents in parallel`,
+		this.logger.debug(
+			`Running ${this.subAgents.length} sub-agents in parallel`,
 		);
 
 		if (this.subAgents.length === 0) {
@@ -73,10 +75,7 @@ export class ParallelAgent extends BaseAgent {
 					config: options.config,
 				})
 				.catch((error) => {
-					console.error(
-						`[ParallelAgent] Error in sub-agent ${agent.name}:`,
-						error,
-					);
+					console.error(`Error in sub-agent ${agent.name}:`, error);
 					return {
 						content: `Error in sub-agent ${agent.name}: ${error instanceof Error ? error.message : String(error)}`,
 						role: "assistant",
@@ -112,8 +111,8 @@ export class ParallelAgent extends BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 	}): AsyncIterable<LLMResponse> {
-		debugLog(
-			`[ParallelAgent] Streaming ${this.subAgents.length} sub-agents in parallel`,
+		this.logger.debug(
+			`Streaming ${this.subAgents.length} sub-agents in parallel`,
 		);
 
 		if (this.subAgents.length === 0) {
@@ -133,10 +132,7 @@ export class ParallelAgent extends BaseAgent {
 					config: options.config,
 				})
 				.catch((error) => {
-					console.error(
-						`[ParallelAgent] Error in sub-agent ${agent.name}:`,
-						error,
-					);
+					console.error(`Error in sub-agent ${agent.name}:`, error);
 					return {
 						content: `Error in sub-agent ${agent.name}: ${error instanceof Error ? error.message : String(error)}`,
 						role: "assistant",

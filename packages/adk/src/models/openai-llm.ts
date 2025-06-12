@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import OpenAI from "openai";
 import { BaseLLM } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
@@ -69,6 +69,8 @@ export class OpenAILLM extends BaseLLM {
 	 * Default parameters for requests
 	 */
 	private defaultParams: Record<string, any>;
+
+	private logger = new Logger({ name: "OpenAILLM" });
 
 	/**
 	 * Constructor for OpenAILLM
@@ -261,8 +263,8 @@ export class OpenAILLM extends BaseLLM {
 	private convertChunk(
 		chunk: OpenAI.Chat.ChatCompletionChunk.Choice,
 	): LLMResponse {
-		debugLog(
-			`[OpenAILLM]: Converting chunk - delta: ${JSON.stringify(chunk.delta || {})}`,
+		this.logger.debug(
+			`Converting chunk - delta: ${JSON.stringify(chunk.delta || {})}`,
 		);
 
 		// Special case: some chunks might be empty or just contain whitespace
@@ -332,8 +334,8 @@ export class OpenAILLM extends BaseLLM {
 		};
 
 		// Log the request parameters
-		debugLog(
-			`[OpenAILLM] Request parameters - model: ${params.model}, messages: ${params.messages.length}, functions: ${params.tools ? params.tools.length : 0}, streaming: ${shouldStream}`,
+		this.logger.debug(
+			`Request parameters - model: ${params.model}, messages: ${params.messages.length}, functions: ${params.tools ? params.tools.length : 0}, streaming: ${shouldStream}`,
 		);
 
 		// Add tools if available
@@ -343,7 +345,7 @@ export class OpenAILLM extends BaseLLM {
 
 		try {
 			if (shouldStream) {
-				debugLog("[OpenAILLM] Starting streaming request");
+				this.logger.debug("Starting streaming request");
 
 				// Handle streaming - explicitly cast the stream to the correct type
 				const streamResponse =
@@ -359,11 +361,11 @@ export class OpenAILLM extends BaseLLM {
 				// Ensure the response is a proper async iterable for await...of
 				const asyncIterable = streamResponse as AsyncIterable<any>;
 
-				debugLog("[OpenAILLM] Stream response received, processing chunks");
+				this.logger.debug("Stream response received, processing chunks");
 
 				for await (const chunk of asyncIterable) {
 					if (!chunk.choices || chunk.choices.length === 0) {
-						debugLog("[OpenAILLM] Empty chunk received, skipping");
+						this.logger.debug("Empty chunk received, skipping");
 						continue;
 					}
 
@@ -375,8 +377,8 @@ export class OpenAILLM extends BaseLLM {
 						accumulatedContent += responseChunk.content;
 					}
 
-					debugLog(
-						`[OpenAILLM] Chunk received - delta: "${choice.delta?.content || ""}"`,
+					this.logger.debug(
+						`Chunk received - delta: "${choice.delta?.content || ""}"`,
 						`responseChunk content: "${responseChunk.content || ""}"`,
 						`is_partial: ${responseChunk.is_partial}`,
 						`accumulated: "${accumulatedContent.substring(0, 30)}${accumulatedContent.length > 30 ? "..." : ""}"`,
@@ -415,14 +417,14 @@ export class OpenAILLM extends BaseLLM {
 						responseChunk.tool_calls = Array.from(partialToolCalls.values());
 					}
 
-					debugLog("[OpenAILLM] Yielding chunk to caller");
+					this.logger.debug("Yielding chunk to caller");
 					yield responseChunk;
 				}
 
 				// After all chunks are processed, yield a final non-streaming chunk with complete content
 				if (accumulatedContent.length > 0) {
-					debugLog(
-						`[OpenAILLM] Yielding final accumulated content: "${accumulatedContent.substring(0, 30)}${accumulatedContent.length > 30 ? "..." : ""}"`,
+					this.logger.debug(
+						`Yielding final accumulated content: "${accumulatedContent.substring(0, 30)}${accumulatedContent.length > 30 ? "..." : ""}"`,
 					);
 					yield new LLMResponse({
 						content: accumulatedContent,
@@ -431,10 +433,10 @@ export class OpenAILLM extends BaseLLM {
 					});
 				}
 
-				debugLog("[OpenAILLM] Finished processing all stream chunks");
+				this.logger.debug("Finished processing all stream chunks");
 			} else {
 				// Handle non-streaming
-				debugLog("[OpenAILLM] Making non-streaming request");
+				this.logger.debug("Making non-streaming request");
 
 				const response = await this.client.chat.completions.create(params);
 
@@ -443,7 +445,7 @@ export class OpenAILLM extends BaseLLM {
 					throw new Error("No response from OpenAI");
 				}
 
-				debugLog("[OpenAILLM] Non-streaming response received");
+				this.logger.debug("Non-streaming response received");
 
 				// @ts-expect-error - OpenAI SDK types may be inconsistent
 				yield this.convertResponse(response.choices[0]);

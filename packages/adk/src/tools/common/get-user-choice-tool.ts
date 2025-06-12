@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/logger";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -8,6 +8,8 @@ import "../tool-context-extensions";
  * Tool that allows an agent to get a choice from the user
  */
 export class GetUserChoiceTool extends BaseTool {
+	private logger = new Logger({ name: "GetUserChoiceTool" });
+
 	/**
 	 * Constructor for GetUserChoiceTool
 	 */
@@ -60,13 +62,11 @@ export class GetUserChoiceTool extends BaseTool {
 		},
 		context: ToolContext,
 	): Promise<any> {
-		debugLog(
-			`[GetUserChoiceTool] Executing get_user_choice with options: ${args.options.join(
-				", ",
-			)}`,
+		this.logger.debug(
+			`Executing get_user_choice with options: ${args.options.join(", ")}`,
 		);
 		if (args.question) {
-			debugLog(`[GetUserChoiceTool] Question: ${args.question}`);
+			this.logger.debug(`Question: ${args.question}`);
 		}
 
 		// Set skip_summarization flag to true
