@@ -159,7 +159,9 @@ export class McpSamplingHandler {
 	/**
 	 * Convert MCP messages to ADK message format
 	 */
-	private convertMcpMessagesToADK(mcpMessages: any[]): ADKMessage[] {
+	private convertMcpMessagesToADK(
+		mcpMessages: SamplingRequest["params"]["messages"],
+	): ADKMessage[] {
 		return mcpMessages.map((mcpMessage) => {
 			// Map MCP role to ADK role - MCP only supports "user" and "assistant"
 			const adkRole = mcpMessage.role === "assistant" ? "assistant" : "user";
@@ -202,7 +204,7 @@ export class McpSamplingHandler {
 				this.logger.warn(
 					`Unknown MCP content type: ${mcpMessage.content.type}`,
 				);
-				adkContent = mcpMessage.content.text || "";
+				adkContent = mcpMessage.content.data || "";
 			}
 
 			const adkMessage: ADKMessage = {
