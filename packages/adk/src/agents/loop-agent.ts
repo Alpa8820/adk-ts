@@ -61,7 +61,7 @@ export class LoopAgent extends BaseAgent {
 		response: LLMResponse,
 	) => boolean | Promise<boolean>;
 
-	private logger = new Logger({ name: "LoopAgentConfig" });
+private logger = new Logger({ name: "LoopAgent" });
 
 	/**
 	 * Constructor for LoopAgent
