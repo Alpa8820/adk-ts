@@ -10,7 +10,7 @@ export class Logger {
 	}
 
 	debug(message: string, ...args: any[]) {
-		const time = new Date().toLocaleDateString();
+const time = new Date().toLocaleTimeString(); // Or .toISOString() for a more standard format
 
 		if (isDebugEnabled) {
 			console.log(`[${time}] 🐛 [DEBUG] ✨ [${this.name}] ${message}`, ...args);
