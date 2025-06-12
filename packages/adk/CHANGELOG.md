@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.0.12
+
+### Patch Changes
+
+- 948b0a1: Fixes sampling handler type to include promise
+
 ## 0.0.11
 
 ### Patch Changes
