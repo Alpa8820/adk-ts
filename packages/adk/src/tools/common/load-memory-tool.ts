@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -8,6 +8,8 @@ import "../tool-context-extensions";
  * Tool that allows an agent to load memories relevant to a query
  */
 export class LoadMemoryTool extends BaseTool {
+	private logger = new Logger({ name: "LoadMemoryTool" });
+
 	/**
 	 * Constructor for LoadMemoryTool
 	 */
@@ -47,9 +49,7 @@ export class LoadMemoryTool extends BaseTool {
 		},
 		context: ToolContext,
 	): Promise<any> {
-		debugLog(
-			`[LoadMemoryTool] Executing load_memory with query: ${args.query}`,
-		);
+		this.logger.debug(`Executing load_memory with query: ${args.query}`);
 
 		// Check if memory service is available
 		if (!context.memoryService) {

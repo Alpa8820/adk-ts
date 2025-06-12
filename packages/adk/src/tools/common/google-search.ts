@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -7,6 +7,8 @@ import type { ToolContext } from "../tool-context";
  * Simple GoogleSearch tool implementation
  */
 export class GoogleSearch extends BaseTool {
+	private logger = new Logger({ name: "GoogleSearch" });
+
 	/**
 	 * Constructor for GoogleSearch
 	 */
@@ -53,7 +55,9 @@ export class GoogleSearch extends BaseTool {
 		},
 		_context: ToolContext,
 	): Promise<any> {
-		debugLog(`[GoogleSearch] Executing Google search for: ${args.query}`);
+		this.logger.debug(
+			`[GoogleSearch] Executing Google search for: ${args.query}`,
+		);
 
 		// This would be replaced with an actual API call to Google Search API
 		return {

@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/debug";
 import type { Message, MessageRole } from "../models/llm-request";
 import type { LLMResponse } from "../models/llm-response";
 import { BaseAgent } from "./base-agent";
@@ -61,6 +61,8 @@ export class LoopAgent extends BaseAgent {
 		response: LLMResponse,
 	) => boolean | Promise<boolean>;
 
+	private logger = new Logger({ name: "LoopAgentConfig" });
+
 	/**
 	 * Constructor for LoopAgent
 	 */
@@ -104,8 +106,8 @@ export class LoopAgent extends BaseAgent {
 	): Promise<boolean> {
 		// Stop if we've reached maximum iterations
 		if (iterationCount >= this.maxIterations) {
-			debugLog(
-				`[LoopAgent] Maximum iterations (${this.maxIterations}) reached. Stopping loop.`,
+			this.logger.debug(
+				`Maximum iterations (${this.maxIterations}) reached. Stopping loop.`,
 			);
 			return false;
 		}
@@ -113,14 +115,14 @@ export class LoopAgent extends BaseAgent {
 		// Use custom condition check if provided
 		if (this.conditionCheck) {
 			const shouldContinue = await this.conditionCheck(response);
-			debugLog(`[LoopAgent] Custom condition check result: ${shouldContinue}`);
+			this.logger.debug(`Custom condition check result: ${shouldContinue}`);
 			return shouldContinue;
 		}
 
 		// Use condition agent if provided
 		if (this.conditionAgent) {
-			debugLog(
-				`[LoopAgent] Using condition agent ${this.conditionAgent.name} to check loop condition`,
+			this.logger.debug(
+				`Using condition agent ${this.conditionAgent.name} to check loop condition`,
 			);
 
 			// Add the response to messages for the condition agent
@@ -149,12 +151,12 @@ export class LoopAgent extends BaseAgent {
 				const shouldContinue =
 					content.includes("yes") && !content.includes("no");
 
-				debugLog(
-					`[LoopAgent] Condition agent result: ${shouldContinue ? "Continue loop" : "Stop loop"}`,
+				this.logger.debug(
+					`Condition agent result: ${shouldContinue ? "Continue loop" : "Stop loop"}`,
 				);
 				return shouldContinue;
 			} catch (error) {
-				console.error("[LoopAgent] Error in condition agent:", error);
+				console.error("Error in condition agent:", error);
 				return false;
 			}
 		}
@@ -172,8 +174,8 @@ export class LoopAgent extends BaseAgent {
 		config?: RunConfig;
 	}): Promise<LLMResponse> {
 		// Log execution
-		debugLog(
-			`[LoopAgent] Starting loop with max ${this.maxIterations} iterations`,
+		this.logger.debug(
+			`Starting loop with max ${this.maxIterations} iterations`,
 		);
 
 		if (this.subAgents.length === 0) {
@@ -196,8 +198,8 @@ export class LoopAgent extends BaseAgent {
 		while (shouldContinueLoop && iterationCount < this.maxIterations) {
 			iterationCount++;
 
-			debugLog(
-				`[LoopAgent] Running iteration ${iterationCount}/${this.maxIterations}`,
+			this.logger.debug(
+				`Running iteration ${iterationCount}/${this.maxIterations}`,
 			);
 
 			try {
@@ -232,10 +234,7 @@ export class LoopAgent extends BaseAgent {
 					});
 				}
 			} catch (error) {
-				console.error(
-					`[LoopAgent] Error in loop iteration ${iterationCount}:`,
-					error,
-				);
+				console.error(`Error in loop iteration ${iterationCount}:`, error);
 				break;
 			}
 		}
@@ -263,8 +262,8 @@ export class LoopAgent extends BaseAgent {
 		config?: RunConfig;
 	}): AsyncIterable<LLMResponse> {
 		// Log execution
-		debugLog(
-			`[LoopAgent] Starting loop with max ${this.maxIterations} iterations (streaming)`,
+		this.logger.debug(
+			`Starting loop with max ${this.maxIterations} iterations (streaming)`,
 		);
 
 		if (this.subAgents.length === 0) {
@@ -294,8 +293,8 @@ export class LoopAgent extends BaseAgent {
 		while (shouldContinueLoop && iterationCount < this.maxIterations) {
 			iterationCount++;
 
-			debugLog(
-				`[LoopAgent] Running iteration ${iterationCount}/${this.maxIterations} (streaming)`,
+			this.logger.debug(
+				`Running iteration ${iterationCount}/${this.maxIterations} (streaming)`,
 			);
 
 			// Status update for this iteration
@@ -333,8 +332,8 @@ export class LoopAgent extends BaseAgent {
 
 				// Need the last complete chunk for condition checking
 				if (!lastChunk) {
-					debugLog(
-						`[LoopAgent] No complete chunk received from iteration ${iterationCount}`,
+					this.logger.debug(
+						`No complete chunk received from iteration ${iterationCount}`,
 					);
 					shouldContinueLoop = false;
 					continue;
@@ -369,8 +368,8 @@ export class LoopAgent extends BaseAgent {
 					};
 				}
 			} catch (error) {
-				debugLog(
-					`[LoopAgent] Error in loop iteration ${iterationCount}: ${error instanceof Error ? error.message : String(error)}`,
+				this.logger.debug(
+					`Error in loop iteration ${iterationCount}: ${error instanceof Error ? error.message : String(error)}`,
 				);
 				yield {
 					content: `Error in loop iteration ${iterationCount}: ${error instanceof Error ? error.message : String(error)}`,

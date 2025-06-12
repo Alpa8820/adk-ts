@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/debug";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
@@ -8,6 +8,8 @@ import "../tool-context-extensions";
  * Tool that allows an agent to exit the current execution loop
  */
 export class ExitLoopTool extends BaseTool {
+	private logger = new Logger({ name: "ExitLoopTool" });
+
 	/**
 	 * Constructor for ExitLoopTool
 	 */
@@ -41,7 +43,7 @@ export class ExitLoopTool extends BaseTool {
 		_args: Record<string, any>,
 		context: ToolContext,
 	): Promise<any> {
-		debugLog("[ExitLoopTool] Executing exit loop tool");
+		this.logger.debug("Executing exit loop tool");
 
 		// Set the escalate flag to true to indicate that the loop should exit
 		if (context.actions) {

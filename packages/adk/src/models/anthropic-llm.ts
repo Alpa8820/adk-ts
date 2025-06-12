@@ -1,6 +1,6 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/debug";
 import axios from "axios";
-import { AnthropicLLMConnection } from "./anthropic-llm-connection";
+import { AnthropicLlmConnection } from "./anthropic-llm-connection";
 import { BaseLLM } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LLMRequest, Message } from "./llm-request";
@@ -114,6 +114,8 @@ export class AnthropicLLM extends BaseLLM {
 	 * Default parameters for requests
 	 */
 	private defaultParams: Record<string, any>;
+
+	private logger = new Logger({ name: "AnthropicLLM" });
 
 	/**
 	 * Constructor for AnthropicLLM
@@ -285,13 +287,11 @@ export class AnthropicLLM extends BaseLLM {
 		const toolUses: AnthropicToolUse[] = [];
 
 		for (const block of content) {
-			debugLog(
-				`[AnthropicLLM] Processing content block of type: ${block.type}`,
-			);
+			this.logger.debug(`Processing content block of type: ${block.type}`);
 
 			if (block.type === "tool_use") {
-				debugLog(
-					`[AnthropicLLM] Found tool_use block: ${JSON.stringify(block, null, 2)}`,
+				this.logger.debug(
+					`Found tool_use block: ${JSON.stringify(block, null, 2)}`,
 				);
 
 				// Extract tool use directly from the block
@@ -303,8 +303,8 @@ export class AnthropicLLM extends BaseLLM {
 			}
 		}
 
-		debugLog(
-			`[AnthropicLLM] Found ${toolUses.length} tool uses in content`,
+		this.logger.debug(
+			`Found ${toolUses.length} tool uses in content`,
 			toolUses,
 		);
 
@@ -331,12 +331,12 @@ export class AnthropicLLM extends BaseLLM {
 				responseType: stream ? "stream" : "json",
 			});
 
-			debugLog(
-				`[AnthropicLLM] API Response done with ${response.status}:`,
+			this.logger.debug(
+				`API Response done with ${response.status}:`,
 				response.data,
 			);
-			debugLog(
-				"[AnthropicLLM] API Response content:",
+			this.logger.debug(
+				"API Response content:",
 				response.data.content.map((block: any) => ({ type: block.type })),
 			);
 
@@ -381,7 +381,7 @@ export class AnthropicLLM extends BaseLLM {
 				tools: tools?.length ? tools : undefined,
 			};
 
-			debugLog("[AnthropicLLM] API Request:", {
+			this.logger.debug("API Request:", {
 				model: params.model,
 				messageCount: params.messages.length,
 				systemMessage: params.system ? "present" : "none",
@@ -395,7 +395,7 @@ export class AnthropicLLM extends BaseLLM {
 			// Make direct API call
 			const response = await this.callAnthropicAPI(params);
 
-			debugLog("[AnthropicLLM] Full Response Content:", response.content);
+			this.logger.debug("Full Response Content:", response.content);
 
 			// Extract text content
 			let content = "";
@@ -409,8 +409,8 @@ export class AnthropicLLM extends BaseLLM {
 			const toolUses = this.extractToolUses(response.content);
 			const toolCalls = this.convertToolUses(toolUses);
 
-			debugLog("[AnthropicLLM] Extracted Tool Uses:", toolUses);
-			debugLog("[AnthropicLLM] Converted Tool Calls:", toolCalls);
+			this.logger.debug("Extracted Tool Uses:", toolUses);
+			this.logger.debug("Converted Tool Calls:", toolCalls);
 
 			// Only yield a response with tool_calls if there are any
 			const llmResponse = new LLMResponse({
@@ -430,14 +430,14 @@ export class AnthropicLLM extends BaseLLM {
 					: "undefined",
 			};
 
-			debugLog(
-				"[AnthropicLLM] Final LLMResponse object:",
+			this.logger.debug(
+				"Final LLMResponse object:",
 				JSON.stringify(logObject, null, 2),
 			);
 
 			yield llmResponse;
 		} catch (error) {
-			debugLog("[AnthropicLLM] Error:", error);
+			this.logger.debug("Error:", error);
 			throw error;
 		}
 	}
@@ -454,7 +454,7 @@ export class AnthropicLLM extends BaseLLM {
 				"anthropic-version": "2023-06-01",
 			},
 		});
-		return new AnthropicLLMConnection(
+		return new AnthropicLlmConnection(
 			axiosInstance,
 			this.model,
 			llmRequest,

@@ -1,4 +1,4 @@
-import { debugLog } from "@adk/helpers/debug";
+import { Logger } from "@adk/helpers/debug";
 import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
@@ -148,6 +148,8 @@ export class Agent extends BaseAgent {
 	 */
 	private memoryRelevanceThreshold: number;
 
+	private logger = new Logger({ name: "LangGraphAgent" });
+
 	/**
 	 * Constructor for Agent
 	 */
@@ -189,7 +191,7 @@ export class Agent extends BaseAgent {
 	): Promise<{ name: string; result: any }> {
 		const { name, arguments: argsString } = toolCall.function;
 
-		debugLog(`Executing tool: ${name}`);
+		this.logger.debug(`Executing tool: ${name}`);
 
 		// Find the tool
 		const tool = this.findTool(name);
@@ -217,7 +219,7 @@ export class Agent extends BaseAgent {
 			// Execute the tool
 			const result = await tool.runAsync(args, toolContext);
 
-			debugLog(`Tool ${name} execution complete`);
+			this.logger.debug(`Tool ${name} execution complete`);
 
 			return {
 				name,
@@ -439,7 +441,7 @@ export class Agent extends BaseAgent {
 			while (stepCount < this.maxToolExecutionSteps) {
 				stepCount++;
 
-				debugLog(`Step ${stepCount}: Thinking...`);
+				this.logger.debug(`Step ${stepCount}: Thinking...`);
 
 				// Request a response from the LLM
 				const llmRequest = new LLMRequest({
@@ -467,7 +469,9 @@ export class Agent extends BaseAgent {
 					currentResponse.tool_calls.length > 0
 				) {
 					// The LLM wants to use tools
-					debugLog(`Tool calls: ${JSON.stringify(currentResponse.tool_calls)}`);
+					this.logger.debug(
+						`Tool calls: ${JSON.stringify(currentResponse.tool_calls)}`,
+					);
 
 					// Add the assistant message with tool_calls to the conversation first
 					context.addMessage({
@@ -493,7 +497,7 @@ export class Agent extends BaseAgent {
 					}
 				} else {
 					// This is a final response without tool calls
-					debugLog("[Agent] No tool calls, finishing...");
+					this.logger.debug("No tool calls, finishing...");
 
 					// Add the final assistant message to the conversation
 					context.addMessage({
@@ -550,7 +554,7 @@ export class Agent extends BaseAgent {
 		let hadToolCalls = false;
 
 		while (stepCount < this.maxToolExecutionSteps) {
-			debugLog(`[Agent] Step ${stepCount}: Thinking...`);
+			this.logger.debug(`Step ${stepCount}: Thinking...`);
 
 			// Get tool declarations
 			const toolDeclarations = this.tools
@@ -604,11 +608,11 @@ export class Agent extends BaseAgent {
 
 			// If no tool calls, we're done
 			if (!hadToolCalls) {
-				debugLog("[Agent] No tool calls, finishing...");
+				this.logger.debug("No tool calls, finishing...");
 				break;
 			}
 
-			debugLog(`[Agent] Step ${stepCount + 1}: Executing tools...`);
+			this.logger.debug(`Step ${stepCount + 1}: Executing tools...`);
 			stepCount++;
 
 			// Execute function_call for backward compatibility
@@ -637,8 +641,8 @@ export class Agent extends BaseAgent {
 				finalResponse.tool_calls &&
 				finalResponse.tool_calls.length > 0
 			) {
-				debugLog(
-					`[Agent] Step ${stepCount + 1}: Executing ${finalResponse.tool_calls.length} tool(s)...`,
+				this.logger.debug(
+					`Step ${stepCount + 1}: Executing ${finalResponse.tool_calls.length} tool(s)...`,
 				);
 
 				// Replace the assistant message with one that includes tool_calls

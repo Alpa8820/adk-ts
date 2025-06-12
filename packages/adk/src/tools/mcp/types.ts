@@ -1,3 +1,9 @@
+import type {
+	CreateMessageRequestSchema,
+	CreateMessageResultSchema,
+} from "@modelcontextprotocol/sdk/types.js";
+import type { z } from "zod";
+
 export type McpConfig = {
 	// Basic configuration
 	name: string;
@@ -18,6 +24,7 @@ export type McpConfig = {
 		maxSize?: number; // Maximum number of tools to cache
 	};
 	debug?: boolean;
+	samplingHandler?: SamplingHandler;
 };
 
 export type McpTransportType =
@@ -42,6 +49,8 @@ export enum McpErrorType {
 	RESOURCE_CLOSED_ERROR = "resource_closed_error",
 	TIMEOUT_ERROR = "timeout_error",
 	INVALID_SCHEMA_ERROR = "invalid_schema_error",
+	SAMPLING_ERROR = "SAMPLING_ERROR",
+	INVALID_REQUEST_ERROR = "INVALID_REQUEST_ERROR",
 }
 
 /**
@@ -58,3 +67,10 @@ export class McpError extends Error {
 		this.originalError = originalError;
 	}
 }
+
+export type SamplingRequest = z.infer<typeof CreateMessageRequestSchema>;
+export type SamplingResponse = z.infer<typeof CreateMessageResultSchema>;
+
+export type SamplingHandler = (
+	request: SamplingRequest,
+) => Promise<SamplingResponse>;
