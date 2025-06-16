@@ -114,19 +114,18 @@ export class GcsArtifactService implements BaseArtifactService {
 
 			const part: Part = {
 				inlineData: {
-					data: artifactBuffer.toString("base64"),
+					data: artifactBuffer.toString(),
 					mimeType: metadata.contentType || "application/octet-stream",
 				},
 			};
 			return part;
-		} catch (error: any) {
-			if (error.code === 404) {
+		} catch (error: unknown) {
+			if ((error as any)?.code === 404) {
 				return null;
 			}
 			throw error;
 		}
 	}
-
 	async listArtifactKeys(args: {
 		appName: string;
 		userId: string;
