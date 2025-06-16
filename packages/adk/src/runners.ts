@@ -108,14 +108,7 @@ export class Runner {
 					partial: response.is_partial,
 					raw_response: response.raw_response,
 				});
-				if (!event.is_partial && event.content) {
-					session.messages = session.messages || [];
-					session.messages.push({
-						role: "assistant" as MessageRole,
-						content: event.content,
-					});
-					await this.sessionService.appendEvent(session, event);
-				}
+				await this.sessionService.appendEvent(session, event);
 
 				// Track partial events for debugging
 				if (event.is_partial) {
