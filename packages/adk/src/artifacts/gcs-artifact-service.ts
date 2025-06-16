@@ -52,7 +52,8 @@ export class GcsArtifactService implements BaseArtifactService {
 			sessionId,
 			filename,
 		});
-		const version = versions.length > 0 ? Math.max(...versions) + 1 : 0;
+
+		const version = versions.length === 0 ? 0 : Math.max(...versions) + 1;
 
 		const blobName = this.getBlobName(
 			appName,
@@ -61,16 +62,12 @@ export class GcsArtifactService implements BaseArtifactService {
 			filename,
 			version,
 		);
+
 		const blob = this.bucket.file(blobName);
 
-		if (!artifact.inlineData?.data || !artifact.inlineData?.mimeType) {
-			throw new Error(
-				"Artifact part must have inlineData with data and mimeType",
-			);
-		}
-
-		await blob.save(Buffer.from(artifact.inlineData.data, "base64"), {
+		await blob.save(artifact.inlineData.data, {
 			contentType: artifact.inlineData.mimeType,
+			preconditionOpts: { ifGenerationMatch: 0 },
 		});
 
 		return version;
