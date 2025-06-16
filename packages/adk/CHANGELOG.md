@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.0.15
+
+### Patch Changes
+
+- 033217e: google-llm: exclude exclusive min/max from tool calls
+
 ## 0.0.14
 
 ### Patch Changes
