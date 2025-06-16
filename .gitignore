@@ -65,3 +65,6 @@ temp-examples/
 .parcel-cache
 adk-python/*
 apps/examples/src/sqlite-runner-example/data/*
+
+# PgLite
+apps/examples/src/pglite-runner-example/data/*
