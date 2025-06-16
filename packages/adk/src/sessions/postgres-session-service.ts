@@ -156,14 +156,6 @@ export class PostgresSessionService implements SessionService {
 			query = query.limit(options.limit) as typeof query; // Using 'as' to help TypeScript if inference is tricky
 		}
 
-		// TODO: Add filtering for createdAfter, updatedAfter, metadataFilter
-		// This would require dynamic query building with Drizzle's `and` / `or` operators
-		// and potentially more complex `where` clauses.
-		// Example for createdAfter (assuming options.createdAfter is a Date):
-		// if (options?.createdAfter) {
-		//   query = query.where(gte(this.sessionsTable.createdAt, options.createdAfter));
-		// }
-
 		const results: SessionRow[] = await query;
 
 		return results.map((sessionData: SessionRow) => ({
@@ -213,18 +205,21 @@ export class PostgresSessionService implements SessionService {
 		}
 		session.events.push(event);
 
+		// Save all non-partial events with content as messages
+		if (event.content) {
+			session.messages = session.messages || [];
+			session.messages.push({
+				role: event.author as any,
+				content: event.content,
+			});
+		}
+
 		// Update session timestamp
 		session.updatedAt = new Date();
 
-		// Save the updated session to the database
+		// Save the updated session to the database (including messages)
 		await this.updateSession(session);
 
 		return event;
 	}
-
-	// TODO: Consider if table creation/migration logic is needed here or handled externally (e.g., drizzle-kit migrations)
-	// TODO: Implement methods corresponding to Python's append_event, list_events,
-	// get_app_state, update_app_state, get_user_state, update_user_state
-	// if full parity with Python's DatabaseSessionService is desired.
-	// This would require defining corresponding Drizzle schemas for Events, AppState, UserState.
 }
