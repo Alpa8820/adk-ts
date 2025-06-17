@@ -1,4 +1,5 @@
 import type { Message } from "../models/llm-request";
+import { tracer } from "../telemetry";
 import type { RunConfig } from "./run-config";
 
 /**
@@ -109,7 +110,38 @@ export abstract class BaseAgent {
 	/**
 	 * Runs the agent with the given messages and configuration
 	 */
-	abstract run(options: {
+	async run(options: {
+		messages: Message[];
+		config?: RunConfig;
+		sessionId?: string;
+	}): Promise<any> {
+		return await tracer.startActiveSpan(
+			`agent_run [${this.name}]`,
+			async (span) => {
+				try {
+					span.setAttributes({
+						"gen_ai.system.name": "iqai-adk",
+						"gen_ai.operation.name": "agent_run",
+						"adk.agent.name": this.name,
+						"adk.session_id": options.sessionId || "unknown",
+					});
+
+					return await this.runImpl(options);
+				} catch (error) {
+					span.recordException(error as Error);
+					span.setStatus({ code: 2, message: (error as Error).message });
+					throw error;
+				} finally {
+					span.end();
+				}
+			},
+		);
+	}
+
+	/**
+	 * Implementation method to be overridden by subclasses
+	 */
+	protected abstract runImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;
@@ -118,7 +150,35 @@ export abstract class BaseAgent {
 	/**
 	 * Runs the agent with streaming support
 	 */
-	abstract runStreaming(options: {
+	async *runStreaming(options: {
+		messages: Message[];
+		config?: RunConfig;
+		sessionId?: string;
+	}): AsyncIterable<any> {
+		const span = tracer.startSpan(`agent_run_streaming [${this.name}]`);
+
+		try {
+			span.setAttributes({
+				"gen_ai.system.name": "iqai-adk",
+				"gen_ai.operation.name": "agent_run_streaming",
+				"adk.agent.name": this.name,
+				"adk.session_id": options.sessionId || "unknown",
+			});
+
+			yield* this.runStreamingImpl(options);
+		} catch (error) {
+			span.recordException(error as Error);
+			span.setStatus({ code: 2, message: (error as Error).message });
+			throw error;
+		} finally {
+			span.end();
+		}
+	}
+
+	/**
+	 * Implementation method to be overridden by subclasses
+	 */
+	protected abstract runStreamingImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;

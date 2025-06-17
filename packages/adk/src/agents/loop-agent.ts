@@ -61,7 +61,7 @@ export class LoopAgent extends BaseAgent {
 		response: LLMResponse,
 	) => boolean | Promise<boolean>;
 
-private logger = new Logger({ name: "LoopAgent" });
+	private logger = new Logger({ name: "LoopAgent" });
 
 	/**
 	 * Constructor for LoopAgent
@@ -169,7 +169,7 @@ private logger = new Logger({ name: "LoopAgent" });
 	 * Runs the agent with the given messages and configuration
 	 * Executes the sub-agent in a loop until the condition is met
 	 */
-	async run(options: {
+	async runImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 	}): Promise<LLMResponse> {
@@ -257,7 +257,7 @@ private logger = new Logger({ name: "LoopAgent" });
 	/**
 	 * Runs the agent with streaming support
 	 */
-	async *runStreaming(options: {
+	async *runStreamingImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 	}): AsyncIterable<LLMResponse> {

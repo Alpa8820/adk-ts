@@ -388,7 +388,7 @@ export class Agent extends BaseAgent {
 	/**
 	 * Runs the agent with the given messages and configuration
 	 */
-	async run(options: {
+	async runImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;
@@ -523,7 +523,7 @@ export class Agent extends BaseAgent {
 	/**
 	 * Runs the agent with streaming support
 	 */
-	async *runStreaming(options: {
+	async *runStreamingImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;
