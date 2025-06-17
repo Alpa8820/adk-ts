@@ -563,6 +563,7 @@ export class Agent extends BaseAgent {
 
 			// Create the request
 			const request = {
+				model: this.model,
 				messages: context.messages,
 				config: {
 					functions: toolDeclarations as any[],
