@@ -16,7 +16,13 @@ import {
 } from "@opentelemetry/semantic-conventions";
 import type { InvocationContext } from "./agents/invocation-context";
 import type { Event } from "./events/event";
-import type { LLMRequest } from "./models/llm-request";
+import type {
+	ImageContent,
+	LLMRequest,
+	Message,
+	MessageContent,
+	TextContent,
+} from "./models/llm-request";
 import type { LLMResponse } from "./models/llm-response";
 import type { BaseTool } from "./tools";
 
@@ -90,13 +96,131 @@ function _safeJsonStringify(obj: any): string {
 }
 
 /**
+ * Builds a dictionary representation of the LLM request for tracing.
+ *
+ * This function prepares a dictionary representation of the LLMRequest
+ * object, suitable for inclusion in a trace. It excludes fields that cannot
+ * be serialized (e.g., function pointers) and avoids sending binary data.
+ *
+ * @param llmRequest - The LLMRequest object.
+ * @returns A dictionary representation of the LLM request.
+ */
+function _buildLlmRequestForTrace(llmRequest: LLMRequest): Record<string, any> {
+	// Some fields in LLMRequest are function pointers and cannot be serialized.
+	const result: Record<string, any> = {
+		model: llmRequest.model,
+		config: {
+			// Exclude non-serializable fields like response_schema if they exist
+			...llmRequest.config,
+			// Remove any function references or other non-serializable properties
+			functions: llmRequest.config.functions?.map((func) => ({
+				name: func.name,
+				description: func.description,
+				parameters: func.parameters,
+				// Exclude any function implementation details
+			})),
+		},
+		messages: [],
+	};
+
+	// Filter out binary data and non-serializable content from messages
+	for (const message of llmRequest.messages) {
+		const filteredMessage: Record<string, any> = {
+			role: message.role,
+			content: _filterMessageContent(message.content),
+		};
+
+		// Include optional fields if they exist
+		if (message.name) {
+			filteredMessage.name = message.name;
+		}
+		if (message.function_call) {
+			filteredMessage.function_call = message.function_call;
+		}
+		if (message.tool_calls) {
+			filteredMessage.tool_calls = message.tool_calls;
+		}
+		if (message.tool_call_id) {
+			filteredMessage.tool_call_id = message.tool_call_id;
+		}
+
+		result.messages.push(filteredMessage);
+	}
+
+	return result;
+}
+
+/**
+ * Filters message content to exclude binary data and non-serializable content.
+ *
+ * @param content - The message content to filter.
+ * @returns Filtered message content safe for serialization.
+ */
+function _filterMessageContent(content: MessageContent): any {
+	if (typeof content === "string") {
+		return content;
+	}
+
+	if (Array.isArray(content)) {
+		return content
+			.filter((item) => _isSerializableContent(item))
+			.map((item) => _sanitizeContentItem(item));
+	}
+
+	if (_isSerializableContent(content)) {
+		return _sanitizeContentItem(content);
+	}
+
+	return "<filtered content>";
+}
+
+/**
+ * Checks if a content item is serializable (not binary data).
+ *
+ * @param content - The content item to check.
+ * @returns True if the content is serializable.
+ */
+function _isSerializableContent(content: TextContent | ImageContent): boolean {
+	// For now, we'll include both text and image content
+	// In the future, you might want to exclude certain image types or large images
+	return content.type === "text" || content.type === "image";
+}
+
+/**
+ * Sanitizes a content item for safe serialization.
+ *
+ * @param content - The content item to sanitize.
+ * @returns Sanitized content item.
+ */
+function _sanitizeContentItem(content: TextContent | ImageContent): any {
+	if (content.type === "text") {
+		return {
+			type: content.type,
+			text: content.text,
+		};
+	}
+
+	if (content.type === "image") {
+		return {
+			type: content.type,
+			image_url: {
+				url: content.image_url.url,
+			},
+		};
+	}
+
+	return content;
+}
+
+/**
  * Traces a tool call by adding detailed attributes to the current span.
  * A direct translation of Python's `trace_tool_call`.
  */
 export function traceToolCall(
 	tool: BaseTool,
 	args: Record<string, any>,
-	functionResponseEvent: Event, // Assuming your Event type can hold this
+	functionResponseEvent: Event,
+	llmRequest?: LLMRequest, // Optional LLM request that led to this tool call
 ) {
 	const span = trace.getActiveSpan();
 	if (!span) return;
@@ -113,10 +237,11 @@ export function traceToolCall(
 		"gen_ai.tool.description": tool.description,
 		"gen_ai.tool.call.id": toolCallId,
 		"adk.tool_call_args": _safeJsonStringify(args),
-		"adk.event_id": functionResponseEvent.invocationId, // Or a more specific event ID
+		"adk.event_id": functionResponseEvent.invocationId,
 		"adk.tool_response": _safeJsonStringify(toolResponse),
-		// Attributes to satisfy UI expectations, as seen in the Python code
-		"adk.llm_request": "{}",
+		"adk.llm_request": llmRequest
+			? _safeJsonStringify(_buildLlmRequestForTrace(llmRequest))
+			: "{}",
 		"adk.llm_response": "{}",
 	});
 }
@@ -140,7 +265,7 @@ export function traceLlmCall(
 		"adk.invocation_id": invocationContext.sessionId, // Or a more specific invocation ID
 		"adk.session_id": invocationContext.sessionId,
 		"adk.event_id": eventId,
-		"adk.llm_request": _safeJsonStringify(llmRequest), // You might want to prune this
+		"adk.llm_request": _safeJsonStringify(_buildLlmRequestForTrace(llmRequest)),
 		"adk.llm_response": _safeJsonStringify(llmResponse),
 	});
 }
