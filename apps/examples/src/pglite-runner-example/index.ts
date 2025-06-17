@@ -1,42 +1,41 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
+// PgLite Runner Example: Demonstrates persistent session storage using PgLite (serverless Postgres-compatible DB)
 import {
 	Agent,
 	InMemoryMemoryService,
 	type MessageRole,
+	PgLiteSessionService,
 	RunConfig,
 	Runner,
-	SqliteSessionService,
 	StreamingMode,
 } from "@iqai/adk";
-import Database from "better-sqlite3";
-
-import { v4 as uuidv4 } from "uuid";
 import { env } from "node:process";
+import { v4 as uuidv4 } from "uuid";
+import { PGlite } from "@electric-sql/pglite";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
-const dbPath = path.format({
-	dir: "apps/examples/src/sqlite-runner-example/data/session.db",
-});
+// Set up PgLite database file (like SQLite)
+const dbPath = path.join(__dirname, "data", "session");
 if (!fs.existsSync(path.dirname(dbPath))) {
 	fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 }
-const sqlite = new Database(dbPath);
+const db = new PGlite(dbPath);
 
-const sessionService = new SqliteSessionService({ sqlite });
+const sessionService = new PgLiteSessionService({ pglite: db });
 
-// Initialize the agent with Google's Gemini model
+// Initialize the agent
 const agent = new Agent({
-	name: "sqlite_runner_assistant",
+	name: "pglite_runner_assistant",
 	model: env.LLM_MODEL,
 	description:
-		"A simple assistant demonstrating Runner usage with SQLite session persistence",
+		"A simple assistant demonstrating Runner usage with PgLite session persistence",
 	instructions:
 		"You are a helpful assistant with persistent session storage. Answer questions directly and accurately. When asked about databases, explain the benefits of using persistent storage over in-memory storage.",
 });
 
-// Create a runner with SQLite session service
+// Create a runner with PgLite session service
 const runner = new Runner({
-	appName: "SqliteRunnerDemo",
+	appName: "PgLiteRunnerDemo",
 	agent,
 	sessionService,
 	memoryService: new InMemoryMemoryService(),
@@ -47,15 +46,14 @@ const userId = uuidv4();
 
 async function runConversation() {
 	console.log(
-		"🤖 Starting a SQLite runner example with persistent sessions...",
+		"🤖 Starting a PgLite runner example with persistent sessions...",
 	);
-	console.log("🗄️  SQLite database will be initialized automatically...");
+	console.log("🗄️  PgLite database will be used for session persistence...");
 
-	// Create a session using the SqliteSessionService
-	// The database tables will be created automatically on first use
-	console.log("📝 Creating a new session with SQLite persistence...");
+	// Create a session using the PgLiteSessionService
+	console.log("📝 Creating a new session with PgLite persistence...");
 	const session = await runner.sessionService.createSession(userId, {
-		example: "sqlite-runner",
+		example: "pglite-runner",
 		timestamp: new Date().toISOString(),
 	});
 	const sessionId = session.id;
@@ -107,10 +105,36 @@ async function runConversation() {
 	const userSessions = await runner.sessionService.listSessions(userId);
 	console.log(`Found ${userSessions.length} session(s) for user ${userId}`);
 
-	console.log("\n✅ SQLite runner example completed successfully!");
+	console.log("\n🗄️  Inspecting raw sessions table via PGlite SQL query...");
+	const result = await db.query("SELECT id, user_id, messages FROM sessions");
+	for (const row of result.rows as any[]) {
+		console.log(`Session ID: ${row.id}`);
+		console.log(`User ID: ${row.user_id}`);
 
-	// Close the database connection
-	sqlite.close();
+		// Robustly parse messages
+		let messages = row.messages;
+		if (typeof messages === "string") {
+			try {
+				messages = JSON.parse(messages);
+			} catch {
+				messages = [];
+			}
+		}
+		if (Array.isArray(messages) && messages.length > 0) {
+			console.log("Messages:");
+			for (const [i, msg] of messages.entries()) {
+				// Defensive: msg may not have role/content
+				const role = msg.role ?? "(unknown)";
+				const content = msg.content ?? "(no content)";
+				console.log(`  [${i}] (${role}): ${content}`);
+			}
+		} else {
+			console.log("  (No messages found)");
+		}
+		console.log("-----");
+	}
+
+	console.log("\n✅ PgLite runner example completed successfully!");
 }
 
 async function processMessage(messageContent: string, sessionId: string) {
@@ -177,5 +201,5 @@ async function processMessage(messageContent: string, sessionId: string) {
 
 // Run the example
 runConversation().catch((error) => {
-	console.error("❌ Error in SQLite runner example:", error);
+	console.error("❌ Error in PgLite runner example:", error);
 });

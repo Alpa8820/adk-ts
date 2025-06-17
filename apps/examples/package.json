@@ -15,13 +15,15 @@
 		"@types/better-sqlite3": "^7.6.13",
 		"better-sqlite3": "^11.10.0",
 		"dotenv": "^16.5.0",
+		"drizzle-orm": "^0.43.1",
+		"pg": "^8.16.0",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
+		"@iqai/tsconfig": "workspace:*",
 		"@types/node": "^20.17.30",
 		"tsx": "^4.19.4",
-		"typescript": "^5.3.2",
-		"@iqai/tsconfig": "workspace:*"
+		"typescript": "^5.3.2"
 	},
 	"packageManager": "pnpm@9.0.0",
 	"engines": {

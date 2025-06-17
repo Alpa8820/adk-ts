@@ -390,29 +390,27 @@ export class GoogleLLM extends BaseLLM {
 
 	/**
 	 * Convert parameter types to Google Gemini format (uppercase types)
+	 * Also removes unsupported fields like exclusiveMinimum/exclusiveMaximum
 	 */
 	private convertParametersToGoogleFormat(parameters: any): any {
 		if (!parameters) return parameters;
 
-		const converted = { ...parameters };
+		// Create a new object excluding unsupported fields
+		const { exclusiveMinimum, exclusiveMaximum, ...rest } = parameters;
+		const converted = { ...rest };
 
 		// Convert main type to uppercase
 		if (converted.type && typeof converted.type === "string") {
 			converted.type = converted.type.toUpperCase();
 		}
 
-		// Convert property types to uppercase
+		// Convert property types to uppercase and recursively clean
 		if (converted.properties) {
 			converted.properties = { ...converted.properties };
 			for (const [key, prop] of Object.entries(converted.properties)) {
 				if (prop && typeof prop === "object" && "type" in prop) {
-					converted.properties[key] = {
-						...(prop as any),
-						type:
-							typeof (prop as any).type === "string"
-								? (prop as any).type.toUpperCase()
-								: (prop as any).type,
-					};
+					converted.properties[key] =
+						this.convertParametersToGoogleFormat(prop);
 				}
 			}
 		}

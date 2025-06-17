@@ -1,42 +1,42 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
+// Postgres Runner Example: Demonstrates persistent session storage using PostgreSQL and Drizzle ORM
 import {
 	Agent,
 	InMemoryMemoryService,
 	type MessageRole,
+	PostgresSessionService,
 	RunConfig,
 	Runner,
-	SqliteSessionService,
 	StreamingMode,
+	sessionsSchema,
 } from "@iqai/adk";
-import Database from "better-sqlite3";
-
-import { v4 as uuidv4 } from "uuid";
 import { env } from "node:process";
+import { v4 as uuidv4 } from "uuid";
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 
-const dbPath = path.format({
-	dir: "apps/examples/src/sqlite-runner-example/data/session.db",
-});
-if (!fs.existsSync(path.dirname(dbPath))) {
-	fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+// Set up Postgres connection (use env var for connection string)
+const connectionString = env.PG_CONNECTION_STRING;
+if (!connectionString) {
+	throw new Error("PG_CONNECTION_STRING is not set");
 }
-const sqlite = new Database(dbPath);
+const pool = new Pool({ connectionString });
+const db = drizzle(pool, { schema: { sessions: sessionsSchema } });
 
-const sessionService = new SqliteSessionService({ sqlite });
+const sessionService = new PostgresSessionService({ db });
 
-// Initialize the agent with Google's Gemini model
+// Initialize the agent
 const agent = new Agent({
-	name: "sqlite_runner_assistant",
+	name: "postgres_runner_assistant",
 	model: env.LLM_MODEL,
 	description:
-		"A simple assistant demonstrating Runner usage with SQLite session persistence",
+		"A simple assistant demonstrating Runner usage with Postgres session persistence",
 	instructions:
 		"You are a helpful assistant with persistent session storage. Answer questions directly and accurately. When asked about databases, explain the benefits of using persistent storage over in-memory storage.",
 });
 
-// Create a runner with SQLite session service
+// Create a runner with Postgres session service
 const runner = new Runner({
-	appName: "SqliteRunnerDemo",
+	appName: "PostgresRunnerDemo",
 	agent,
 	sessionService,
 	memoryService: new InMemoryMemoryService(),
@@ -47,15 +47,14 @@ const userId = uuidv4();
 
 async function runConversation() {
 	console.log(
-		"🤖 Starting a SQLite runner example with persistent sessions...",
+		"🤖 Starting a Postgres runner example with persistent sessions...",
 	);
-	console.log("🗄️  SQLite database will be initialized automatically...");
+	console.log("🐘 Postgres database will be used for session persistence...");
 
-	// Create a session using the SqliteSessionService
-	// The database tables will be created automatically on first use
-	console.log("📝 Creating a new session with SQLite persistence...");
+	// Create a session using the PostgresSessionService
+	console.log("📝 Creating a new session with Postgres persistence...");
 	const session = await runner.sessionService.createSession(userId, {
-		example: "sqlite-runner",
+		example: "postgres-runner",
 		timestamp: new Date().toISOString(),
 	});
 	const sessionId = session.id;
@@ -107,10 +106,10 @@ async function runConversation() {
 	const userSessions = await runner.sessionService.listSessions(userId);
 	console.log(`Found ${userSessions.length} session(s) for user ${userId}`);
 
-	console.log("\n✅ SQLite runner example completed successfully!");
+	console.log("\n✅ Postgres runner example completed successfully!");
 
 	// Close the database connection
-	sqlite.close();
+	await pool.end();
 }
 
 async function processMessage(messageContent: string, sessionId: string) {
@@ -177,5 +176,5 @@ async function processMessage(messageContent: string, sessionId: string) {
 
 // Run the example
 runConversation().catch((error) => {
-	console.error("❌ Error in SQLite runner example:", error);
+	console.error("❌ Error in Postgres runner example:", error);
 });

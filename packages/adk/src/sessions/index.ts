@@ -9,7 +9,10 @@ export { SessionState } from "./state";
 // Export session services and implementations
 export { SessionService } from "./base-session-service";
 export { InMemorySessionService } from "./in-memory-session-service";
-export { PostgresSessionService } from "./postgres-session-service";
+export {
+	PostgresSessionService,
+	sessionsSchema,
+} from "./postgres-session-service";
 export { PgLiteSessionService } from "./pglite-session-service";
 export { SqliteSessionService } from "./sqlite-session-service";
 
