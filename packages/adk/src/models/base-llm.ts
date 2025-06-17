@@ -1,3 +1,4 @@
+import { tracer } from "../telemetry";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LLMRequest } from "./llm-request";
 import type { LLMResponse } from "./llm-response";
@@ -44,6 +45,22 @@ export abstract class BaseLLM {
 	 * @returns BaseLLMConnection, the connection to the LLM
 	 */
 	connect(llmRequest: LLMRequest): BaseLLMConnection {
-		throw new Error(`Live connection is not supported for ${this.model}`);
+		return tracer.startActiveSpan(`llm_connect [${this.model}]`, (span) => {
+			try {
+				span.setAttributes({
+					"gen_ai.system.name": "iqai-adk",
+					"gen_ai.operation.name": "connect",
+					"gen_ai.request.model": this.model,
+				});
+
+				throw new Error(`Live connection is not supported for ${this.model}`);
+			} catch (error) {
+				span.recordException(error as Error);
+				span.setStatus({ code: 2, message: (error as Error).message });
+				throw error;
+			} finally {
+				span.end();
+			}
+		});
 	}
 }
