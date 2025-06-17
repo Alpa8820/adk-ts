@@ -71,6 +71,7 @@ export interface LLMRequestConfig {
  * Represents a request to an LLM
  */
 export class LLMRequest {
+	model: string;
 	/**
 	 * The conversation history
 	 */
