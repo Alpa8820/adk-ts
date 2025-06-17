@@ -12,14 +12,12 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import {
 	ATTR_SERVICE_NAME,
 	ATTR_SERVICE_VERSION,
-	SemanticAttributes,
 } from "@opentelemetry/semantic-conventions";
 import type { InvocationContext } from "./agents/invocation-context";
 import type { Event } from "./events/event";
 import type {
 	ImageContent,
 	LLMRequest,
-	Message,
 	MessageContent,
 	TextContent,
 } from "./models/llm-request";
