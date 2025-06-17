@@ -7,22 +7,18 @@ import {
 	RunConfig,
 	Runner,
 	StreamingMode,
-	sessionsSchema,
 } from "@iqai/adk";
 import { env } from "node:process";
 import { v4 as uuidv4 } from "uuid";
-import { Pool } from "pg";
-import { drizzle } from "drizzle-orm/node-postgres";
 
 // Set up Postgres connection (use env var for connection string)
 const connectionString = env.PG_CONNECTION_STRING;
 if (!connectionString) {
 	throw new Error("PG_CONNECTION_STRING is not set");
 }
-const pool = new Pool({ connectionString });
-const db = drizzle(pool, { schema: { sessions: sessionsSchema } });
 
-const sessionService = new PostgresSessionService({ db });
+const sessionService =
+	PostgresSessionService.fromConnectionString(connectionString);
 
 // Initialize the agent
 const agent = new Agent({
@@ -107,9 +103,7 @@ async function runConversation() {
 	console.log(`Found ${userSessions.length} session(s) for user ${userId}`);
 
 	console.log("\n✅ Postgres runner example completed successfully!");
-
-	// Close the database connection
-	await pool.end();
+	process.exit(0);
 }
 
 async function processMessage(messageContent: string, sessionId: string) {

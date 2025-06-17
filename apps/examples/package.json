@@ -16,7 +16,6 @@
 		"better-sqlite3": "^11.10.0",
 		"dotenv": "^16.5.0",
 		"drizzle-orm": "^0.43.1",
-		"pg": "^8.16.0",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {

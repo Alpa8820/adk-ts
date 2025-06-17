@@ -6,6 +6,8 @@ import type { Message } from "../models/llm-request";
 import type { SessionService } from "./base-session-service";
 import type { ListSessionOptions, Session } from "./session";
 import { SessionState } from "./state";
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 
 // Define Drizzle schema for sessions
 // Adjust column types based on your specific DB and needs
@@ -205,15 +207,6 @@ export class PostgresSessionService implements SessionService {
 		}
 		session.events.push(event);
 
-		// Save all non-partial events with content as messages
-		if (event.content) {
-			session.messages = session.messages || [];
-			session.messages.push({
-				role: event.author as any,
-				content: event.content,
-			});
-		}
-
 		// Update session timestamp
 		session.updatedAt = new Date();
 
@@ -221,5 +214,13 @@ export class PostgresSessionService implements SessionService {
 		await this.updateSession(session);
 
 		return event;
+	}
+
+	static fromConnectionString(
+		connectionString: string,
+	): PostgresSessionService {
+		const pool = new Pool({ connectionString });
+		const db = drizzle(pool, { schema: { sessions: sessionsSchema } });
+		return new PostgresSessionService({ db });
 	}
 }
