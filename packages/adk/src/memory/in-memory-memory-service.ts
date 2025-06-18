@@ -1,4 +1,3 @@
-import type { Message } from "../models/llm-request";
 import type { Session } from "../sessions/session";
 import type {
 	BaseMemoryService,
