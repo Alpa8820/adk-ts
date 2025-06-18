@@ -9,7 +9,7 @@ const authString = Buffer.from(
 initializeTelemetry({
 	appName: "telemetry-agent-example",
 	appVersion: "1.0.0",
-	otlpEndpoint: "https://cloud.langfuse.com/api/public/ingestion",
+	otlpEndpoint: `${process.env.LANGFUSE_HOST}/api/public/otel`,
 	otlpHeaders: {
 		Authorization: `Basic ${authString}`,
 		"Content-Type": "application/json",
