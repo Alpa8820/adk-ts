@@ -1,5 +1,4 @@
 import type { Event } from "@adk/events/event";
-import type { Message } from "../models/llm-request";
 import type { SessionState } from "./state";
 
 /**
@@ -12,14 +11,24 @@ export interface Session {
 	id: string;
 
 	/**
+	 * Name of the app
+	 */
+	appName: string;
+
+	/**
 	 * User identifier associated with the session
 	 */
 	userId: string;
 
 	/**
-	 * Conversation history
+	 * Session state for storing arbitrary data
 	 */
-	messages: Message[];
+	state: SessionState;
+
+	/**
+	 * Session events
+	 */
+	events?: Event[];
 
 	/**
 	 * Additional session metadata
@@ -35,16 +44,6 @@ export interface Session {
 	 * Last update timestamp
 	 */
 	updatedAt: Date;
-
-	/**
-	 * Session state for storing arbitrary data
-	 */
-	state: SessionState;
-
-	/**
-	 * Session events
-	 */
-	events?: Event[];
 }
 
 /**

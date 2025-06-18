@@ -25,20 +25,23 @@ export class InMemorySessionService implements SessionService {
 	 * @returns The created session
 	 */
 	async createSession(
+		appName: string,
 		userId: string,
 		metadata: Record<string, any> = {},
+		state = new SessionState(),
+		sessionId = this.generateSessionId(),
 	): Promise<Session> {
-		const sessionId = this.generateSessionId();
+		const id = sessionId ?? this.generateSessionId();
 		const now = new Date();
 
 		const session: Session = {
-			id: sessionId,
+			appName,
+			id,
 			userId,
-			messages: [],
 			metadata,
 			createdAt: now,
 			updatedAt: now,
-			state: new SessionState(),
+			state,
 			events: [],
 		};
 
