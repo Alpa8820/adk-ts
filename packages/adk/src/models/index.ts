@@ -23,6 +23,9 @@ export * from "./openai-llm-connection";
 export * from "./llm-registry";
 export * from "./registry";
 
+// LLM configuration types
+export * from "./thinking-config";
+
 // Auth re-exports for backward compatibility
 export * from "../auth/auth-credential";
 export * from "../auth/auth-config";
