@@ -1,8 +1,10 @@
-import { type FunctionCall, LLMResponse } from "@adk/models";
-import type { FunctionResponse } from "@google/genai";
+import { LlmResponse } from "@adk/models";
 import { v4 as uuidv4 } from "uuid";
 import { EventActions } from "./event-actions";
 
+/**
+ * Options for creating an Event.
+ */
 interface EventOpts {
 	invocationId?: string;
 	author: string;
@@ -12,12 +14,7 @@ interface EventOpts {
 	id?: string;
 	timestamp?: number;
 	content?: any;
-	function_call?: FunctionCall;
-	function_responses?: FunctionResponse[];
-	tool_calls?: any[];
-	role?: string;
 	partial?: boolean;
-	raw_response?: any;
 }
 
 /**
@@ -25,7 +22,7 @@ interface EventOpts {
  * It is used to store the content of the conversation, as well as the actions
  * taken by the agents like function calls, etc.
  */
-export class Event extends LLMResponse {
+export class Event extends LlmResponse {
 	/** The invocation ID of the event. */
 	invocationId = "";
 
@@ -53,8 +50,8 @@ export class Event extends LLMResponse {
 	/** The unique identifier of the event. */
 	id = "";
 
-	/** The timestamp of the event. */
-	timestamp: number = Date.now();
+	/** The timestamp of the event (seconds since epoch). */
+	timestamp: number = Math.floor(Date.now() / 1000);
 
 	/**
 	 * Constructor for Event.
@@ -62,20 +59,15 @@ export class Event extends LLMResponse {
 	constructor(opts: EventOpts) {
 		super({
 			content: opts.content,
-			function_call: opts.function_call,
-			function_responses: opts.function_responses,
-			tool_calls: opts.tool_calls,
-			role: opts.role,
-			is_partial: opts.partial,
-			raw_response: opts.raw_response,
+			partial: opts.partial,
 		});
-		this.invocationId = opts.invocationId;
+		this.invocationId = opts.invocationId ?? "";
 		this.author = opts.author;
-		this.actions = opts.actions;
+		this.actions = opts.actions ?? new EventActions();
 		this.longRunningToolIds = opts.longRunningToolIds;
 		this.branch = opts.branch;
-		this.id = opts.id || Event.newId();
-		this.timestamp = opts.timestamp ?? Date.now();
+		this.id = opts.id ?? Event.newId();
+		this.timestamp = opts.timestamp ?? Math.floor(Date.now() / 1000);
 	}
 
 	/**
@@ -88,7 +80,7 @@ export class Event extends LLMResponse {
 		return (
 			this.getFunctionCalls().length === 0 &&
 			this.getFunctionResponses().length === 0 &&
-			!this.is_partial &&
+			!this.partial &&
 			!this.hasTrailingCodeExecutionResult()
 		);
 	}
@@ -96,12 +88,12 @@ export class Event extends LLMResponse {
 	/**
 	 * Returns the function calls in the event.
 	 */
-	getFunctionCalls(): FunctionCall[] {
-		const funcCalls: FunctionCall[] = [];
+	getFunctionCalls(): any[] {
+		const funcCalls: any[] = [];
 		if (this.content && Array.isArray(this.content.parts)) {
 			for (const part of this.content.parts) {
-				if (part.function_call) {
-					funcCalls.push(part.function_call);
+				if (part.functionCall) {
+					funcCalls.push(part.functionCall);
 				}
 			}
 		}
@@ -111,12 +103,12 @@ export class Event extends LLMResponse {
 	/**
 	 * Returns the function responses in the event.
 	 */
-	getFunctionResponses(): FunctionResponse[] {
-		const funcResponses: FunctionResponse[] = [];
+	getFunctionResponses(): any[] {
+		const funcResponses: any[] = [];
 		if (this.content && Array.isArray(this.content.parts)) {
 			for (const part of this.content.parts) {
-				if (part.function_response) {
-					funcResponses.push(part.function_response);
+				if (part.functionResponse) {
+					funcResponses.push(part.functionResponse);
 				}
 			}
 		}
@@ -133,8 +125,8 @@ export class Event extends LLMResponse {
 			this.content.parts.length > 0
 		) {
 			return (
-				this.content.parts[this.content.parts.length - 1]
-					.code_execution_result != null
+				this.content.parts[this.content.parts.length - 1].codeExecutionResult !=
+				null
 			);
 		}
 		return false;
