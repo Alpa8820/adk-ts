@@ -1,8 +1,9 @@
 import type { CallbackContext } from "../agents/callback-context";
 import type { ReadonlyContext } from "../agents/readonly-context";
 import type { LLMRequest } from "../models/llm-request";
+import type { Part } from "../models/part";
 import type { ThinkingConfig } from "../models/thinking-config";
-import { BasePlanner, type Part } from "./base-planner";
+import { BasePlanner } from "./base-planner";
 
 /**
  * The built-in planner that uses model's built-in thinking features.

@@ -26,6 +26,9 @@ export * from "./registry";
 // LLM configuration types
 export * from "./thinking-config";
 
+// Shared types
+export * from "./part";
+
 // Auth re-exports for backward compatibility
 export * from "../auth/auth-credential";
 export * from "../auth/auth-config";

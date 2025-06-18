@@ -1,13 +1,7 @@
 import type { CallbackContext } from "../agents/callback-context";
 import type { ReadonlyContext } from "../agents/readonly-context";
 import type { LLMRequest } from "../models/llm-request";
-
-// Import Part type from google/genai for compatibility
-// For now, we'll use a generic interface that can be made compatible later
-export interface Part {
-	text?: string;
-	[key: string]: any;
-}
+import type { Part } from "../models/part";
 
 /**
  * Abstract base class for all planners.

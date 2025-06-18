@@ -561,6 +561,9 @@ export class Agent extends BaseAgent {
 					},
 				});
 
+				// Apply planner preprocessing to ALL requests (not just initial)
+				this.applyPlannerPreprocessing(context, llmRequest);
+
 				// Use generateContentAsync instead of generateContent
 				const responseIterator = this.llm.generateContentAsync(llmRequest);
 				let currentResponse: LLMResponse | undefined;

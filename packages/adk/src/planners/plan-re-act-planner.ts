@@ -1,7 +1,8 @@
 import type { CallbackContext } from "../agents/callback-context";
 import type { ReadonlyContext } from "../agents/readonly-context";
 import type { LLMRequest } from "../models/llm-request";
-import { BasePlanner, type Part } from "./base-planner";
+import type { Part } from "../models/part";
+import { BasePlanner } from "./base-planner";
 
 // Planning tags used for structured responses
 const PLANNING_TAG = "/*PLANNING*/";
@@ -146,9 +147,9 @@ export class PlanReActPlanner extends BasePlanner {
 		const highLevelPreamble = `
 When answering the question, try to leverage the available tools to gather the information instead of your memorized knowledge.
 
-Follow this process when answering the question: (1) first come up with a plan in natural language text format; (2) Then use tools to execute the plan and provide reasoning between tool code snippets to make a summary of current state and next step. Tool code snippets and reasoning should be interleaved with each other. (3) In the end, return one final answer.
+Follow this process when answering the question: (1) first come up with a plan in natural language text format; (2) Then use tools to execute the plan and provide reasoning between tool usage to make a summary of current state and next step. Tool usage and reasoning should be interleaved with each other. (3) In the end, return one final answer.
 
-Follow this format when answering the question: (1) The planning part should be under ${PLANNING_TAG}. (2) The tool code snippets should be under ${ACTION_TAG}, and the reasoning parts should be under ${REASONING_TAG}. (3) The final answer part should be under ${FINAL_ANSWER_TAG}.
+Follow this format when answering the question: (1) The planning part should be under ${PLANNING_TAG}. (2) The tool usage should be under ${ACTION_TAG}, and the reasoning parts should be under ${REASONING_TAG}. (3) The final answer part should be under ${FINAL_ANSWER_TAG}.
 `;
 
 		const planningPreamble = `
@@ -167,16 +168,17 @@ Below are the requirements for the final answer:
 The final answer should be precise and follow query formatting requirements. Some queries may not be answerable with the available tools and information. In those cases, inform the user why you cannot process their query and ask for more information.
 `;
 
-		// Only contains the requirements for custom tool/libraries.
-		const toolCodeWithoutPythonLibrariesPreamble = `
-Below are the requirements for the tool code:
+		// Language-agnostic tool usage requirements
+		const toolUsagePreamble = `
+Below are the requirements for tool usage:
 
-**Custom Tools:** The available tools are described in the context and can be directly used.
-- Code must be valid self-contained Python snippets with no imports and no references to tools or Python libraries that are not in the context.
-- You cannot use any parameters or fields that are not explicitly defined in the APIs in the context.
-- The code snippets should be readable, efficient, and directly relevant to the user query and reasoning steps.
-- When using the tools, you should use the library name together with the function name, e.g., vertex_search.search().
-- If Python libraries are not provided in the context, NEVER write your own code other than the function calls using the provided tools.
+**Available Tools:** The available tools are described in the context and can be directly used.
+- You can only use tools and parameters that are explicitly defined in the function declarations.
+- You cannot use any parameters, fields, or capabilities that are not documented in the tool specifications.
+- Tool usage should be clear, efficient, and directly relevant to the user query and reasoning steps.
+- When using tools, reference them by their exact function names as provided in the context.
+- Do not attempt to use external libraries, services, or capabilities beyond the provided tools.
+- If the available tools are insufficient to fully answer a query, clearly explain the limitations.
 `;
 
 		const userInputPreamble = `
@@ -191,7 +193,7 @@ You should prefer using the information available in the context instead of repe
 			planningPreamble,
 			reasoningPreamble,
 			finalAnswerPreamble,
-			toolCodeWithoutPythonLibrariesPreamble,
+			toolUsagePreamble,
 			userInputPreamble,
 		].join("\n\n");
 	}
