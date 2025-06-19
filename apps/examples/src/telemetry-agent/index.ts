@@ -1,18 +1,25 @@
-import { Agent, GoogleLLM, LLMRegistry, type MessageRole } from "@iqai/adk";
-import { initializeTelemetry } from "@iqai/adk";
+import {
+	Agent,
+	GoogleLLM,
+	LLMRegistry,
+	type MessageRole,
+	TelemetryService,
+} from "@iqai/adk";
+
+// Create a new telemetry service instance
+const telemetryService = new TelemetryService();
 
 // Initialize telemetry with Langfuse configuration
 const authString = Buffer.from(
 	`${process.env.LANGFUSE_PUBLIC_KEY}:${process.env.LANGFUSE_SECRET_KEY}`,
 ).toString("base64");
 
-initializeTelemetry({
+telemetryService.initialize({
 	appName: "telemetry-agent-example",
 	appVersion: "1.0.0",
 	otlpEndpoint: `${process.env.LANGFUSE_HOST}/api/public/ingestion`,
 	otlpHeaders: {
 		Authorization: `Basic ${authString}`,
-		"Content-Type": "application/json",
 	},
 });
 
@@ -32,6 +39,8 @@ async function main() {
 	try {
 		console.log("📊 Starting telemetry-enabled agent example...");
 		console.log("🔍 All interactions will be traced and sent to Langfuse");
+		console.log(`🔧 Telemetry initialized: ${telemetryService.initialized}`);
+		console.log(`🏷️  App: ${telemetryService.getConfig()?.appName}`);
 
 		// Simple conversation with telemetry
 		const response = await agent.run({
@@ -50,8 +59,40 @@ async function main() {
 		);
 	} catch (error) {
 		console.error("❌ Error in telemetry agent example:", error);
+	} finally {
+		// Gracefully shutdown telemetry
+		try {
+			console.log("🔄 Shutting down telemetry...");
+			await telemetryService.shutdown();
+			console.log("✅ Telemetry shutdown complete");
+		} catch (shutdownError) {
+			console.error("⚠️  Error during telemetry shutdown:", shutdownError);
+		}
 	}
 }
+
+// Handle process termination gracefully
+process.on("SIGINT", async () => {
+	console.log("\n🛑 Received SIGINT, shutting down gracefully...");
+	try {
+		await telemetryService.shutdown();
+		process.exit(0);
+	} catch (error) {
+		console.error("Error during graceful shutdown:", error);
+		process.exit(1);
+	}
+});
+
+process.on("SIGTERM", async () => {
+	console.log("\n🛑 Received SIGTERM, shutting down gracefully...");
+	try {
+		await telemetryService.shutdown();
+		process.exit(0);
+	} catch (error) {
+		console.error("Error during graceful shutdown:", error);
+		process.exit(1);
+	}
+});
 
 // Run the example
 main();
