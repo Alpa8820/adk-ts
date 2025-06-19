@@ -6,8 +6,8 @@ import {
 	type Part,
 } from "@google/genai";
 import { BaseLLM } from "./base-llm";
-import type { LLMRequest, Message, MessageRole } from "./llm-request";
-import { LLMResponse } from "./llm-response";
+import type { LlmRequest, Message, MessageRole } from "./llm-request";
+import { LlmResponse } from "./llm-response";
 
 /**
  * Google Gemini LLM configuration
@@ -424,12 +424,11 @@ export class GoogleLLM extends BaseLLM {
 	}
 
 	/**
-	 * Convert Google response to LLMResponse
+	 * Convert Google response to LlmResponse
 	 */
-	private convertResponse(response: any): LLMResponse {
+	private convertResponse(response: any): LlmResponse {
 		// Create base response
-		const result = new LLMResponse({
-			role: "assistant",
+		const result = new LlmResponse({
 			content: null,
 		});
 
@@ -472,9 +471,9 @@ export class GoogleLLM extends BaseLLM {
 	 * Generates content from the given request
 	 */
 	async *generateContentAsync(
-		llmRequest: LLMRequest,
+		llmRequest: LlmRequest,
 		stream = false,
-	): AsyncGenerator<LLMResponse, void, unknown> {
+	): AsyncGenerator<LlmResponse, void, unknown> {
 		try {
 			// Extract system message and filter it out from regular messages
 			const { systemMessage, filteredMessages } = this.extractSystemMessage(
@@ -528,7 +527,7 @@ export class GoogleLLM extends BaseLLM {
 						chunk.candidates[0]?.content?.parts[0]?.text || "";
 
 					// Create partial response
-					const partialResponse = new LLMResponse({
+					const partialResponse = new LlmResponse({
 						content: partialText,
 						role: "assistant",
 						is_partial: true,

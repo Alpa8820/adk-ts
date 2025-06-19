@@ -1,6 +1,6 @@
 import type { BaseLLMConnection } from "./base-llm-connection";
-import type { LLMRequest } from "./llm-request";
-import type { LLMResponse } from "./llm-response";
+import type { LlmRequest } from "./llm-request";
+import type { LlmResponse } from "./llm-response";
 
 /**
  * Base class for all LLM implementations
@@ -33,9 +33,9 @@ export abstract class BaseLLM {
 	 * @returns A generator of LLMResponses
 	 */
 	abstract generateContentAsync(
-		llmRequest: LLMRequest,
+		llmRequest: LlmRequest,
 		stream?: boolean,
-	): AsyncGenerator<LLMResponse, void, unknown>;
+	): AsyncGenerator<LlmResponse, void, unknown>;
 
 	/**
 	 * Creates a live connection to the LLM
@@ -43,7 +43,7 @@ export abstract class BaseLLM {
 	 * @param llmRequest The request to send to the LLM
 	 * @returns BaseLLMConnection, the connection to the LLM
 	 */
-	connect(llmRequest: LLMRequest): BaseLLMConnection {
+	connect(_llmRequest: LlmRequest): BaseLLMConnection {
 		throw new Error(`Live connection is not supported for ${this.model}`);
 	}
 }
