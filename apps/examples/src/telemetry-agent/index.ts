@@ -14,6 +14,7 @@ initializeTelemetry({
 		Authorization: `Basic ${authString}`,
 		"Content-Type": "application/json",
 	},
+	enableConsoleLogging: true,
 });
 
 // Register the Google LLM

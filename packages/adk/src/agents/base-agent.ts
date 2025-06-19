@@ -124,12 +124,61 @@ export abstract class BaseAgent {
 						"gen_ai.operation.name": "agent_run",
 						"adk.agent.name": this.name,
 						"adk.session_id": options.sessionId || "unknown",
+						"adk.message_count": options.messages.length,
+						"adk.agent_input": JSON.stringify(
+							options.messages.map((msg) => ({
+								role: msg.role,
+								content:
+									typeof msg.content === "string"
+										? msg.content.substring(0, 200) +
+											(msg.content.length > 200 ? "..." : "")
+										: "[complex_content]",
+							})),
+						),
 					});
 
-					return await this.runImpl(options);
+					console.log("🎯 ADK Agent Run Started:", {
+						agentName: this.name,
+						sessionId: options.sessionId,
+						messageCount: options.messages.length,
+						messages: options.messages.map((msg) => ({
+							role: msg.role,
+							content:
+								typeof msg.content === "string"
+									? msg.content.substring(0, 100) +
+										(msg.content.length > 100 ? "..." : "")
+									: "[complex_content]",
+						})),
+					});
+
+					const result = await this.runImpl(options);
+
+					// Log the result
+					console.log("✅ ADK Agent Run Completed:", {
+						agentName: this.name,
+						sessionId: options.sessionId,
+						result:
+							typeof result === "string"
+								? result.substring(0, 200) + (result.length > 200 ? "..." : "")
+								: typeof result,
+					});
+
+					span.setAttributes({
+						"adk.agent_output":
+							typeof result === "string"
+								? result.substring(0, 500)
+								: JSON.stringify(result).substring(0, 500),
+					});
+
+					return result;
 				} catch (error) {
 					span.recordException(error as Error);
 					span.setStatus({ code: 2, message: (error as Error).message });
+					console.error("❌ ADK Agent Run Failed:", {
+						agentName: this.name,
+						sessionId: options.sessionId,
+						error: (error as Error).message,
+					});
 					throw error;
 				} finally {
 					span.end();
@@ -163,12 +212,38 @@ export abstract class BaseAgent {
 				"gen_ai.operation.name": "agent_run_streaming",
 				"adk.agent.name": this.name,
 				"adk.session_id": options.sessionId || "unknown",
+				"adk.message_count": options.messages.length,
 			});
 
-			yield* this.runStreamingImpl(options);
+			console.log("🎯 ADK Agent Streaming Started:", {
+				agentName: this.name,
+				sessionId: options.sessionId,
+				messageCount: options.messages.length,
+			});
+
+			let chunkCount = 0;
+			for await (const chunk of this.runStreamingImpl(options)) {
+				chunkCount++;
+				console.log(`📡 ADK Agent Stream Chunk ${chunkCount}:`, {
+					agentName: this.name,
+					chunk:
+						typeof chunk === "string"
+							? chunk.substring(0, 100) + (chunk.length > 100 ? "..." : "")
+							: typeof chunk,
+				});
+				yield chunk;
+			}
+
+			span.setAttributes({
+				"adk.stream_chunks": chunkCount,
+			});
 		} catch (error) {
 			span.recordException(error as Error);
 			span.setStatus({ code: 2, message: (error as Error).message });
+			console.error("❌ ADK Agent Streaming Failed:", {
+				agentName: this.name,
+				error: (error as Error).message,
+			});
 			throw error;
 		} finally {
 			span.end();

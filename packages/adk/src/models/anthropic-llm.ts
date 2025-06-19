@@ -350,7 +350,7 @@ export class AnthropicLLM extends BaseLLM {
 	/**
 	 * Generates content from the given request
 	 */
-	async *generateContentAsync(
+	async *generateContentAsyncImpl(
 		llmRequest: LLMRequest,
 		stream = false,
 	): AsyncGenerator<LLMResponse, void, unknown> {

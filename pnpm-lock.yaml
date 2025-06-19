@@ -46,7 +46,7 @@ importers:
         version: 16.5.0
       drizzle-orm:
         specifier: ^0.43.1
-        version: 0.43.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.6.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sql.js@1.13.0)
+        version: 0.43.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sql.js@1.13.0)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -96,6 +96,12 @@ importers:
       '@opentelemetry/sdk-node':
         specifier: ^0.202.0
         version: 0.202.0(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-base':
+        specifier: ^2.0.1
+        version: 2.0.1(@opentelemetry/api@1.9.0)
+      '@opentelemetry/sdk-trace-node':
+        specifier: ^2.0.1
+        version: 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions':
         specifier: ^1.34.0
         version: 1.34.0
@@ -110,7 +116,7 @@ importers:
         version: 16.5.0
       drizzle-orm:
         specifier: ^0.43.1
-        version: 0.43.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.6.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sql.js@1.13.0)
+        version: 0.43.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sql.js@1.13.0)
       openai:
         specifier: ^4.93.0
         version: 4.104.0(ws@8.18.2)(zod@3.24.4)
@@ -1207,9 +1213,6 @@ packages:
 
   '@types/pg@8.15.1':
     resolution: {integrity: sha512-YKHrkGWBX5+ivzvOQ66I0fdqsQTsvxqM0AGP2i0XrVZ9DP5VA/deEbTf7VuLPGpY7fJB9uGbkZ6KjVhuHcrTkQ==}
-
-  '@types/pg@8.6.1':
-    resolution: {integrity: sha512-1Kc4oAGzAl7uqUStZCDvaLFqZrW9qWSjXOmBfdgyBP5La7Us6Mg4GBvRlSoaZMhQF/zSj1C8CtKMBkoiT8eL8w==}
 
   '@types/tedious@4.0.14':
     resolution: {integrity: sha512-KHPsfX/FoVbUGbyYvk1q9MMQHLPeRZhRJZdO45Q4YjvFkv4hMNghCWTvy7rdKessBsmtz4euWCWAB6/tVpI1Iw==}
@@ -4284,13 +4287,6 @@ snapshots:
       pg-protocol: 1.10.0
       pg-types: 4.0.2
 
-  '@types/pg@8.6.1':
-    dependencies:
-      '@types/node': 20.17.57
-      pg-protocol: 1.10.0
-      pg-types: 2.2.0
-    optional: true
-
   '@types/tedious@4.0.14':
     dependencies:
       '@types/node': 20.17.57
@@ -4571,12 +4567,12 @@ snapshots:
 
   dotenv@16.5.0: {}
 
-  drizzle-orm@0.43.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.6.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sql.js@1.13.0):
+  drizzle-orm@0.43.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sql.js@1.13.0):
     optionalDependencies:
       '@electric-sql/pglite': 0.3.2
       '@opentelemetry/api': 1.9.0
       '@types/better-sqlite3': 7.6.13
-      '@types/pg': 8.6.1
+      '@types/pg': 8.15.1
       better-sqlite3: 11.10.0
       pg: 8.16.0
       sql.js: 1.13.0

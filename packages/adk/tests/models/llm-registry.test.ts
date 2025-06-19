@@ -8,7 +8,7 @@ class MockLLM extends BaseLLM {
 		return ["mock-model-.*", "exact-mock-model"];
 	}
 
-	async *generateContentAsync(): AsyncGenerator<any, void, unknown> {
+	async *generateContentAsyncImpl(): AsyncGenerator<any, void, unknown> {
 		yield { content: "Mock content", role: "assistant" };
 	}
 
