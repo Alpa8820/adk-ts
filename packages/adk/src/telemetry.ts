@@ -5,16 +5,10 @@ import {
 	diag,
 	trace,
 } from "@opentelemetry/api";
-import type { Context } from "@opentelemetry/api";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { NodeSDK } from "@opentelemetry/sdk-node";
-import type {
-	ReadableSpan,
-	SpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
-import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-node";
 import {
 	ATTR_SERVICE_NAME,
 	ATTR_SERVICE_VERSION,
@@ -35,42 +29,6 @@ export interface TelemetryConfig {
 	appVersion?: string;
 	otlpEndpoint: string;
 	otlpHeaders?: Record<string, string>;
-	enableConsoleLogging?: boolean; // New option to enable/disable console logging
-}
-
-// Custom span processor to log traces to console
-class ConsoleLoggingSpanProcessor implements SpanProcessor {
-	forceFlush(): Promise<void> {
-		return Promise.resolve();
-	}
-
-	onStart(span: ReadableSpan, parentContext: Context): void {
-		// Optional: log when spans start
-	}
-
-	onEnd(span: ReadableSpan): void {
-		console.log("🔍 ADK Trace Export:", {
-			traceId: span.spanContext().traceId,
-			spanId: span.spanContext().spanId,
-			name: span.name,
-			kind: span.kind,
-			status: span.status,
-			attributes: span.attributes,
-			events: span.events,
-			duration: `${(span.endTime[0] - span.startTime[0]) * 1000 + (span.endTime[1] - span.startTime[1]) / 1000000}ms`,
-			startTime: new Date(
-				span.startTime[0] * 1000 + span.startTime[1] / 1000000,
-			).toISOString(),
-			endTime: new Date(
-				span.endTime[0] * 1000 + span.endTime[1] / 1000000,
-			).toISOString(),
-		});
-	}
-
-	shutdown(): Promise<void> {
-		console.log("🛑 ADK Console logging span processor shutdown");
-		return Promise.resolve();
-	}
 }
 
 let sdk: NodeSDK | null = null;
@@ -98,22 +56,9 @@ export function initializeTelemetry(config: TelemetryConfig): void {
 		headers: config.otlpHeaders,
 	});
 
-	// Create span processors
-	const spanProcessors: SpanProcessor[] = [
-		new BatchSpanProcessor(traceExporter),
-	];
-
-	// Add console logging processor if enabled
-	if (config.enableConsoleLogging !== false) {
-		// Default to true
-		console.log("🚀 ADK Telemetry: Console logging enabled for traces");
-		spanProcessors.push(new ConsoleLoggingSpanProcessor());
-	}
-
 	sdk = new NodeSDK({
 		resource,
 		traceExporter,
-		spanProcessors,
 		instrumentations: [getNodeAutoInstrumentations()],
 	});
 
@@ -121,15 +66,8 @@ export function initializeTelemetry(config: TelemetryConfig): void {
 		sdk.start();
 		isInitialized = true;
 		diag.info("OpenTelemetry SDK started successfully.");
-		console.log("✅ ADK Telemetry initialized:", {
-			appName: config.appName,
-			appVersion: config.appVersion,
-			otlpEndpoint: config.otlpEndpoint,
-			consoleLogging: config.enableConsoleLogging !== false,
-		});
 	} catch (error) {
 		diag.error("Error starting OpenTelemetry SDK:", error);
-		console.error("❌ ADK Telemetry initialization failed:", error);
 	}
 }
 
@@ -137,14 +75,8 @@ export async function shutdownTelemetry(): Promise<void> {
 	if (sdk) {
 		await sdk
 			.shutdown()
-			.then(() => {
-				diag.info("Telemetry terminated successfully.");
-				console.log("🛑 ADK Telemetry shutdown successfully");
-			})
-			.catch((error) => {
-				diag.error("Error terminating telemetry", error);
-				console.error("❌ ADK Telemetry shutdown failed:", error);
-			});
+			.then(() => diag.info("Telemetry terminated successfully."))
+			.catch((error) => diag.error("Error terminating telemetry", error));
 	}
 }
 
@@ -289,17 +221,14 @@ export function traceToolCall(
 	llmRequest?: LLMRequest, // Optional LLM request that led to this tool call
 ) {
 	const span = trace.getActiveSpan();
-	if (!span) {
-		console.warn("🔍 ADK Telemetry: No active span found for tool call trace");
-		return;
-	}
+	if (!span) return;
 
 	// Assuming your Event structure is similar enough to extract these details
 	const toolCallId =
 		functionResponseEvent.tool_calls?.[0]?.id ?? "<not specified>";
 	const toolResponse = functionResponseEvent.content ?? "<not specified>";
 
-	const attributes = {
+	span.setAttributes({
 		"gen_ai.system.name": "iqai-adk",
 		"gen_ai.operation.name": "execute_tool",
 		"gen_ai.tool.name": tool.name,
@@ -312,14 +241,6 @@ export function traceToolCall(
 			? _safeJsonStringify(_buildLlmRequestForTrace(llmRequest))
 			: "{}",
 		"adk.llm_response": "{}",
-	};
-
-	span.setAttributes(attributes);
-
-	console.log("🔧 ADK Tool Call Traced:", {
-		toolName: tool.name,
-		toolCallId,
-		attributes: Object.keys(attributes),
 	});
 }
 
@@ -334,12 +255,9 @@ export function traceLlmCall(
 	llmResponse: LLMResponse,
 ) {
 	const span = trace.getActiveSpan();
-	if (!span) {
-		console.warn("🔍 ADK Telemetry: No active span found for LLM call trace");
-		return;
-	}
+	if (!span) return;
 
-	const attributes = {
+	span.setAttributes({
 		"adk.system_name": "iqai-adk",
 		"adk.request_model": llmRequest.model,
 		"adk.invocation_id": invocationContext.sessionId, // Or a more specific invocation ID
@@ -347,14 +265,5 @@ export function traceLlmCall(
 		"adk.event_id": eventId,
 		"adk.llm_request": _safeJsonStringify(_buildLlmRequestForTrace(llmRequest)),
 		"adk.llm_response": _safeJsonStringify(llmResponse),
-	};
-
-	span.setAttributes(attributes);
-
-	console.log("🤖 ADK LLM Call Traced:", {
-		model: llmRequest.model,
-		sessionId: invocationContext.sessionId,
-		eventId,
-		attributes: Object.keys(attributes),
 	});
 }
