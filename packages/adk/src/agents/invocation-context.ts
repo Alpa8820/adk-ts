@@ -6,6 +6,8 @@ import type {
 import type { Message } from "../models/llm-request";
 import type { SessionService } from "../sessions/base-session-service";
 import type { Session } from "../sessions/session";
+import type { BaseArtifactService } from "../artifacts/base-artifact-service";
+import type { Part } from "@google/genai";
 import { RunConfig } from "./run-config";
 
 /**
@@ -48,6 +50,11 @@ export class InvocationContext {
 	sessionService?: SessionService;
 
 	/**
+	 * Artifact service for file storage
+	 */
+	artifactService?: BaseArtifactService;
+
+	/**
 	 * Additional context metadata
 	 */
 	metadata: Record<string, any>;
@@ -74,6 +81,7 @@ export class InvocationContext {
 			appName?: string;
 			memoryService?: BaseMemoryService;
 			sessionService?: SessionService;
+			artifactService?: BaseArtifactService;
 			metadata?: Record<string, any>;
 		} = {},
 	) {
@@ -84,6 +92,7 @@ export class InvocationContext {
 		this.appName = options.appName;
 		this.memoryService = options.memoryService;
 		this.sessionService = options.sessionService;
+		this.artifactService = options.artifactService;
 		this.metadata = options.metadata || {};
 		this.variables = new Map<string, any>();
 	}
@@ -129,8 +138,99 @@ export class InvocationContext {
 			appName: this.appName,
 			memoryService: this.memoryService,
 			sessionService: this.sessionService,
+			artifactService: this.artifactService,
 			metadata: { ...this.metadata },
 		});
+	}
+
+	/**
+	 * Creates a tool context that provides artifact methods to function tools
+	 */
+	createToolContext(): any {
+		return {
+			// Artifact methods
+			saveArtifact: async (
+				filename: string,
+				artifact: Part,
+			): Promise<number> => {
+				if (!this.artifactService) {
+					throw new Error("Artifact service not available");
+				}
+				if (!this.userId || !this.appName) {
+					throw new Error("User ID and app name required for artifacts");
+				}
+				return await this.artifactService.saveArtifact({
+					appName: this.appName,
+					userId: this.userId,
+					sessionId: this.sessionId,
+					filename,
+					artifact,
+				});
+			},
+
+			loadArtifact: async (
+				filename: string,
+				version?: number,
+			): Promise<Part | null> => {
+				if (!this.artifactService) {
+					throw new Error("Artifact service not available");
+				}
+				if (!this.userId || !this.appName) {
+					throw new Error("User ID and app name required for artifacts");
+				}
+				return await this.artifactService.loadArtifact({
+					appName: this.appName,
+					userId: this.userId,
+					sessionId: this.sessionId,
+					filename,
+					version,
+				});
+			},
+
+			listArtifacts: async (): Promise<string[]> => {
+				if (!this.artifactService) {
+					throw new Error("Artifact service not available");
+				}
+				if (!this.userId || !this.appName) {
+					throw new Error("User ID and app name required for artifacts");
+				}
+				return await this.artifactService.listArtifactKeys({
+					appName: this.appName,
+					userId: this.userId,
+					sessionId: this.sessionId,
+				});
+			},
+
+			deleteArtifact: async (filename: string): Promise<void> => {
+				if (!this.artifactService) {
+					throw new Error("Artifact service not available");
+				}
+				if (!this.userId || !this.appName) {
+					throw new Error("User ID and app name required for artifacts");
+				}
+				return await this.artifactService.deleteArtifact({
+					appName: this.appName,
+					userId: this.userId,
+					sessionId: this.sessionId,
+					filename,
+				});
+			},
+
+			listArtifactVersions: async (filename: string): Promise<number[]> => {
+				if (!this.artifactService) {
+					throw new Error("Artifact service not available");
+				}
+				if (!this.userId || !this.appName) {
+					throw new Error("User ID and app name required for artifacts");
+				}
+				return await this.artifactService.listVersions({
+					appName: this.appName,
+					userId: this.userId,
+					sessionId: this.sessionId,
+					filename,
+				});
+			},
+		};
 	}
 
 	/**

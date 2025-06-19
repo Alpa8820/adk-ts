@@ -6,6 +6,7 @@ import type {
 	SearchMemoryResponse,
 } from "../memory/base-memory-service";
 import type { Message } from "../models/llm-request";
+import type { Part } from "@google/genai";
 
 /**
  * Context for tool execution
@@ -123,6 +124,9 @@ export class ToolContext implements IToolContext {
 	get sessionService() {
 		return this.invocationContext.sessionService;
 	}
+	get artifactService() {
+		return this.invocationContext.artifactService;
+	}
 	get metadata() {
 		return this.invocationContext.metadata;
 	}
@@ -155,5 +159,86 @@ export class ToolContext implements IToolContext {
 		options?: SearchMemoryOptions,
 	): Promise<SearchMemoryResponse> {
 		return this.invocationContext.searchMemory(query, options);
+	}
+
+	async saveArtifact(filename: string, artifact: Part): Promise<number> {
+		if (!this.artifactService) {
+			throw new Error("Artifact service not available");
+		}
+		if (!this.userId || !this.appName) {
+			throw new Error("User ID and app name required for artifacts");
+		}
+
+		return await this.artifactService.saveArtifact({
+			appName: this.appName,
+			userId: this.userId,
+			sessionId: this.sessionId,
+			filename,
+			artifact,
+		});
+	}
+
+	async loadArtifact(filename: string, version?: number): Promise<Part | null> {
+		if (!this.artifactService) {
+			throw new Error("Artifact service not available");
+		}
+		if (!this.userId || !this.appName) {
+			throw new Error("User ID and app name required for artifacts");
+		}
+
+		return await this.artifactService.loadArtifact({
+			appName: this.appName,
+			userId: this.userId,
+			sessionId: this.sessionId,
+			filename,
+			version,
+		});
+	}
+
+	async listArtifacts(): Promise<string[]> {
+		if (!this.artifactService) {
+			throw new Error("Artifact service not available");
+		}
+		if (!this.userId || !this.appName) {
+			throw new Error("User ID and app name required for artifacts");
+		}
+
+		return await this.artifactService.listArtifactKeys({
+			appName: this.appName,
+			userId: this.userId,
+			sessionId: this.sessionId,
+		});
+	}
+
+	async deleteArtifact(filename: string): Promise<void> {
+		if (!this.artifactService) {
+			throw new Error("Artifact service not available");
+		}
+		if (!this.userId || !this.appName) {
+			throw new Error("User ID and app name required for artifacts");
+		}
+
+		return await this.artifactService.deleteArtifact({
+			appName: this.appName,
+			userId: this.userId,
+			sessionId: this.sessionId,
+			filename,
+		});
+	}
+
+	async listArtifactVersions(filename: string): Promise<number[]> {
+		if (!this.artifactService) {
+			throw new Error("Artifact service not available");
+		}
+		if (!this.userId || !this.appName) {
+			throw new Error("User ID and app name required for artifacts");
+		}
+
+		return await this.artifactService.listVersions({
+			appName: this.appName,
+			userId: this.userId,
+			sessionId: this.sessionId,
+			filename,
+		});
 	}
 }

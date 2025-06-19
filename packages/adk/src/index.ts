@@ -10,6 +10,9 @@ export * from "./models";
 export * from "./memory";
 export * from "./auth";
 export * from "./sessions";
+export * from "./artifacts";
+
+export * from "./planners";
 
 // Initialize providers - Automatically registers all LLMs
 import "./models/registry";

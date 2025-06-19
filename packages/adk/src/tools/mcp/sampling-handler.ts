@@ -87,6 +87,7 @@ export class McpSamplingHandler {
 
 			// Prepare ADK request
 			const adkRequest: LLMRequest = {
+				model: "", //TODO: Implement model passing from context
 				messages: adkMessages,
 				config: {
 					temperature: mcpParams.temperature,
