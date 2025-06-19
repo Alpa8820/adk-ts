@@ -14,7 +14,7 @@ class MockBaseAgent extends BaseAgent {
 		});
 	}
 
-	async run() {
+	async runImpl() {
 		this.callCount += 1;
 		return new LLMResponse({
 			role: "assistant",
@@ -22,7 +22,7 @@ class MockBaseAgent extends BaseAgent {
 		});
 	}
 
-	async *runStreaming() {
+	async *runStreamingImpl() {
 		this.callCount += 1;
 		yield new LLMResponse({
 			role: "assistant",

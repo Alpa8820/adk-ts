@@ -1,16 +1,18 @@
+import { SpanStatusCode } from "@opentelemetry/api";
 import type { BaseAgent } from "./agents/base-agent";
 import { InvocationContext } from "./agents/invocation-context";
 import { RunConfig } from "./agents/run-config";
+import type { BaseArtifactService } from "./artifacts/base-artifact-service";
+import { InMemoryArtifactService } from "./artifacts/in-memory-artifact-service";
 import { Event } from "./events/event";
 import type { BaseMemoryService } from "./memory/base-memory-service";
 import { InMemoryMemoryService } from "./memory/in-memory-memory-service";
 import type { Message } from "./models/llm-request";
+import type { MessageRole } from "./models/llm-request";
 import type { SessionService } from "./sessions/base-session-service";
 import { InMemorySessionService } from "./sessions/in-memory-session-service";
 import type { Session } from "./sessions/session";
-import type { MessageRole } from "./models/llm-request";
-import type { BaseArtifactService } from "./artifacts/base-artifact-service";
-import { InMemoryArtifactService } from "./artifacts/in-memory-artifact-service";
+import { tracer } from "./telemetry";
 
 /**
  * The Runner class is used to run agents.
@@ -80,6 +82,8 @@ export class Runner {
 		newMessage: Message;
 		runConfig?: RunConfig;
 	}): AsyncGenerator<Event, void, unknown> {
+		const span = tracer.startSpan("invocation");
+
 		// Get the session
 		const session = await this.sessionService.getSession(sessionId);
 		if (!session) {
@@ -155,7 +159,15 @@ export class Runner {
 				yield finalEvent;
 			}
 
+			span.recordException(error as Error);
+			span.setStatus({
+				code: SpanStatusCode.ERROR,
+				message: error instanceof Error ? error.message : "Unknown error",
+			});
+
 			throw error;
+		} finally {
+			span.end();
 		}
 	}
 

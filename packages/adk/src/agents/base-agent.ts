@@ -1,4 +1,5 @@
 import type { Message } from "../models/llm-request";
+import { tracer } from "../telemetry";
 import type { RunConfig } from "./run-config";
 
 /**
@@ -13,7 +14,7 @@ export abstract class BaseAgent {
 
 	/**
 	 * Description about the agent's capability
-	 * The LLM uses this to determine whether to delegate control to the agent
+	 * The LLM uses this to determine wshether to delegate control to the agent
 	 */
 	description: string;
 
@@ -109,7 +110,80 @@ export abstract class BaseAgent {
 	/**
 	 * Runs the agent with the given messages and configuration
 	 */
-	abstract run(options: {
+	async run(options: {
+		messages: Message[];
+		config?: RunConfig;
+		sessionId?: string;
+		userId?: string; // Add userId parameter
+	}): Promise<any> {
+		return await tracer.startActiveSpan(
+			`agent_run [${this.name}]`,
+			async (span) => {
+				try {
+					span.setAttributes({
+						"gen_ai.system.name": "iqai-adk",
+						"gen_ai.operation.name": "agent_run",
+
+						// Session and user tracking (maps to Langfuse)
+						...(options.sessionId && { "session.id": options.sessionId }),
+						...(options.userId && { "user.id": options.userId }),
+
+						// Environment
+						...(process.env.NODE_ENV && {
+							"deployment.environment.name": process.env.NODE_ENV,
+						}),
+
+						// Agent-specific attributes
+						"adk.agent.name": this.name,
+						"adk.session_id": options.sessionId || "unknown",
+						"adk.message_count": options.messages.length,
+					});
+
+					// Add input as event
+					span.addEvent("agent.input", {
+						"input.value": JSON.stringify(
+							options.messages.map((msg) => ({
+								role: msg.role,
+								content:
+									typeof msg.content === "string"
+										? msg.content.substring(0, 200) +
+											(msg.content.length > 200 ? "..." : "")
+										: "[complex_content]",
+							})),
+						),
+					});
+
+					const result = await this.runImpl(options);
+
+					// Add output as event
+					span.addEvent("agent.output", {
+						"output.value":
+							typeof result === "string"
+								? result.substring(0, 500)
+								: JSON.stringify(result).substring(0, 500),
+					});
+
+					return result;
+				} catch (error) {
+					span.recordException(error as Error);
+					span.setStatus({ code: 2, message: (error as Error).message });
+					console.error("❌ ADK Agent Run Failed:", {
+						agentName: this.name,
+						sessionId: options.sessionId,
+						error: (error as Error).message,
+					});
+					throw error;
+				} finally {
+					span.end();
+				}
+			},
+		);
+	}
+
+	/**
+	 * Implementation method to be overridden by subclasses
+	 */
+	protected abstract runImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;
@@ -118,7 +192,61 @@ export abstract class BaseAgent {
 	/**
 	 * Runs the agent with streaming support
 	 */
-	abstract runStreaming(options: {
+	async *runStreaming(options: {
+		messages: Message[];
+		config?: RunConfig;
+		sessionId?: string;
+	}): AsyncIterable<any> {
+		const span = tracer.startSpan(`agent_run_streaming [${this.name}]`);
+
+		try {
+			span.setAttributes({
+				"gen_ai.system.name": "iqai-adk",
+				"gen_ai.operation.name": "agent_run_streaming",
+				"adk.agent.name": this.name,
+				"adk.session_id": options.sessionId || "unknown",
+				"adk.message_count": options.messages.length,
+			});
+
+			console.log("🎯 ADK Agent Streaming Started:", {
+				agentName: this.name,
+				sessionId: options.sessionId,
+				messageCount: options.messages.length,
+			});
+
+			let chunkCount = 0;
+			for await (const chunk of this.runStreamingImpl(options)) {
+				chunkCount++;
+				console.log(`📡 ADK Agent Stream Chunk ${chunkCount}:`, {
+					agentName: this.name,
+					chunk:
+						typeof chunk === "string"
+							? chunk.substring(0, 100) + (chunk.length > 100 ? "..." : "")
+							: typeof chunk,
+				});
+				yield chunk;
+			}
+
+			span.setAttributes({
+				"adk.stream_chunks": chunkCount,
+			});
+		} catch (error) {
+			span.recordException(error as Error);
+			span.setStatus({ code: 2, message: (error as Error).message });
+			console.error("❌ ADK Agent Streaming Failed:", {
+				agentName: this.name,
+				error: (error as Error).message,
+			});
+			throw error;
+		} finally {
+			span.end();
+		}
+	}
+
+	/**
+	 * Implementation method to be overridden by subclasses
+	 */
+	protected abstract runStreamingImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;

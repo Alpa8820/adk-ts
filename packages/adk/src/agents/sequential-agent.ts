@@ -59,7 +59,7 @@ export class SequentialAgent extends BaseAgent {
 	 * Runs the agent with the given messages and configuration
 	 * Executes sub-agents sequentially, passing output from one to the next
 	 */
-	async run(options: {
+	async runImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 	}): Promise<EnhancedLLMResponse> {
@@ -151,7 +151,7 @@ export class SequentialAgent extends BaseAgent {
 	 * Runs the agent with streaming support
 	 * Streams responses from each sub-agent in sequence
 	 */
-	async *runStreaming(options: {
+	async *runStreamingImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 	}): AsyncIterable<EnhancedLLMResponse> {

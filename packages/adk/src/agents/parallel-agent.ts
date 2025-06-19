@@ -52,7 +52,7 @@ export class ParallelAgent extends BaseAgent {
 	 * Runs the agent with the given messages and configuration
 	 * Executes all sub-agents in parallel
 	 */
-	async run(options: {
+	async runImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 	}): Promise<LLMResponse> {
@@ -107,7 +107,7 @@ export class ParallelAgent extends BaseAgent {
 	 * Runs the agent with streaming support
 	 * Collects streaming responses from all sub-agents
 	 */
-	async *runStreaming(options: {
+	async *runStreamingImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 	}): AsyncIterable<LLMResponse> {

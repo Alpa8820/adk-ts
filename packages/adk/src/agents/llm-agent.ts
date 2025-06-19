@@ -1,4 +1,5 @@
 import { Logger } from "@adk/helpers/logger";
+import type { BaseArtifactService } from "../artifacts/base-artifact-service";
 import type {
 	BaseMemoryService,
 	SearchMemoryOptions,
@@ -17,7 +18,6 @@ import { CallbackContext } from "./callback-context";
 import { InvocationContext } from "./invocation-context";
 import { ReadonlyContext } from "./readonly-context";
 import type { RunConfig } from "./run-config";
-import type { BaseArtifactService } from "../artifacts/base-artifact-service";
 
 /**
  * Configuration for Agent
@@ -505,7 +505,7 @@ export class Agent extends BaseAgent {
 	/**
 	 * Runs the agent with the given messages and configuration
 	 */
-	async run(options: {
+	async runImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;
@@ -654,7 +654,7 @@ export class Agent extends BaseAgent {
 	/**
 	 * Runs the agent with streaming support
 	 */
-	async *runStreaming(options: {
+	async *runStreamingImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;

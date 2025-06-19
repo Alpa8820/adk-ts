@@ -1,5 +1,3 @@
-import { MessageContent } from "./llm-request";
-
 /**
  * Function call result from LLM
  */

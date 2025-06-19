@@ -265,7 +265,7 @@ export class LangGraphAgent extends BaseAgent {
 	 * Runs the agent with the given messages and configuration
 	 * Executes the graph by traversing nodes based on conditions
 	 */
-	async run(options: {
+	async runImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 	}): Promise<LLMResponse> {
@@ -408,7 +408,7 @@ export class LangGraphAgent extends BaseAgent {
 	/**
 	 * Runs the agent with streaming support
 	 */
-	async *runStreaming(options: {
+	async *runStreamingImpl(options: {
 		messages: Message[];
 		config?: RunConfig;
 	}): AsyncIterable<LLMResponse> {
