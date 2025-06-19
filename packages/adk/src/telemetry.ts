@@ -29,16 +29,13 @@ export interface TelemetryConfig {
 	appVersion?: string;
 	otlpEndpoint: string;
 	otlpHeaders?: Record<string, string>;
-	environment?: string; // Add environment support
+	environment?: string;
 }
 
 let sdk: NodeSDK | null = null;
 let isInitialized = false;
 
-export const tracer: Tracer = trace.getTracer(
-	"iqai-adk", // Your framework's instrumentation name
-	"0.1.0", // Your framework's version
-);
+export const tracer: Tracer = trace.getTracer("iqai-adk", "0.1.0");
 
 export function initializeTelemetry(config: TelemetryConfig): void {
 	if (isInitialized) {
