@@ -13,6 +13,7 @@ import { ToolContext } from "../tools/tool-context";
 import { BaseAgent } from "./base-agent";
 import { InvocationContext } from "./invocation-context";
 import type { RunConfig } from "./run-config";
+import type { BaseArtifactService } from "../artifacts/base-artifact-service";
 
 /**
  * Configuration for Agent
@@ -57,6 +58,11 @@ export interface AgentConfig {
 	 * Session service for managing conversations
 	 */
 	sessionService?: SessionService;
+
+	/**
+	 * Artifact service for file storage and management
+	 */
+	artifactService?: BaseArtifactService;
 
 	/**
 	 * User ID for the session (required for session persistence)
@@ -124,6 +130,11 @@ export class Agent extends BaseAgent {
 	private sessionService?: SessionService;
 
 	/**
+	 * Artifact service for binary data storage and management
+	 */
+	private artifactService?: BaseArtifactService;
+
+	/**
 	 * User ID for the session
 	 */
 	private userId?: string;
@@ -165,6 +176,7 @@ export class Agent extends BaseAgent {
 		this.maxToolExecutionSteps = config.maxToolExecutionSteps || 10;
 		this.memoryService = config.memoryService;
 		this.sessionService = config.sessionService;
+		this.artifactService = config.artifactService;
 		this.userId = config.userId;
 		this.appName = config.appName;
 		this.useMemoryAugmentation = config.useMemoryAugmentation ?? false;
@@ -404,6 +416,7 @@ export class Agent extends BaseAgent {
 			appName: this.appName,
 			memoryService: this.memoryService,
 			sessionService: this.sessionService,
+			artifactService: this.artifactService,
 		});
 
 		try {
@@ -536,6 +549,7 @@ export class Agent extends BaseAgent {
 			appName: this.appName,
 			memoryService: this.memoryService,
 			sessionService: this.sessionService,
+			artifactService: this.artifactService,
 		});
 
 		// Add system instructions if provided
