@@ -9,12 +9,11 @@ const authString = Buffer.from(
 initializeTelemetry({
 	appName: "telemetry-agent-example",
 	appVersion: "1.0.0",
-	otlpEndpoint: `${process.env.LANGFUSE_HOST}/api/public/otel`,
+	otlpEndpoint: `${process.env.LANGFUSE_HOST}/api/public/ingestion`,
 	otlpHeaders: {
 		Authorization: `Basic ${authString}`,
 		"Content-Type": "application/json",
 	},
-	enableConsoleLogging: true,
 });
 
 // Register the Google LLM
