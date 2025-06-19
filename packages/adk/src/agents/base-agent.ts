@@ -14,7 +14,7 @@ export abstract class BaseAgent {
 
 	/**
 	 * Description about the agent's capability
-	 * The LLM uses this to determine whether to delegate control to the agent
+	 * The LLM uses this to determine wshether to delegate control to the agent
 	 */
 	description: string;
 
@@ -114,6 +114,7 @@ export abstract class BaseAgent {
 		messages: Message[];
 		config?: RunConfig;
 		sessionId?: string;
+		userId?: string; // Add userId parameter
 	}): Promise<any> {
 		return await tracer.startActiveSpan(
 			`agent_run [${this.name}]`,
@@ -122,10 +123,25 @@ export abstract class BaseAgent {
 					span.setAttributes({
 						"gen_ai.system.name": "iqai-adk",
 						"gen_ai.operation.name": "agent_run",
+
+						// Session and user tracking (maps to Langfuse)
+						...(options.sessionId && { "session.id": options.sessionId }),
+						...(options.userId && { "user.id": options.userId }),
+
+						// Environment
+						...(process.env.NODE_ENV && {
+							"deployment.environment.name": process.env.NODE_ENV,
+						}),
+
+						// Agent-specific attributes
 						"adk.agent.name": this.name,
 						"adk.session_id": options.sessionId || "unknown",
 						"adk.message_count": options.messages.length,
-						"adk.agent_input": JSON.stringify(
+					});
+
+					// Add input as event
+					span.addEvent("agent.input", {
+						"input.value": JSON.stringify(
 							options.messages.map((msg) => ({
 								role: msg.role,
 								content:
@@ -137,34 +153,11 @@ export abstract class BaseAgent {
 						),
 					});
 
-					console.log("🎯 ADK Agent Run Started:", {
-						agentName: this.name,
-						sessionId: options.sessionId,
-						messageCount: options.messages.length,
-						messages: options.messages.map((msg) => ({
-							role: msg.role,
-							content:
-								typeof msg.content === "string"
-									? msg.content.substring(0, 100) +
-										(msg.content.length > 100 ? "..." : "")
-									: "[complex_content]",
-						})),
-					});
-
 					const result = await this.runImpl(options);
 
-					// Log the result
-					console.log("✅ ADK Agent Run Completed:", {
-						agentName: this.name,
-						sessionId: options.sessionId,
-						result:
-							typeof result === "string"
-								? result.substring(0, 200) + (result.length > 200 ? "..." : "")
-								: typeof result,
-					});
-
-					span.setAttributes({
-						"adk.agent_output":
+					// Add output as event
+					span.addEvent("agent.output", {
+						"output.value":
 							typeof result === "string"
 								? result.substring(0, 500)
 								: JSON.stringify(result).substring(0, 500),

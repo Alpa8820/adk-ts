@@ -29,6 +29,7 @@ export interface TelemetryConfig {
 	appVersion?: string;
 	otlpEndpoint: string;
 	otlpHeaders?: Record<string, string>;
+	environment?: string; // Add environment support
 }
 
 let sdk: NodeSDK | null = null;
@@ -219,11 +220,11 @@ export function traceToolCall(
 	args: Record<string, any>,
 	functionResponseEvent: Event,
 	llmRequest?: LLMRequest, // Optional LLM request that led to this tool call
+	invocationContext?: InvocationContext,
 ) {
 	const span = trace.getActiveSpan();
 	if (!span) return;
 
-	// Assuming your Event structure is similar enough to extract these details
 	const toolCallId =
 		functionResponseEvent.tool_calls?.[0]?.id ?? "<not specified>";
 	const toolResponse = functionResponseEvent.content ?? "<not specified>";
@@ -234,6 +235,19 @@ export function traceToolCall(
 		"gen_ai.tool.name": tool.name,
 		"gen_ai.tool.description": tool.description,
 		"gen_ai.tool.call.id": toolCallId,
+
+		// Session and user tracking
+		...(invocationContext && {
+			"session.id": invocationContext.sessionId,
+			"user.id": invocationContext.userId,
+		}),
+
+		// Environment
+		...(process.env.NODE_ENV && {
+			"deployment.environment.name": process.env.NODE_ENV,
+		}),
+
+		// Tool-specific data
 		"adk.tool_call_args": _safeJsonStringify(args),
 		"adk.event_id": functionResponseEvent.invocationId,
 		"adk.tool_response": _safeJsonStringify(toolResponse),
@@ -257,13 +271,44 @@ export function traceLlmCall(
 	const span = trace.getActiveSpan();
 	if (!span) return;
 
+	const requestData = _buildLlmRequestForTrace(llmRequest);
+
 	span.setAttributes({
+		// Standard OpenTelemetry attributes
+		"gen_ai.system.name": "iqai-adk",
+		"gen_ai.operation.name": "generate",
+		"gen_ai.request.model": llmRequest.model,
+
+		// Session and user tracking (maps to Langfuse sessionId, userId)
+		"session.id": invocationContext.sessionId,
+		"user.id": invocationContext.userId,
+
+		// Environment (maps to Langfuse environment)
+		...(process.env.NODE_ENV && {
+			"deployment.environment.name": process.env.NODE_ENV,
+		}),
+
+		// Model parameters (maps to Langfuse modelParameters)
+		"gen_ai.request.max_tokens": llmRequest.config.max_tokens || 0,
+		"gen_ai.request.temperature": llmRequest.config.temperature || 0,
+		"gen_ai.request.top_p": llmRequest.config.top_p || 0,
+
+		// Legacy ADK attributes (keep for backward compatibility)
 		"adk.system_name": "iqai-adk",
 		"adk.request_model": llmRequest.model,
-		"adk.invocation_id": invocationContext.sessionId, // Or a more specific invocation ID
+		"adk.invocation_id": invocationContext.sessionId,
 		"adk.session_id": invocationContext.sessionId,
 		"adk.event_id": eventId,
-		"adk.llm_request": _safeJsonStringify(_buildLlmRequestForTrace(llmRequest)),
+		"adk.llm_request": _safeJsonStringify(requestData),
 		"adk.llm_response": _safeJsonStringify(llmResponse),
+	});
+
+	// Add input/output as events (preferred over deprecated attributes)
+	span.addEvent("gen_ai.content.prompt", {
+		"gen_ai.prompt": _safeJsonStringify(requestData.messages),
+	});
+
+	span.addEvent("gen_ai.content.completion", {
+		"gen_ai.completion": _safeJsonStringify(llmResponse.content || ""),
 	});
 }
