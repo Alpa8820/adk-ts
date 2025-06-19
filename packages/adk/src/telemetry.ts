@@ -32,280 +32,360 @@ export interface TelemetryConfig {
 	environment?: string;
 }
 
-let sdk: NodeSDK | null = null;
-let isInitialized = false;
-
-export const tracer: Tracer = trace.getTracer("iqai-adk", "0.1.0");
-
-export function initializeTelemetry(config: TelemetryConfig): void {
-	if (isInitialized) {
-		diag.warn("Telemetry is already initialized. Skipping.");
-		return;
-	}
-	diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
-
-	const resource = resourceFromAttributes({
-		[ATTR_SERVICE_NAME]: config.appName,
-		[ATTR_SERVICE_VERSION]: config.appVersion,
-	});
-
-	const traceExporter = new OTLPTraceExporter({
-		url: config.otlpEndpoint,
-		headers: config.otlpHeaders,
-	});
-
-	sdk = new NodeSDK({
-		resource,
-		traceExporter,
-		instrumentations: [getNodeAutoInstrumentations()],
-	});
-
-	try {
-		sdk.start();
-		isInitialized = true;
-		diag.info("OpenTelemetry SDK started successfully.");
-	} catch (error) {
-		diag.error("Error starting OpenTelemetry SDK:", error);
-	}
-}
-
-export async function shutdownTelemetry(): Promise<void> {
-	if (sdk) {
-		await sdk
-			.shutdown()
-			.then(() => diag.info("Telemetry terminated successfully."))
-			.catch((error) => diag.error("Error terminating telemetry", error));
-	}
-}
-
-// --- Span-Enriching Helper Functions (The Direct Translation) ---
-
-function _safeJsonStringify(obj: any): string {
-	try {
-		// The 'default' handler is not standard in JSON.stringify,
-		// so we use a replacer to handle complex objects if needed,
-		// or just catch the error for simplicity.
-		return JSON.stringify(obj);
-	} catch (e) {
-		return "<not serializable>";
-	}
-}
-
 /**
- * Builds a dictionary representation of the LLM request for tracing.
- *
- * This function prepares a dictionary representation of the LLMRequest
- * object, suitable for inclusion in a trace. It excludes fields that cannot
- * be serialized (e.g., function pointers) and avoids sending binary data.
- *
- * @param llmRequest - The LLMRequest object.
- * @returns A dictionary representation of the LLM request.
+ * Telemetry service for the ADK
+ * Handles OpenTelemetry initialization, tracing, and cleanup
  */
-function _buildLlmRequestForTrace(llmRequest: LLMRequest): Record<string, any> {
-	// Some fields in LLMRequest are function pointers and cannot be serialized.
-	const result: Record<string, any> = {
-		model: llmRequest.model,
-		config: {
-			// Exclude non-serializable fields like response_schema if they exist
-			...llmRequest.config,
-			// Remove any function references or other non-serializable properties
-			functions: llmRequest.config.functions?.map((func) => ({
-				name: func.name,
-				description: func.description,
-				parameters: func.parameters,
-				// Exclude any function implementation details
-			})),
-		},
-		messages: [],
-	};
+export class TelemetryService {
+	private sdk: NodeSDK | null = null;
+	private isInitialized = false;
+	private tracer: Tracer;
+	private config: TelemetryConfig | null = null;
 
-	// Filter out binary data and non-serializable content from messages
-	for (const message of llmRequest.messages) {
-		const filteredMessage: Record<string, any> = {
-			role: message.role,
-			content: _filterMessageContent(message.content),
+	constructor() {
+		// Initialize tracer with default values - will be updated when initialize() is called
+		this.tracer = trace.getTracer("iqai-adk", "0.1.0");
+	}
+
+	/**
+	 * Initialize telemetry with the provided configuration
+	 */
+	initialize(config: TelemetryConfig): void {
+		if (this.isInitialized) {
+			diag.warn("Telemetry is already initialized. Skipping.");
+			return;
+		}
+
+		this.config = config;
+		diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+
+		const resource = resourceFromAttributes({
+			[ATTR_SERVICE_NAME]: config.appName,
+			[ATTR_SERVICE_VERSION]: config.appVersion,
+		});
+
+		const traceExporter = new OTLPTraceExporter({
+			url: config.otlpEndpoint,
+			headers: config.otlpHeaders,
+		});
+
+		this.sdk = new NodeSDK({
+			resource,
+			traceExporter,
+			instrumentations: [getNodeAutoInstrumentations()],
+		});
+
+		try {
+			this.sdk.start();
+			this.isInitialized = true;
+			// Update tracer with actual config
+			this.tracer = trace.getTracer("iqai-adk", config.appVersion || "0.1.0");
+			diag.info("OpenTelemetry SDK started successfully.");
+		} catch (error) {
+			diag.error("Error starting OpenTelemetry SDK:", error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Get the tracer instance
+	 */
+	getTracer(): Tracer {
+		return this.tracer;
+	}
+
+	/**
+	 * Check if telemetry is initialized
+	 */
+	get initialized(): boolean {
+		return this.isInitialized;
+	}
+
+	/**
+	 * Get the current configuration
+	 */
+	getConfig(): TelemetryConfig | null {
+		return this.config;
+	}
+
+	/**
+	 * Shutdown telemetry with optional timeout
+	 */
+	async shutdown(timeoutMs = 5000): Promise<void> {
+		if (!this.sdk || !this.isInitialized) {
+			diag.warn("Telemetry is not initialized or already shut down.");
+			return;
+		}
+
+		try {
+			// Create a timeout promise
+			const timeoutPromise = new Promise<never>((_, reject) => {
+				setTimeout(
+					() =>
+						reject(
+							new Error(`Telemetry shutdown timeout after ${timeoutMs}ms`),
+						),
+					timeoutMs,
+				);
+			});
+
+			// Race between shutdown and timeout
+			await Promise.race([this.sdk.shutdown(), timeoutPromise]);
+
+			this.isInitialized = false;
+			diag.info("Telemetry terminated successfully.");
+		} catch (error) {
+			if (error instanceof Error && error.message.includes("timeout")) {
+				diag.warn("Telemetry shutdown timed out, some traces may be lost");
+			} else {
+				diag.error("Error terminating telemetry:", error);
+			}
+			throw error;
+		} finally {
+			this.sdk = null;
+		}
+	}
+
+	/**
+	 * Traces a tool call by adding detailed attributes to the current span.
+	 */
+	traceToolCall(
+		tool: BaseTool,
+		args: Record<string, any>,
+		functionResponseEvent: Event,
+		llmRequest?: LLMRequest,
+		invocationContext?: InvocationContext,
+	): void {
+		const span = trace.getActiveSpan();
+		if (!span) return;
+
+		const toolCallId =
+			functionResponseEvent.tool_calls?.[0]?.id ?? "<not specified>";
+		const toolResponse = functionResponseEvent.content ?? "<not specified>";
+
+		span.setAttributes({
+			"gen_ai.system.name": "iqai-adk",
+			"gen_ai.operation.name": "execute_tool",
+			"gen_ai.tool.name": tool.name,
+			"gen_ai.tool.description": tool.description,
+			"gen_ai.tool.call.id": toolCallId,
+
+			// Session and user tracking
+			...(invocationContext && {
+				"session.id": invocationContext.sessionId,
+				"user.id": invocationContext.userId,
+			}),
+
+			// Environment
+			...(process.env.NODE_ENV && {
+				"deployment.environment.name": process.env.NODE_ENV,
+			}),
+
+			// Tool-specific data
+			"adk.tool_call_args": this._safeJsonStringify(args),
+			"adk.event_id": functionResponseEvent.invocationId,
+			"adk.tool_response": this._safeJsonStringify(toolResponse),
+			"adk.llm_request": llmRequest
+				? this._safeJsonStringify(this._buildLlmRequestForTrace(llmRequest))
+				: "{}",
+			"adk.llm_response": "{}",
+		});
+	}
+
+	/**
+	 * Traces a call to the LLM by adding detailed attributes to the current span.
+	 */
+	traceLlmCall(
+		invocationContext: InvocationContext,
+		eventId: string,
+		llmRequest: LLMRequest,
+		llmResponse: LLMResponse,
+	): void {
+		const span = trace.getActiveSpan();
+		if (!span) return;
+
+		const requestData = this._buildLlmRequestForTrace(llmRequest);
+
+		span.setAttributes({
+			// Standard OpenTelemetry attributes
+			"gen_ai.system.name": "iqai-adk",
+			"gen_ai.operation.name": "generate",
+			"gen_ai.request.model": llmRequest.model,
+
+			// Session and user tracking (maps to Langfuse sessionId, userId)
+			"session.id": invocationContext.sessionId,
+			"user.id": invocationContext.userId,
+
+			// Environment (maps to Langfuse environment)
+			...(process.env.NODE_ENV && {
+				"deployment.environment.name": process.env.NODE_ENV,
+			}),
+
+			// Model parameters (maps to Langfuse modelParameters)
+			"gen_ai.request.max_tokens": llmRequest.config.max_tokens || 0,
+			"gen_ai.request.temperature": llmRequest.config.temperature || 0,
+			"gen_ai.request.top_p": llmRequest.config.top_p || 0,
+
+			// Legacy ADK attributes (keep for backward compatibility)
+			"adk.system_name": "iqai-adk",
+			"adk.request_model": llmRequest.model,
+			"adk.invocation_id": invocationContext.sessionId,
+			"adk.session_id": invocationContext.sessionId,
+			"adk.event_id": eventId,
+			"adk.llm_request": this._safeJsonStringify(requestData),
+			"adk.llm_response": this._safeJsonStringify(llmResponse),
+		});
+
+		// Add input/output as events (preferred over deprecated attributes)
+		span.addEvent("gen_ai.content.prompt", {
+			"gen_ai.prompt": this._safeJsonStringify(requestData.messages),
+		});
+
+		span.addEvent("gen_ai.content.completion", {
+			"gen_ai.completion": this._safeJsonStringify(llmResponse.content || ""),
+		});
+	}
+
+	// --- Private Helper Methods ---
+
+	private _safeJsonStringify(obj: any): string {
+		try {
+			return JSON.stringify(obj);
+		} catch (e) {
+			return "<not serializable>";
+		}
+	}
+
+	/**
+	 * Builds a dictionary representation of the LLM request for tracing.
+	 */
+	private _buildLlmRequestForTrace(
+		llmRequest: LLMRequest,
+	): Record<string, any> {
+		const result: Record<string, any> = {
+			model: llmRequest.model,
+			config: {
+				...llmRequest.config,
+				functions: llmRequest.config.functions?.map((func) => ({
+					name: func.name,
+					description: func.description,
+					parameters: func.parameters,
+				})),
+			},
+			messages: [],
 		};
 
-		// Include optional fields if they exist
-		if (message.name) {
-			filteredMessage.name = message.name;
-		}
-		if (message.function_call) {
-			filteredMessage.function_call = message.function_call;
-		}
-		if (message.tool_calls) {
-			filteredMessage.tool_calls = message.tool_calls;
-		}
-		if (message.tool_call_id) {
-			filteredMessage.tool_call_id = message.tool_call_id;
+		// Filter out binary data and non-serializable content from messages
+		for (const message of llmRequest.messages) {
+			const filteredMessage: Record<string, any> = {
+				role: message.role,
+				content: this._filterMessageContent(message.content),
+			};
+
+			// Include optional fields if they exist
+			if (message.name) {
+				filteredMessage.name = message.name;
+			}
+			if (message.function_call) {
+				filteredMessage.function_call = message.function_call;
+			}
+			if (message.tool_calls) {
+				filteredMessage.tool_calls = message.tool_calls;
+			}
+			if (message.tool_call_id) {
+				filteredMessage.tool_call_id = message.tool_call_id;
+			}
+
+			result.messages.push(filteredMessage);
 		}
 
-		result.messages.push(filteredMessage);
+		return result;
 	}
 
-	return result;
-}
+	/**
+	 * Filters message content to exclude binary data and non-serializable content.
+	 */
+	private _filterMessageContent(content: MessageContent): any {
+		if (typeof content === "string") {
+			return content;
+		}
 
-/**
- * Filters message content to exclude binary data and non-serializable content.
- *
- * @param content - The message content to filter.
- * @returns Filtered message content safe for serialization.
- */
-function _filterMessageContent(content: MessageContent): any {
-	if (typeof content === "string") {
+		if (Array.isArray(content)) {
+			return content
+				.filter((item) => this._isSerializableContent(item))
+				.map((item) => this._sanitizeContentItem(item));
+		}
+
+		if (this._isSerializableContent(content)) {
+			return this._sanitizeContentItem(content);
+		}
+
+		return "<filtered content>";
+	}
+
+	/**
+	 * Checks if a content item is serializable (not binary data).
+	 */
+	private _isSerializableContent(content: TextContent | ImageContent): boolean {
+		return content.type === "text" || content.type === "image";
+	}
+
+	/**
+	 * Sanitizes a content item for safe serialization.
+	 */
+	private _sanitizeContentItem(content: TextContent | ImageContent): any {
+		if (content.type === "text") {
+			return {
+				type: content.type,
+				text: content.text,
+			};
+		}
+
+		if (content.type === "image") {
+			return {
+				type: content.type,
+				image_url: {
+					url: content.image_url.url,
+				},
+			};
+		}
+
 		return content;
 	}
-
-	if (Array.isArray(content)) {
-		return content
-			.filter((item) => _isSerializableContent(item))
-			.map((item) => _sanitizeContentItem(item));
-	}
-
-	if (_isSerializableContent(content)) {
-		return _sanitizeContentItem(content);
-	}
-
-	return "<filtered content>";
 }
 
-/**
- * Checks if a content item is serializable (not binary data).
- *
- * @param content - The content item to check.
- * @returns True if the content is serializable.
- */
-function _isSerializableContent(content: TextContent | ImageContent): boolean {
-	// For now, we'll include both text and image content
-	// In the future, you might want to exclude certain image types or large images
-	return content.type === "text" || content.type === "image";
-}
+// Global singleton instance for backward compatibility
+export const telemetryService = new TelemetryService();
 
-/**
- * Sanitizes a content item for safe serialization.
- *
- * @param content - The content item to sanitize.
- * @returns Sanitized content item.
- */
-function _sanitizeContentItem(content: TextContent | ImageContent): any {
-	if (content.type === "text") {
-		return {
-			type: content.type,
-			text: content.text,
-		};
-	}
-
-	if (content.type === "image") {
-		return {
-			type: content.type,
-			image_url: {
-				url: content.image_url.url,
-			},
-		};
-	}
-
-	return content;
-}
-
-/**
- * Traces a tool call by adding detailed attributes to the current span.
- * A direct translation of Python's `trace_tool_call`.
- */
-export function traceToolCall(
+// Backward compatibility exports
+export const tracer = telemetryService.getTracer();
+export const initializeTelemetry = (config: TelemetryConfig) =>
+	telemetryService.initialize(config);
+export const shutdownTelemetry = (timeoutMs?: number) =>
+	telemetryService.shutdown(timeoutMs);
+export const traceToolCall = (
 	tool: BaseTool,
 	args: Record<string, any>,
 	functionResponseEvent: Event,
-	llmRequest?: LLMRequest, // Optional LLM request that led to this tool call
+	llmRequest?: LLMRequest,
 	invocationContext?: InvocationContext,
-) {
-	const span = trace.getActiveSpan();
-	if (!span) return;
-
-	const toolCallId =
-		functionResponseEvent.tool_calls?.[0]?.id ?? "<not specified>";
-	const toolResponse = functionResponseEvent.content ?? "<not specified>";
-
-	span.setAttributes({
-		"gen_ai.system.name": "iqai-adk",
-		"gen_ai.operation.name": "execute_tool",
-		"gen_ai.tool.name": tool.name,
-		"gen_ai.tool.description": tool.description,
-		"gen_ai.tool.call.id": toolCallId,
-
-		// Session and user tracking
-		...(invocationContext && {
-			"session.id": invocationContext.sessionId,
-			"user.id": invocationContext.userId,
-		}),
-
-		// Environment
-		...(process.env.NODE_ENV && {
-			"deployment.environment.name": process.env.NODE_ENV,
-		}),
-
-		// Tool-specific data
-		"adk.tool_call_args": _safeJsonStringify(args),
-		"adk.event_id": functionResponseEvent.invocationId,
-		"adk.tool_response": _safeJsonStringify(toolResponse),
-		"adk.llm_request": llmRequest
-			? _safeJsonStringify(_buildLlmRequestForTrace(llmRequest))
-			: "{}",
-		"adk.llm_response": "{}",
-	});
-}
-
-/**
- * Traces a call to the LLM by adding detailed attributes to the current span.
- * A direct translation of Python's `trace_call_llm`.
- */
-export function traceLlmCall(
+) =>
+	telemetryService.traceToolCall(
+		tool,
+		args,
+		functionResponseEvent,
+		llmRequest,
+		invocationContext,
+	);
+export const traceLlmCall = (
 	invocationContext: InvocationContext,
 	eventId: string,
 	llmRequest: LLMRequest,
 	llmResponse: LLMResponse,
-) {
-	const span = trace.getActiveSpan();
-	if (!span) return;
-
-	const requestData = _buildLlmRequestForTrace(llmRequest);
-
-	span.setAttributes({
-		// Standard OpenTelemetry attributes
-		"gen_ai.system.name": "iqai-adk",
-		"gen_ai.operation.name": "generate",
-		"gen_ai.request.model": llmRequest.model,
-
-		// Session and user tracking (maps to Langfuse sessionId, userId)
-		"session.id": invocationContext.sessionId,
-		"user.id": invocationContext.userId,
-
-		// Environment (maps to Langfuse environment)
-		...(process.env.NODE_ENV && {
-			"deployment.environment.name": process.env.NODE_ENV,
-		}),
-
-		// Model parameters (maps to Langfuse modelParameters)
-		"gen_ai.request.max_tokens": llmRequest.config.max_tokens || 0,
-		"gen_ai.request.temperature": llmRequest.config.temperature || 0,
-		"gen_ai.request.top_p": llmRequest.config.top_p || 0,
-
-		// Legacy ADK attributes (keep for backward compatibility)
-		"adk.system_name": "iqai-adk",
-		"adk.request_model": llmRequest.model,
-		"adk.invocation_id": invocationContext.sessionId,
-		"adk.session_id": invocationContext.sessionId,
-		"adk.event_id": eventId,
-		"adk.llm_request": _safeJsonStringify(requestData),
-		"adk.llm_response": _safeJsonStringify(llmResponse),
-	});
-
-	// Add input/output as events (preferred over deprecated attributes)
-	span.addEvent("gen_ai.content.prompt", {
-		"gen_ai.prompt": _safeJsonStringify(requestData.messages),
-	});
-
-	span.addEvent("gen_ai.content.completion", {
-		"gen_ai.completion": _safeJsonStringify(llmResponse.content || ""),
-	});
-}
+) =>
+	telemetryService.traceLlmCall(
+		invocationContext,
+		eventId,
+		llmRequest,
+		llmResponse,
+	);

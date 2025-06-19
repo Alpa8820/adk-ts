@@ -17,7 +17,7 @@ const authString = Buffer.from(
 telemetryService.initialize({
 	appName: "telemetry-agent-example",
 	appVersion: "1.0.0",
-	otlpEndpoint: `${process.env.LANGFUSE_HOST}/api/public/ingestion`,
+	otlpEndpoint: `${process.env.LANGFUSE_HOST}/api/public/v1/traces`,
 	otlpHeaders: {
 		Authorization: `Basic ${authString}`,
 	},
