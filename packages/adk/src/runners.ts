@@ -2,6 +2,8 @@ import { SpanStatusCode } from "@opentelemetry/api";
 import type { BaseAgent } from "./agents/base-agent";
 import { InvocationContext } from "./agents/invocation-context";
 import { RunConfig } from "./agents/run-config";
+import type { BaseArtifactService } from "./artifacts/base-artifact-service";
+import { InMemoryArtifactService } from "./artifacts/in-memory-artifact-service";
 import { Event } from "./events/event";
 import type { BaseMemoryService } from "./memory/base-memory-service";
 import { InMemoryMemoryService } from "./memory/in-memory-memory-service";
@@ -39,6 +41,11 @@ export class Runner {
 	memoryService?: BaseMemoryService;
 
 	/**
+	 * The artifact service for the runner.
+	 */
+	artifactService?: BaseArtifactService;
+
+	/**
 	 * Initializes the Runner.
 	 */
 	constructor({
@@ -46,16 +53,19 @@ export class Runner {
 		agent,
 		sessionService,
 		memoryService,
+		artifactService,
 	}: {
 		appName: string;
 		agent: BaseAgent;
 		sessionService: SessionService;
 		memoryService?: BaseMemoryService;
+		artifactService?: BaseArtifactService;
 	}) {
 		this.appName = appName;
 		this.agent = agent;
 		this.sessionService = sessionService;
 		this.memoryService = memoryService;
+		this.artifactService = artifactService;
 	}
 
 	/**
@@ -214,6 +224,7 @@ export class Runner {
 			appName: this.appName,
 			sessionService: this.sessionService,
 			memoryService: this.memoryService,
+			artifactService: this.artifactService,
 			metadata: session.metadata || {},
 		});
 	}
@@ -231,12 +242,14 @@ export class InMemoryRunner extends Runner {
 		{ appName = "InMemoryRunner" }: { appName?: string } = {},
 	) {
 		const inMemorySessionService = new InMemorySessionService();
+		const inMemoryArtifactService = new InMemoryArtifactService();
 
 		super({
 			appName,
 			agent,
 			sessionService: inMemorySessionService,
 			memoryService: new InMemoryMemoryService(),
+			artifactService: inMemoryArtifactService,
 		});
 	}
 }
