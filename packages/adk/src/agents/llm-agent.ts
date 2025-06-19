@@ -7,11 +7,15 @@ import type { BaseLLM } from "../models/base-llm";
 import { LLMRegistry } from "../models/llm-registry";
 import { LLMRequest, type Message } from "../models/llm-request";
 import type { LLMResponse, ToolCall } from "../models/llm-response";
+import type { BasePlanner } from "../planners/base-planner";
+import { BuiltInPlanner } from "../planners/built-in-planner";
 import type { SessionService } from "../sessions/base-session-service";
 import type { BaseTool } from "../tools/base/base-tool";
 import { ToolContext } from "../tools/tool-context";
 import { BaseAgent } from "./base-agent";
+import { CallbackContext } from "./callback-context";
 import { InvocationContext } from "./invocation-context";
+import { ReadonlyContext } from "./readonly-context";
 import type { RunConfig } from "./run-config";
 
 /**
@@ -82,6 +86,11 @@ export interface AgentConfig {
 	 * The minimum relevance score for memory augmentation (0-1)
 	 */
 	memoryRelevanceThreshold?: number;
+
+	/**
+	 * Planner to guide the agent's reasoning and action planning
+	 */
+	planner?: BasePlanner;
 }
 
 /**
@@ -148,6 +157,11 @@ export class Agent extends BaseAgent {
 	 */
 	private memoryRelevanceThreshold: number;
 
+	/**
+	 * Planner to guide the agent's reasoning and action planning
+	 */
+	private planner?: BasePlanner;
+
 	private logger = new Logger({ name: "LlmAgent" });
 
 	/**
@@ -170,6 +184,7 @@ export class Agent extends BaseAgent {
 		this.useMemoryAugmentation = config.useMemoryAugmentation ?? false;
 		this.maxMemoryItems = config.maxMemoryItems ?? 5;
 		this.memoryRelevanceThreshold = config.memoryRelevanceThreshold ?? 0.3;
+		this.planner = config.planner;
 
 		// Get the LLM instance
 		this.llm = LLMRegistry.newLLM(this.model);
@@ -386,6 +401,96 @@ export class Agent extends BaseAgent {
 	}
 
 	/**
+	 * Applies planner preprocessing to the LLM request
+	 */
+	private applyPlannerPreprocessing(
+		context: InvocationContext,
+		request: LLMRequest,
+	): void {
+		if (!this.planner) {
+			return;
+		}
+
+		try {
+			const readonlyContext = new ReadonlyContext(context);
+
+			// For BuiltInPlanner, apply thinking config
+			if (this.planner instanceof BuiltInPlanner) {
+				this.planner.applyThinkingConfig(request);
+			}
+
+			// Get planning instruction and add to request
+			const planningInstruction = this.planner.buildPlanningInstruction(
+				readonlyContext,
+				request,
+			);
+
+			if (planningInstruction) {
+				// Add planning instruction as a system message
+				const planningMessage: Message = {
+					role: "system",
+					content: planningInstruction,
+				};
+
+				// Insert planning instruction after other system messages
+				const lastSystemIndex = context.messages.findIndex(
+					(m) => m.role !== "system",
+				);
+				if (lastSystemIndex > 0) {
+					context.messages.splice(lastSystemIndex, 0, planningMessage);
+				} else {
+					context.messages.unshift(planningMessage);
+				}
+			}
+		} catch (error) {
+			this.logger.debug("Error in planner preprocessing:", error);
+			// Continue without planner preprocessing on error
+		}
+	}
+
+	/**
+	 * Applies planner postprocessing to the LLM response
+	 */
+	private applyPlannerPostprocessing(
+		context: InvocationContext,
+		response: LLMResponse,
+	): LLMResponse {
+		if (!this.planner || !response.content) {
+			return response;
+		}
+
+		try {
+			const callbackContext = new CallbackContext(context);
+
+			// Convert response content to Part format for planner
+			const responseParts = [{ text: response.content }];
+
+			// Process the response with the planner
+			const processedParts = this.planner.processPlanningResponse(
+				callbackContext,
+				responseParts,
+			);
+
+			// Update the response if processing returned modified parts
+			if (processedParts && processedParts.length > 0) {
+				// Extract text from processed parts
+				const processedContent = processedParts
+					.map((part) => part.text || "")
+					.join("");
+
+				if (processedContent.trim()) {
+					response.content = processedContent;
+				}
+			}
+		} catch (error) {
+			this.logger.debug("Error in planner postprocessing:", error);
+			// Continue with original response on error
+		}
+
+		return response;
+	}
+
+	/**
 	 * Runs the agent with the given messages and configuration
 	 */
 	async run(options: {
@@ -418,15 +523,19 @@ export class Agent extends BaseAgent {
 			// Add tool declarations if any tools are available
 			const functions = this.tools.map((tool) => tool.getDeclaration());
 
-			const responseGenerator = await this.llm.generateContentAsync(
-				new LLMRequest({
-					messages: context.messages,
-					config: {
-						...options.config,
-						functions: functions.length > 0 ? functions : undefined,
-					},
-				}),
-			);
+			// Create the initial LLM request
+			const llmRequest = new LLMRequest({
+				messages: context.messages,
+				config: {
+					...options.config,
+					functions: functions.length > 0 ? functions : undefined,
+				},
+			});
+
+			// Apply planner preprocessing
+			this.applyPlannerPreprocessing(context, llmRequest);
+
+			const responseGenerator = await this.llm.generateContentAsync(llmRequest);
 
 			let response: LLMResponse | undefined;
 			for await (const chunk of responseGenerator) {
@@ -452,6 +561,9 @@ export class Agent extends BaseAgent {
 					},
 				});
 
+				// Apply planner preprocessing to ALL requests (not just initial)
+				this.applyPlannerPreprocessing(context, llmRequest);
+
 				// Use generateContentAsync instead of generateContent
 				const responseIterator = this.llm.generateContentAsync(llmRequest);
 				let currentResponse: LLMResponse | undefined;
@@ -463,6 +575,12 @@ export class Agent extends BaseAgent {
 				if (!currentResponse) {
 					throw new Error("No response from LLM");
 				}
+
+				// Apply planner postprocessing
+				currentResponse = this.applyPlannerPostprocessing(
+					context,
+					currentResponse,
+				);
 
 				if (
 					currentResponse.tool_calls &&
@@ -562,7 +680,7 @@ export class Agent extends BaseAgent {
 				.filter((declaration) => declaration !== null);
 
 			// Create the request
-			const request = {
+			const request = new LLMRequest({
 				messages: context.messages,
 				config: {
 					functions: toolDeclarations as any[],
@@ -571,7 +689,10 @@ export class Agent extends BaseAgent {
 					// Ensure streaming is enabled
 					stream: true,
 				},
-			};
+			});
+
+			// Apply planner preprocessing
+			this.applyPlannerPreprocessing(context, request);
 
 			// Stream response from LLM
 			const responseGenerator = this.llm.generateContentAsync(request, true);
@@ -598,6 +719,9 @@ export class Agent extends BaseAgent {
 			if (!finalResponse) {
 				throw new Error("No response received from LLM");
 			}
+
+			// Apply planner postprocessing
+			finalResponse = this.applyPlannerPostprocessing(context, finalResponse);
 
 			// Add assistant response to conversation history
 			context.addMessage({
