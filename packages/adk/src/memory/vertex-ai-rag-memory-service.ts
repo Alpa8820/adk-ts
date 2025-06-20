@@ -12,7 +12,6 @@ import type {
 } from "./base-memory-service";
 import type { MemoryEntry } from "./memory-entry";
 
-// Types for Vertex AI RAG (you may need to adjust these based on actual SDK)
 interface VertexRagStoreRagResource {
 	rag_corpus: string;
 }
