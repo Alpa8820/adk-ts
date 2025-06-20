@@ -24,10 +24,10 @@ export class CallbackContext extends ReadonlyContext {
 		super(invocationContext);
 
 		this._eventActions = options.eventActions || new EventActions();
-		this._state = new State({
-			value: invocationContext.session.state,
-			delta: this._eventActions.stateDelta,
-		});
+		this._state = new State(
+			invocationContext.session.state,
+			this._eventActions.stateDelta,
+		);
 	}
 
 	/**
