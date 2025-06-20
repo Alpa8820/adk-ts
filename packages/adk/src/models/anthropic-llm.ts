@@ -1,10 +1,10 @@
 import { Logger } from "@adk/helpers/logger";
 import axios from "axios";
 import { AnthropicLLMConnection } from "./anthropic-llm-connection";
-import { BaseLLM } from "./base-llm";
+import { BaseLlm } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
-import type { LLMRequest, Message } from "./llm-request";
-import { LLMResponse, type ToolCall } from "./llm-response";
+import type { LlmRequest } from "./llm-request";
+import { LlmResponse } from "./llm-response";
 
 /**
  * Configuration for Anthropic LLM
@@ -99,7 +99,7 @@ interface AnthropicApiResponse {
  * Anthropic LLM implementation for Claude models
  * Uses direct API calls instead of the SDK for better control
  */
-export class AnthropicLLM extends BaseLLM {
+export class AnthropicLLM extends BaseLlm {
 	/**
 	 * Anthropic API key
 	 */
@@ -351,9 +351,9 @@ export class AnthropicLLM extends BaseLLM {
 	 * Generates content from the given request
 	 */
 	async *generateContentAsyncImpl(
-		llmRequest: LLMRequest,
+		llmRequest: LlmRequest,
 		stream = false,
-	): AsyncGenerator<LLMResponse, void, unknown> {
+	): AsyncGenerator<LlmResponse, void, unknown> {
 		try {
 			// Extract system message
 			const systemMessage = this.extractSystemMessage(llmRequest.messages);
@@ -413,7 +413,7 @@ export class AnthropicLLM extends BaseLLM {
 			this.logger.debug("Converted Tool Calls:", toolCalls);
 
 			// Only yield a response with tool_calls if there are any
-			const llmResponse = new LLMResponse({
+			const llmResponse = new LlmResponse({
 				role: "assistant",
 				content,
 				tool_calls: toolCalls.length > 0 ? toolCalls : undefined,
@@ -445,7 +445,7 @@ export class AnthropicLLM extends BaseLLM {
 	/**
 	 * Creates a live connection to the LLM
 	 */
-	connect(llmRequest: LLMRequest): BaseLLMConnection {
+	connect(llmRequest: LlmRequest): BaseLLMConnection {
 		const axiosInstance = axios.create({
 			baseURL: this.baseURL,
 			headers: {

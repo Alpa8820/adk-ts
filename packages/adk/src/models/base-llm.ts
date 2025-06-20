@@ -1,18 +1,22 @@
+import { Logger } from "@adk/helpers/logger";
+import { tracer } from "../telemetry";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LlmRequest } from "./llm-request";
 import type { LlmResponse } from "./llm-response";
 
+const logger = new Logger({ name: "BaseLlm" });
+
 /**
- * The BaseLLM class.
+ * The BaseLlm class.
  */
-export abstract class BaseLLM {
+export abstract class BaseLlm {
 	/**
 	 * The name of the LLM, e.g. gemini-1.5-flash or gemini-1.5-flash-001.
 	 */
 	model: string;
 
 	/**
-	 * Constructor for BaseLLM
+	 * Constructor for BaseLlm
 	 */
 	constructor(model: string) {
 		this.model = model;
@@ -38,7 +42,113 @@ export abstract class BaseLLM {
 	 * responses should be treated as one response by merging the
 	 * parts list.
 	 */
-	abstract generateContentAsync(
+	async *generateContentAsync(
+		llmRequest: LlmRequest,
+		stream?: boolean,
+	): AsyncGenerator<LlmResponse, void, unknown> {
+		// Apply the maybeAppendUserContent fix before processing
+		this.maybeAppendUserContent(llmRequest);
+
+		yield* tracer.startActiveSpan(
+			`llm_generate [${this.model}]`,
+			async function* (span) {
+				try {
+					span.setAttributes({
+						"gen_ai.system.name": "iqai-adk",
+						"gen_ai.operation.name": "generate",
+						"gen_ai.request.model": this.model,
+						"gen_ai.request.max_tokens":
+							llmRequest.config?.maxOutputTokens || 0,
+						"gen_ai.request.temperature": llmRequest.config?.temperature || 0,
+						"gen_ai.request.top_p": llmRequest.config?.topP || 0,
+						"adk.llm_request": JSON.stringify({
+							model: this.model,
+							contents: llmRequest.contents?.map((content) => ({
+								role: content.role,
+								parts: content.parts?.map((part) => ({
+									text:
+										typeof part.text === "string"
+											? part.text.substring(0, 200) +
+												(part.text.length > 200 ? "..." : "")
+											: "[non_text_content]",
+								})),
+							})),
+							config: llmRequest.config,
+						}),
+						"adk.streaming": stream || false,
+					});
+
+					logger.debug("ADK LLM Request:", {
+						model: this.model,
+						contentCount: llmRequest.contents?.length || 0,
+						streaming: stream || false,
+						config: llmRequest.config,
+					});
+
+					let responseCount = 0;
+					let totalTokens = 0;
+
+					for await (const response of this.generateContentAsyncImpl(
+						llmRequest,
+						stream,
+					)) {
+						responseCount++;
+
+						// Log each response chunk
+						logger.debug(`ADK LLM Response ${responseCount}:`, {
+							model: this.model,
+							parts: response.parts?.map((part) => ({
+								text:
+									typeof part.text === "string"
+										? part.text.substring(0, 200) +
+											(part.text.length > 200 ? "..." : "")
+										: "[non_text_content]",
+							})),
+							finishReason: response.finish_reason,
+							usage: response.usage,
+						});
+
+						// Update span attributes with response info
+						if (response.usage) {
+							totalTokens += response.usage.total_tokens || 0;
+							span.setAttributes({
+								"gen_ai.response.finish_reasons": [
+									response.finish_reason || "unknown",
+								],
+								"gen_ai.usage.input_tokens": response.usage.prompt_tokens || 0,
+								"gen_ai.usage.output_tokens":
+									response.usage.completion_tokens || 0,
+								"gen_ai.usage.total_tokens": response.usage.total_tokens || 0,
+							});
+						}
+
+						yield response;
+					}
+
+					span.setAttributes({
+						"adk.response_count": responseCount,
+						"adk.total_tokens": totalTokens,
+					});
+				} catch (error) {
+					span.recordException(error as Error);
+					span.setStatus({ code: 2, message: (error as Error).message });
+					console.error("❌ ADK LLM Error:", {
+						model: this.model,
+						error: (error as Error).message,
+					});
+					throw error;
+				} finally {
+					span.end();
+				}
+			}.bind(this),
+		);
+	}
+
+	/**
+	 * Implementation method to be overridden by subclasses.
+	 * This replaces the abstract generateContentAsync method.
+	 */
+	protected abstract generateContentAsyncImpl(
 		llmRequest: LlmRequest,
 		stream?: boolean,
 	): AsyncGenerator<LlmResponse, void, unknown>;
@@ -77,7 +187,6 @@ export abstract class BaseLLM {
 			});
 		}
 	}
-
 	/**
 	 * Creates a live connection to the LLM.
 	 *

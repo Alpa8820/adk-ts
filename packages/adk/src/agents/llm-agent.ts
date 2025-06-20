@@ -1,9 +1,9 @@
 import { Logger } from "@adk/helpers/logger";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service";
 import { Event } from "../events/event";
-import { AutoFlow, SingleFlow, type BaseLlmFlow } from "../flows/llm-flows";
+import { AutoFlow, type BaseLlmFlow, SingleFlow } from "../flows/llm-flows";
 import type { BaseMemoryService } from "../memory/base-memory-service";
-import type { BaseLLM } from "../models/base-llm";
+import type { BaseLlm } from "../models/base-llm";
 import { LLMRegistry } from "../models/llm-registry";
 import type { BasePlanner } from "../planners/base-planner";
 import type { BaseSessionService } from "../sessions/base-session-service";
@@ -43,7 +43,7 @@ export interface LlmAgentConfig {
 	 * The LLM model to use
 	 * When not set, the agent will inherit the model from its ancestor
 	 */
-	model?: string | BaseLLM;
+	model?: string | BaseLlm;
 
 	/**
 	 * Instructions for the LLM model, guiding the agent's behavior
@@ -120,7 +120,7 @@ export class LlmAgent extends BaseAgent {
 	 * The model to use for the agent
 	 * When not set, the agent will inherit the model from its ancestor
 	 */
-	public model: string | BaseLLM;
+	public model: string | BaseLlm;
 
 	/**
 	 * Instructions for the LLM model, guiding the agent's behavior
@@ -219,7 +219,7 @@ export class LlmAgent extends BaseAgent {
 	 * The resolved model field as BaseLLM
 	 * This method is only for use by Agent Development Kit
 	 */
-	get canonicalModel(): BaseLLM {
+	get canonicalModel(): BaseLlm {
 		if (typeof this.model !== "string") {
 			return this.model;
 		}

@@ -5,7 +5,7 @@ import {
 	type GoogleGenAIOptions,
 	type Part,
 } from "@google/genai";
-import { BaseLLM } from "./base-llm";
+import { BaseLlm } from "./base-llm";
 import type { LlmRequest, Message, MessageRole } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 
@@ -47,7 +47,7 @@ export interface GoogleLLMConfig {
 /**
  * Google Gemini LLM implementation
  */
-export class GoogleLLM extends BaseLLM {
+export class GoogleLLM extends BaseLlm {
 	/**
 	 * Generative model instance
 	 */

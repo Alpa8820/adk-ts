@@ -1,6 +1,6 @@
 import { Logger } from "@adk/helpers/logger";
 import OpenAI from "openai";
-import { BaseLLM } from "./base-llm";
+import { BaseLlm } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LLMRequest, Message } from "./llm-request";
 import { type FunctionCall, LLMResponse, type ToolCall } from "./llm-response";
@@ -59,7 +59,7 @@ export interface OpenAILLMConfig {
 /**
  * OpenAI LLM implementation
  */
-export class OpenAILLM extends BaseLLM {
+export class OpenAILLM extends BaseLlm {
 	/**
 	 * OpenAI client instance
 	 */
