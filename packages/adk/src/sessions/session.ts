@@ -1,37 +1,37 @@
 import type { Event } from "@adk/events/event";
-import type { SessionState } from "./state";
 
 /**
- * Represents a conversation session
+ * Represents a series of interactions between a user and agents.
  */
 export interface Session {
 	/**
-	 * Unique session identifier
+	 * The unique identifier of the session.
 	 */
 	id: string;
 
 	/**
-	 * Name of the app
+	 * The name of the app.
 	 */
 	appName: string;
 
 	/**
-	 * User identifier associated with the session
+	 * The id of the user.
 	 */
 	userId: string;
 
 	/**
-	 * Session state for storing arbitrary data
+	 * The state of the session.
 	 */
-	state: SessionState;
+	state: Record<string, any>;
 
 	/**
-	 * Session events
+	 * The events of the session, e.g. user input, model response, function
+	 * call/response, etc.
 	 */
-	events?: Event[];
+	events: Event[];
 
 	/**
-	 * Last update timestamp
+	 * The last update time of the session.
 	 */
 	lastUpdateTime: number;
 }
