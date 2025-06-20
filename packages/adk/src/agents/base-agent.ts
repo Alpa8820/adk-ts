@@ -1,6 +1,6 @@
 import type { Content } from "@google/genai";
 import { Event } from "../events/event";
-import { telemetryService, tracer } from "../telemetry";
+import { telemetryService } from "../telemetry";
 import { CallbackContext } from "./callback-context";
 import type { InvocationContext } from "./invocation-context";
 
