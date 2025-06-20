@@ -1,5 +1,4 @@
 import { Logger } from "@adk/helpers/logger";
-import type { Content } from "@google/genai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service";
 import { Event } from "../events/event";
 import { AutoFlow, SingleFlow, type BaseLlmFlow } from "../flows/llm-flows";
