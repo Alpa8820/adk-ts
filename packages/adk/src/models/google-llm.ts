@@ -7,6 +7,7 @@ import {
 	GoogleGenAI,
 	type Part,
 } from "@google/genai";
+import dedent from "dedent";
 import { BaseLlm } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import type { LlmRequest } from "./llm-request";
@@ -366,17 +367,18 @@ export class GoogleLlm extends BaseLlm {
 				}),
 			) || [];
 
-		return `LLM Request:
------------------------------------------------------------
-System Instruction:
-${(req.config as any)?.systemInstruction || ""}
------------------------------------------------------------
-Contents:
-${contentsLogs.join(NEW_LINE)}
------------------------------------------------------------
-Functions:
-${functionLogs.join(NEW_LINE)}
------------------------------------------------------------`;
+		return dedent`
+		LLM Request:
+		-----------------------------------------------------------
+		System Instruction:
+		${(req.config as any)?.systemInstruction || ""}
+		-----------------------------------------------------------
+		Contents:
+		${contentsLogs.join(NEW_LINE)}
+		-----------------------------------------------------------
+		Functions:
+		${functionLogs.join(NEW_LINE)}
+		-----------------------------------------------------------`;
 	}
 
 	/**
@@ -392,17 +394,18 @@ ${functionLogs.join(NEW_LINE)}
 			}
 		}
 
-		return `LLM Response:
------------------------------------------------------------
-Text:
-${resp.text || ""}
------------------------------------------------------------
-Function calls:
-${functionCallsText.join(NEW_LINE)}
------------------------------------------------------------
-Raw response:
-${JSON.stringify(resp, null, 2)}
------------------------------------------------------------`;
+		return dedent`
+		LLM Response:
+		-----------------------------------------------------------
+		Text:
+		${resp.text || ""}
+		-----------------------------------------------------------
+		Function calls:
+		${functionCallsText.join(NEW_LINE)}
+		-----------------------------------------------------------
+		Raw response:
+		${JSON.stringify(resp, null, 2)}
+		-----------------------------------------------------------`;
 	}
 
 	/**
