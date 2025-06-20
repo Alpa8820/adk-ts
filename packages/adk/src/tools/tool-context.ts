@@ -1,12 +1,12 @@
-import type { Session } from "..";
+import type { Part } from "@google/genai";
+import { CallbackContext } from "../agents/callback-context";
 import type { InvocationContext } from "../agents/invocation-context";
 import type { AuthHandler } from "../auth/auth-handler";
+import type { EventActions } from "../events/event-actions";
 import type {
-	SearchMemoryOptions,
+	BaseMemoryService,
 	SearchMemoryResponse,
 } from "../memory/base-memory-service";
-import type { Message } from "../models/llm-request";
-import type { Part } from "@google/genai";
 
 /**
  * Context for tool execution
@@ -39,13 +39,21 @@ export interface IToolContext {
 }
 
 /**
- * Context for tool execution
+ * The context of the tool.
+ *
+ * This class provides the context for a tool invocation, including access to
+ * the invocation context, function call ID, event actions, and authentication
+ * response. It also provides methods for requesting credentials, retrieving
+ * authentication responses, listing artifacts, and searching memory.
  */
-export class ToolContext implements IToolContext {
+export class ToolContext extends CallbackContext implements IToolContext {
 	/**
-	 * The parent invocation context
+	 * The function call id of the current tool call. This id was
+	 * returned in the function call event from LLM to identify a function call.
+	 * If LLM didn't return this id, ADK will assign one to it. This id is used
+	 * to map function call response to the original function call.
 	 */
-	private invocationContext: InvocationContext;
+	functionCallId?: string;
 
 	/**
 	 * Authentication handler for the tool
@@ -75,15 +83,28 @@ export class ToolContext implements IToolContext {
 	/**
 	 * Constructor for ToolContext
 	 */
-	constructor(options: {
-		invocationContext: InvocationContext;
-		auth?: AuthHandler;
-		parameters?: Record<string, any>;
-	}) {
-		this.invocationContext = options.invocationContext;
+	constructor(
+		invocationContext: InvocationContext,
+		options: {
+			functionCallId?: string;
+			eventActions?: EventActions;
+			auth?: AuthHandler;
+			parameters?: Record<string, any>;
+		} = {},
+	) {
+		super(invocationContext, { eventActions: options.eventActions });
+
+		this.functionCallId = options.functionCallId;
 		this.auth = options.auth;
 		this.parameters = options.parameters || {};
 		this._variables = new Map<string, any>();
+	}
+
+	/**
+	 * Gets the event actions of the current tool call
+	 */
+	get actions(): EventActions {
+		return this.eventActions;
 	}
 
 	/**
@@ -102,142 +123,152 @@ export class ToolContext implements IToolContext {
 		this.parameters[name] = value;
 	}
 
-	// Delegate to invocation context
-	get sessionId(): string {
-		return this.invocationContext.sessionId;
-	}
-	get messages() {
-		return this.invocationContext.messages;
-	}
-	get config() {
-		return this.invocationContext.config;
-	}
-	get userId() {
-		return this.invocationContext.userId;
-	}
-	get appName() {
-		return this.invocationContext.appName;
-	}
-	get memoryService() {
-		return this.invocationContext.memoryService;
-	}
-	get sessionService() {
-		return this.invocationContext.sessionService;
-	}
-	get artifactService() {
-		return this.invocationContext.artifactService;
-	}
-	get metadata() {
-		return this.invocationContext.metadata;
+	/**
+	 * Requests authentication credentials
+	 */
+	requestCredential(authConfig: any): void {
+		if (!this.functionCallId) {
+			throw new Error("function_call_id is not set.");
+		}
+
+		// TODO: Implement proper auth handling when AuthHandler is available
+		console.warn(
+			"requestCredential not fully implemented - auth system pending",
+		);
 	}
 
-	// Variable management
+	/**
+	 * Gets authentication response
+	 */
+	getAuthResponse(authConfig: any): any {
+		// TODO: Implement proper auth handling when AuthHandler is available
+		console.warn("getAuthResponse not fully implemented - auth system pending");
+		return null;
+	}
+
+	/**
+	 * Lists the filenames of the artifacts attached to the current session
+	 */
+	async listArtifacts(): Promise<string[]> {
+		if (!this._invocationContext.artifactService) {
+			throw new Error("Artifact service is not initialized.");
+		}
+
+		return await this._invocationContext.artifactService.listArtifactKeys({
+			appName: this._invocationContext.appName,
+			userId: this._invocationContext.userId,
+			sessionId: this._invocationContext.session.id,
+		});
+	}
+
+	/**
+	 * Searches the memory of the current user
+	 */
+	async searchMemory(query: string): Promise<SearchMemoryResponse> {
+		if (!this._invocationContext.memoryService) {
+			throw new Error("Memory service is not available.");
+		}
+
+		return await this._invocationContext.memoryService.searchMemory({
+			query,
+			appName: this._invocationContext.appName,
+			userId: this._invocationContext.userId,
+		});
+	}
+
+	// Variable management (inherited from original implementation)
 	get variables(): Map<string, any> {
 		return this._variables;
 	}
+
 	setVariable(name: string, value: any): void {
 		this._variables.set(name, value);
 	}
+
 	getVariable<T>(name: string, defaultValue?: T): T | undefined {
 		return (
 			this._variables.has(name) ? this._variables.get(name) : defaultValue
 		) as T | undefined;
 	}
 
-	// Delegate session operations
-	addMessage(message: Message): void {
-		this.invocationContext.addMessage(message);
-	}
-	async loadSession(): Promise<Session | undefined> {
-		return this.invocationContext.loadSession();
-	}
-	async saveSession(): Promise<Session | undefined> {
-		return this.invocationContext.saveSession();
-	}
-	async searchMemory(
-		query: string,
-		options?: SearchMemoryOptions,
-	): Promise<SearchMemoryResponse> {
-		return this.invocationContext.searchMemory(query, options);
+	// Artifact methods (delegated to parent CallbackContext)
+	async saveArtifact(filename: string, artifact: Part): Promise<number> {
+		return await super.saveArtifact(filename, artifact);
 	}
 
-	async saveArtifact(filename: string, artifact: Part): Promise<number> {
-		if (!this.artifactService) {
+	async loadArtifact(
+		filename: string,
+		version?: number,
+	): Promise<Part | undefined> {
+		return await super.loadArtifact(filename, version);
+	}
+
+	// Legacy methods for backward compatibility
+	async saveArtifactLegacy(filename: string, artifact: Part): Promise<number> {
+		if (!this._invocationContext.artifactService) {
 			throw new Error("Artifact service not available");
 		}
-		if (!this.userId || !this.appName) {
+		if (!this._invocationContext.userId || !this._invocationContext.appName) {
 			throw new Error("User ID and app name required for artifacts");
 		}
 
-		return await this.artifactService.saveArtifact({
-			appName: this.appName,
-			userId: this.userId,
-			sessionId: this.sessionId,
+		return await this._invocationContext.artifactService.saveArtifact({
+			appName: this._invocationContext.appName,
+			userId: this._invocationContext.userId,
+			sessionId: this._invocationContext.session.id,
 			filename,
 			artifact,
 		});
 	}
 
-	async loadArtifact(filename: string, version?: number): Promise<Part | null> {
-		if (!this.artifactService) {
+	async loadArtifactLegacy(
+		filename: string,
+		version?: number,
+	): Promise<Part | null> {
+		if (!this._invocationContext.artifactService) {
 			throw new Error("Artifact service not available");
 		}
-		if (!this.userId || !this.appName) {
+		if (!this._invocationContext.userId || !this._invocationContext.appName) {
 			throw new Error("User ID and app name required for artifacts");
 		}
 
-		return await this.artifactService.loadArtifact({
-			appName: this.appName,
-			userId: this.userId,
-			sessionId: this.sessionId,
+		return await this._invocationContext.artifactService.loadArtifact({
+			appName: this._invocationContext.appName,
+			userId: this._invocationContext.userId,
+			sessionId: this._invocationContext.session.id,
 			filename,
 			version,
 		});
 	}
 
-	async listArtifacts(): Promise<string[]> {
-		if (!this.artifactService) {
-			throw new Error("Artifact service not available");
-		}
-		if (!this.userId || !this.appName) {
-			throw new Error("User ID and app name required for artifacts");
-		}
-
-		return await this.artifactService.listArtifactKeys({
-			appName: this.appName,
-			userId: this.userId,
-			sessionId: this.sessionId,
-		});
-	}
-
 	async deleteArtifact(filename: string): Promise<void> {
-		if (!this.artifactService) {
+		if (!this._invocationContext.artifactService) {
 			throw new Error("Artifact service not available");
 		}
-		if (!this.userId || !this.appName) {
+		if (!this._invocationContext.userId || !this._invocationContext.appName) {
 			throw new Error("User ID and app name required for artifacts");
 		}
 
-		return await this.artifactService.deleteArtifact({
-			appName: this.appName,
-			userId: this.userId,
-			sessionId: this.sessionId,
+		return await this._invocationContext.artifactService.deleteArtifact({
+			appName: this._invocationContext.appName,
+			userId: this._invocationContext.userId,
+			sessionId: this._invocationContext.session.id,
 			filename,
 		});
 	}
 
 	async listArtifactVersions(filename: string): Promise<number[]> {
-		if (!this.artifactService) {
+		if (!this._invocationContext.artifactService) {
 			throw new Error("Artifact service not available");
 		}
-		if (!this.userId || !this.appName) {
+		if (!this._invocationContext.userId || !this._invocationContext.appName) {
 			throw new Error("User ID and app name required for artifacts");
 		}
 
-		return await this.artifactService.listVersions({
-			appName: this.appName,
-			userId: this.userId,
-			sessionId: this.sessionId,
+		return await this._invocationContext.artifactService.listVersions({
+			appName: this._invocationContext.appName,
+			userId: this._invocationContext.userId,
+			sessionId: this._invocationContext.session.id,
 			filename,
 		});
 	}
