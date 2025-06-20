@@ -92,12 +92,12 @@ export function newInvocationContextId(): string {
  * A step ends when it's done calling llm and tools, or if the end_invocation
  * is set to true at any time.
  *
- * ```
+ *
  *     ┌─────────────────────── invocation ──────────────────────────┐
  *     ┌──────────── llm_agent_call_1 ────────────┐ ┌─ agent_call_2 ─┐
  *     ┌──── step_1 ────────┐ ┌───── step_2 ──────┐
  *     [call_llm] [call_tool] [call_llm] [transfer]
- * ```
+ *
  */
 export class InvocationContext {
 	readonly artifactService?: BaseArtifactService;
@@ -225,5 +225,26 @@ export class InvocationContext {
 		this._invocationCostManager.incrementAndEnforceLlmCallsLimit(
 			this.runConfig,
 		);
+	}
+
+	/**
+	 * Creates a child invocation context for a sub-agent
+	 */
+	createChildContext(agent: BaseAgent): InvocationContext {
+		return new InvocationContext({
+			artifactService: this.artifactService,
+			sessionService: this.sessionService,
+			memoryService: this.memoryService,
+			invocationId: this.invocationId, // Keep same invocation ID
+			branch: this.branch ? `${this.branch}.${agent.name}` : agent.name, // Update branch
+			agent: agent, // Update to the new agent
+			userContent: this.userContent,
+			session: this.session,
+			endInvocation: this.endInvocation,
+			liveRequestQueue: this.liveRequestQueue,
+			activeStreamingTools: this.activeStreamingTools,
+			transcriptionCache: this.transcriptionCache,
+			runConfig: this.runConfig,
+		});
 	}
 }

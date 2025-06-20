@@ -246,6 +246,28 @@ export class TelemetryService {
 		});
 	}
 
+	/**
+	 * Wraps an async generator with tracing
+	 */
+	async *traceAsyncGenerator<T>(
+		spanName: string,
+		generator: AsyncGenerator<T, void, unknown>,
+	): AsyncGenerator<T, void, unknown> {
+		const span = this.tracer.startSpan(spanName);
+
+		try {
+			for await (const item of generator) {
+				yield item;
+			}
+		} catch (error) {
+			span.recordException(error as Error);
+			span.setStatus({ code: 2, message: (error as Error).message });
+			throw error;
+		} finally {
+			span.end();
+		}
+	}
+
 	// --- Private Helper Methods ---
 
 	private _safeJsonStringify(obj: any): string {
