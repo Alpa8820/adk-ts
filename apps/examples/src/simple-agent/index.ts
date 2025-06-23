@@ -1,4 +1,4 @@
-import { Agent, InMemorySessionService, Runner } from "@iqai/adk";
+import { Agent, type Content, InMemorySessionService, Runner } from "@iqai/adk";
 
 // Initialize the agent with Google's Gemini model
 const APP_NAME = "simple-example";
@@ -13,7 +13,7 @@ async function main() {
 		const agent = new Agent({
 			name: "gemini_assistant",
 			model: "gemini-2.5-flash",
-			description: "A simple assistant using Google's gemini 2.5Flash model",
+			description: "A simple assistant using Google's gemini 2.5 Flash model",
 		});
 
 		const sessionService = new InMemorySessionService();
@@ -25,16 +25,8 @@ async function main() {
 			sessionService,
 		});
 
-		// Example 1: Basic question answering
-		console.log("\n📝 Example 1: Basic question answering");
-
-		const newMessage = {
-			parts: [
-				{
-					text: "Say hello!",
-				},
-			],
-		};
+		const text = "What is capital of Australia?";
+		const newMessage: Content = { parts: [{ text }] };
 
 		for await (const event of runner.runAsync({
 			userId: newSession.userId,
@@ -43,6 +35,7 @@ async function main() {
 		})) {
 			console.log(JSON.stringify(event.content.parts, null, 4));
 		}
+
 		console.log("\n✅ Example completed successfully!");
 	} catch (error) {
 		console.error("❌ Error in agent example:", error);

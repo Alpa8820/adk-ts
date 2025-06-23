@@ -1,6 +1,6 @@
 import {
 	Agent,
-	GoogleLLM,
+	GoogleLlm,
 	LLMRegistry,
 	RunConfig,
 	UserInteractionTool,
@@ -8,7 +8,7 @@ import {
 // Load environment variables
 
 // Register LLM provider
-LLMRegistry.registerLLM(GoogleLLM);
+LLMRegistry.registerLLM(GoogleLlm);
 
 // Mock implementation of the promptUser function for demonstration purposes
 // In a real application, this would be a UI component or CLI prompt
@@ -64,7 +64,7 @@ async function main() {
 		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 		description:
 			"An agent that demonstrates user interaction capabilities using Google Gemini",
-		instructions: `You are a helpful assistant that can interact with the user to gather information.
+		instruction: `You are a helpful assistant that can interact with the user to gather information.
     Use the user_interaction tool to ask the user questions or get their input on decisions.
     Always be respectful and clear in your prompts to the user.`,
 		tools: [userInteractionTool],
