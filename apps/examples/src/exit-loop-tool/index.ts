@@ -1,20 +1,36 @@
-import { Agent, ExitLoopTool, GoogleLLM, LLMRegistry } from "@iqai/adk";
+import {
+	LlmAgent,
+	ExitLoopTool,
+	InMemorySessionService,
+	Runner,
+} from "@iqai/adk";
+import { env } from "node:process";
+import { v4 as uuidv4 } from "uuid";
 
-LLMRegistry.registerLLM(GoogleLLM);
+const APP_NAME = "exit-loop-example";
+const USER_ID = uuidv4();
 
 async function main() {
 	const exitLoopTool = new ExitLoopTool();
+	const sessionService = new InMemorySessionService();
+	const session = await sessionService.createSession(APP_NAME, USER_ID);
 
-	const agent = new Agent({
+	const agent = new LlmAgent({
 		name: "exit_loop_demo",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 		description:
 			"An agent that demonstrates the exit loop tool using Google Gemini",
-		instructions: `You are a helpful assistant that can exit a loop when asked to do so.
-    Use the exit_loop tool when the user explicitly asks you to exit the loop.
-    Do not use the exit_loop tool unless specifically instructed.
-    Always mention the current iteration number provided in the user's message.`,
+		instruction: `You are a helpful assistant that can exit a loop when asked to do so.
+Use the exit_loop tool when the user explicitly asks you to exit the loop.
+Do not use the exit_loop tool unless specifically instructed.
+Always mention the current iteration number provided in the user's message.`,
 		tools: [exitLoopTool],
+	});
+
+	const runner = new Runner({
+		appName: APP_NAME,
+		agent,
+		sessionService,
 	});
 
 	let loopCount = 0;
@@ -37,25 +53,63 @@ async function main() {
 
 		console.log(`User says: "${userMessage}"`);
 
-		const result = await agent.run({
-			messages: [{ role: "user", content: userMessage }],
-		});
+		const newMessage = {
+			parts: [
+				{
+					text: userMessage,
+				},
+			],
+		};
 
-		console.log("Agent response:", result.content);
+		let agentResponse = "";
+		let exitToolCalled = false;
 
-		// Check if the exit_loop tool was called by examining tool_calls
-		if (result.tool_calls && result.tool_calls.length > 0) {
-			for (const toolCall of result.tool_calls) {
-				if (toolCall.function.name === "exit_loop") {
-					console.log("Exit loop tool was called. Exiting loop early.");
-					exitLoop = true;
-					break;
+		try {
+			for await (const event of runner.runAsync({
+				userId: USER_ID,
+				sessionId: session.id,
+				newMessage,
+			})) {
+				// Check for agent responses
+				if (event.author === agent.name && event.content?.parts) {
+					const content = event.content.parts
+						.map((part) => part.text || "")
+						.join("");
+					if (content) {
+						agentResponse += content;
+					}
 				}
+
+				// Check for function calls to exit_loop
+				const functionCalls = event.getFunctionCalls();
+				if (functionCalls) {
+					for (const functionCall of functionCalls) {
+						if (functionCall.name === "exit_loop") {
+							console.log("Exit loop tool was called. Exiting loop early.");
+							exitToolCalled = true;
+							exitLoop = true;
+							break;
+						}
+					}
+				}
+
+				if (exitToolCalled) break;
 			}
+
+			if (agentResponse) {
+				console.log("Agent response:", agentResponse);
+			}
+		} catch (error) {
+			console.error("❌ Error in loop iteration:", error);
 		}
 	}
 
 	console.log("\nLoop has finished. Final loop count:", loopCount);
+	console.log(
+		exitLoop
+			? "Loop exited early via exit_loop tool."
+			: "Loop completed all iterations.",
+	);
 }
 
 // Run the example

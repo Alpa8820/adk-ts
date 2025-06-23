@@ -1,8 +1,7 @@
 // Postgres Runner Example: Demonstrates persistent session storage using PostgreSQL and Drizzle ORM
 import {
-	Agent,
+	LlmAgent,
 	InMemoryMemoryService,
-	type MessageRole,
 	PostgresSessionService,
 	RunConfig,
 	Runner,
@@ -10,6 +9,8 @@ import {
 } from "@iqai/adk";
 import { env } from "node:process";
 import { v4 as uuidv4 } from "uuid";
+
+const APP_NAME = "PostgresRunnerDemo";
 
 // Set up Postgres connection (use env var for connection string)
 const connectionString = env.PG_CONNECTION_STRING;
@@ -21,18 +22,18 @@ const sessionService =
 	PostgresSessionService.fromConnectionString(connectionString);
 
 // Initialize the agent
-const agent = new Agent({
+const agent = new LlmAgent({
 	name: "postgres_runner_assistant",
-	model: env.LLM_MODEL,
+	model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 	description:
 		"A simple assistant demonstrating Runner usage with Postgres session persistence",
-	instructions:
+	instruction:
 		"You are a helpful assistant with persistent session storage. Answer questions directly and accurately. When asked about databases, explain the benefits of using persistent storage over in-memory storage.",
 });
 
 // Create a runner with Postgres session service
 const runner = new Runner({
-	appName: "PostgresRunnerDemo",
+	appName: APP_NAME,
 	agent,
 	sessionService,
 	memoryService: new InMemoryMemoryService(),
@@ -49,7 +50,7 @@ async function runConversation() {
 
 	// Create a session using the PostgresSessionService
 	console.log("📝 Creating a new session with Postgres persistence...");
-	const session = await runner.sessionService.createSession(userId, {
+	const session = await runner.sessionService.createSession(APP_NAME, userId, {
 		example: "postgres-runner",
 		timestamp: new Date().toISOString(),
 	});
@@ -57,7 +58,7 @@ async function runConversation() {
 
 	console.log(`🔑 Session ID: ${sessionId}`);
 	console.log(`👤 User ID: ${userId}`);
-	console.log("📊 Session Metadata:", session.metadata);
+	console.log("📊 Session State:", session.state);
 
 	// Run the first question
 	console.log(
@@ -79,13 +80,18 @@ async function runConversation() {
 
 	// Demonstrate session persistence by retrieving the session
 	console.log("\n🔍 Demonstrating session persistence...");
-	const retrievedSession = await runner.sessionService.getSession(sessionId);
+	const retrievedSession = await runner.sessionService.getSession(
+		APP_NAME,
+		userId,
+		sessionId,
+	);
 	if (retrievedSession) {
 		console.log(
 			`📋 Retrieved session has ${retrievedSession.events?.length || 0} events`,
 		);
-		console.log(`🕒 Session created at: ${retrievedSession.createdAt}`);
-		console.log(`🕒 Session updated at: ${retrievedSession.updatedAt}`);
+		console.log(
+			`🕒 Session last update time: ${new Date(retrievedSession.lastUpdateTime * 1000).toISOString()}`,
+		);
 	}
 
 	// Run another question to show continued conversation
@@ -99,10 +105,24 @@ async function runConversation() {
 
 	// List all sessions for this user
 	console.log("\n📋 Listing all sessions for this user...");
-	const userSessions = await runner.sessionService.listSessions(userId);
-	console.log(`Found ${userSessions.length} session(s) for user ${userId}`);
+	const userSessionsResponse = await runner.sessionService.listSessions(
+		APP_NAME,
+		userId,
+	);
+	console.log(
+		`Found ${userSessionsResponse.sessions.length} session(s) for user ${userId}`,
+	);
 
 	console.log("\n✅ Postgres runner example completed successfully!");
+	console.log("\n📊 What we demonstrated:");
+	console.log("✅ PostgreSQL session service integration");
+	console.log("✅ Persistent session storage across interactions");
+	console.log("✅ Session creation with custom state");
+	console.log("✅ Session retrieval and inspection");
+	console.log("✅ Multi-turn conversations with persistence");
+	console.log("✅ Production-ready database storage");
+	console.log("✅ Proper streaming response handling");
+
 	process.exit(0);
 }
 
@@ -118,8 +138,11 @@ async function processMessage(messageContent: string, sessionId: string) {
 
 		// Create a new message
 		const newMessage = {
-			role: "user" as MessageRole,
-			content: messageContent,
+			parts: [
+				{
+					text: messageContent,
+				},
+			],
 		};
 
 		// Track streaming state
@@ -134,23 +157,28 @@ async function processMessage(messageContent: string, sessionId: string) {
 			runConfig,
 		})) {
 			// Skip events without content
-			if (!event.content) continue;
+			if (!event.content?.parts) continue;
 
 			// Only process assistant messages
-			if (event.author === "assistant") {
-				if (event.is_partial) {
+			if (event.author === agent.name) {
+				// Extract text content from parts
+				const textContent = event.content.parts
+					.map((part) => part.text || "")
+					.join("");
+
+				if (event.partial) {
 					// Handle streaming chunks
 					isStreaming = true;
-					process.stdout.write(event.content);
-					streamedContent += event.content;
+					process.stdout.write(textContent);
+					streamedContent += textContent;
 				} else {
 					// Handle complete response
 					if (!isStreaming) {
 						// If we haven't streamed anything yet, print the full response
-						console.log(event.content);
-					} else if (streamedContent.trim() !== event.content.trim()) {
+						console.log(textContent);
+					} else if (streamedContent.trim() !== textContent.trim()) {
 						// If the final content is different from what we've streamed, print it
-						console.log("\nFull response:", event.content);
+						console.log("\nFull response:", textContent);
 					} else {
 						// We've already streamed the content, just add a newline
 						console.log();

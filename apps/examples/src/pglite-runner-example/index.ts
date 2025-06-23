@@ -1,8 +1,7 @@
 // PgLite Runner Example: Demonstrates persistent session storage using PgLite (serverless Postgres-compatible DB)
 import {
-	Agent,
+	LlmAgent,
 	InMemoryMemoryService,
-	type MessageRole,
 	PgLiteSessionService,
 	RunConfig,
 	Runner,
@@ -14,6 +13,8 @@ import { PGlite } from "@electric-sql/pglite";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
+const APP_NAME = "PgLiteRunnerDemo";
+
 // Set up PgLite database file (like SQLite)
 const dbPath = path.join(__dirname, "data", "session");
 if (!fs.existsSync(path.dirname(dbPath))) {
@@ -24,18 +25,18 @@ const db = new PGlite(dbPath);
 const sessionService = new PgLiteSessionService({ pglite: db });
 
 // Initialize the agent
-const agent = new Agent({
+const agent = new LlmAgent({
 	name: "pglite_runner_assistant",
-	model: env.LLM_MODEL,
+	model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
 	description:
 		"A simple assistant demonstrating Runner usage with PgLite session persistence",
-	instructions:
+	instruction:
 		"You are a helpful assistant with persistent session storage. Answer questions directly and accurately. When asked about databases, explain the benefits of using persistent storage over in-memory storage.",
 });
 
 // Create a runner with PgLite session service
 const runner = new Runner({
-	appName: "PgLiteRunnerDemo",
+	appName: APP_NAME,
 	agent,
 	sessionService,
 	memoryService: new InMemoryMemoryService(),
@@ -52,7 +53,7 @@ async function runConversation() {
 
 	// Create a session using the PgLiteSessionService
 	console.log("📝 Creating a new session with PgLite persistence...");
-	const session = await runner.sessionService.createSession(userId, {
+	const session = await runner.sessionService.createSession(APP_NAME, userId, {
 		example: "pglite-runner",
 		timestamp: new Date().toISOString(),
 	});
@@ -60,7 +61,7 @@ async function runConversation() {
 
 	console.log(`🔑 Session ID: ${sessionId}`);
 	console.log(`👤 User ID: ${userId}`);
-	console.log("📊 Session Metadata:", session.metadata);
+	console.log("📊 Session State:", session.state);
 
 	// Run the first question
 	console.log(
@@ -82,13 +83,18 @@ async function runConversation() {
 
 	// Demonstrate session persistence by retrieving the session
 	console.log("\n🔍 Demonstrating session persistence...");
-	const retrievedSession = await runner.sessionService.getSession(sessionId);
+	const retrievedSession = await runner.sessionService.getSession(
+		APP_NAME,
+		userId,
+		sessionId,
+	);
 	if (retrievedSession) {
 		console.log(
 			`📋 Retrieved session has ${retrievedSession.events?.length || 0} events`,
 		);
-		console.log(`🕒 Session created at: ${retrievedSession.createdAt}`);
-		console.log(`🕒 Session updated at: ${retrievedSession.updatedAt}`);
+		console.log(
+			`🕒 Session last update time: ${new Date(retrievedSession.lastUpdateTime * 1000).toISOString()}`,
+		);
 	}
 
 	// Run another question to show continued conversation
@@ -102,39 +108,60 @@ async function runConversation() {
 
 	// List all sessions for this user
 	console.log("\n📋 Listing all sessions for this user...");
-	const userSessions = await runner.sessionService.listSessions(userId);
-	console.log(`Found ${userSessions.length} session(s) for user ${userId}`);
+	const userSessionsResponse = await runner.sessionService.listSessions(
+		APP_NAME,
+		userId,
+	);
+	console.log(
+		`Found ${userSessionsResponse.sessions.length} session(s) for user ${userId}`,
+	);
 
 	console.log("\n🗄️  Inspecting raw sessions table via PGlite SQL query...");
-	const result = await db.query("SELECT id, user_id, messages FROM sessions");
-	for (const row of result.rows as any[]) {
-		console.log(`Session ID: ${row.id}`);
-		console.log(`User ID: ${row.user_id}`);
+	try {
+		const result = await db.query(
+			"SELECT id, app_name, user_id, state, last_update_time FROM sessions WHERE app_name = $1 AND user_id = $2",
+			[APP_NAME, userId],
+		);
+		for (const row of result.rows as any[]) {
+			console.log(`Session ID: ${row.id}`);
+			console.log(`App Name: ${row.app_name}`);
+			console.log(`User ID: ${row.user_id}`);
+			console.log(
+				`Last Update: ${new Date((row.last_update_time || 0) * 1000).toISOString()}`,
+			);
 
-		// Robustly parse messages
-		let messages = row.messages;
-		if (typeof messages === "string") {
-			try {
-				messages = JSON.parse(messages);
-			} catch {
-				messages = [];
+			// Robustly parse state
+			let state = row.state;
+			if (typeof state === "string") {
+				try {
+					state = JSON.parse(state);
+				} catch {
+					state = {};
+				}
 			}
+			console.log("State:", state);
+			console.log("-----");
 		}
-		if (Array.isArray(messages) && messages.length > 0) {
-			console.log("Messages:");
-			for (const [i, msg] of messages.entries()) {
-				// Defensive: msg may not have role/content
-				const role = msg.role ?? "(unknown)";
-				const content = msg.content ?? "(no content)";
-				console.log(`  [${i}] (${role}): ${content}`);
-			}
-		} else {
-			console.log("  (No messages found)");
+	} catch (error) {
+		console.error("Error querying sessions table:", error);
+		// Try a more generic query
+		try {
+			const result = await db.query("SELECT * FROM sessions LIMIT 5");
+			console.log("Sample sessions:", result.rows);
+		} catch (err) {
+			console.error("Could not query sessions table:", err);
 		}
-		console.log("-----");
 	}
 
 	console.log("\n✅ PgLite runner example completed successfully!");
+	console.log("\n📊 What we demonstrated:");
+	console.log("✅ PgLite session service integration");
+	console.log("✅ Persistent session storage across interactions");
+	console.log("✅ Session creation with custom state");
+	console.log("✅ Session retrieval and inspection");
+	console.log("✅ Multi-turn conversations with persistence");
+	console.log("✅ Direct database inspection via SQL queries");
+	console.log("✅ Proper streaming response handling");
 }
 
 async function processMessage(messageContent: string, sessionId: string) {
@@ -149,8 +176,11 @@ async function processMessage(messageContent: string, sessionId: string) {
 
 		// Create a new message
 		const newMessage = {
-			role: "user" as MessageRole,
-			content: messageContent,
+			parts: [
+				{
+					text: messageContent,
+				},
+			],
 		};
 
 		// Track streaming state
@@ -165,23 +195,28 @@ async function processMessage(messageContent: string, sessionId: string) {
 			runConfig,
 		})) {
 			// Skip events without content
-			if (!event.content) continue;
+			if (!event.content?.parts) continue;
 
 			// Only process assistant messages
-			if (event.author === "assistant") {
-				if (event.is_partial) {
+			if (event.author === agent.name) {
+				// Extract text content from parts
+				const textContent = event.content.parts
+					.map((part) => part.text || "")
+					.join("");
+
+				if (event.partial) {
 					// Handle streaming chunks
 					isStreaming = true;
-					process.stdout.write(event.content);
-					streamedContent += event.content;
+					process.stdout.write(textContent);
+					streamedContent += textContent;
 				} else {
 					// Handle complete response
 					if (!isStreaming) {
 						// If we haven't streamed anything yet, print the full response
-						console.log(event.content);
-					} else if (streamedContent.trim() !== event.content.trim()) {
+						console.log(textContent);
+					} else if (streamedContent.trim() !== textContent.trim()) {
 						// If the final content is different from what we've streamed, print it
-						console.log("\nFull response:", event.content);
+						console.log("\nFull response:", textContent);
 					} else {
 						// We've already streamed the content, just add a newline
 						console.log();
