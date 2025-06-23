@@ -6,7 +6,7 @@ import {
 	StreamingMode,
 } from "@adk/agents";
 import { Event } from "@adk/events";
-import { type BaseLlm, LlmRequest, type LlmResponse } from "@adk/models";
+import { type BaseLlm, LlmRequest, LlmResponse } from "@adk/models";
 import { traceLlmCall } from "@adk/telemetry";
 import { ToolContext } from "@adk/tools";
 import * as functions from "./functions";
@@ -75,7 +75,12 @@ export abstract class BaseLlmFlow {
 		llmRequest: LlmRequest,
 	): AsyncGenerator<Event> {
 		const agent = invocationContext.agent;
-		if (typeof agent.canonical_tools !== "function") return;
+		if (
+			!("canonicalTools" in agent) ||
+			typeof agent.canonicalTools !== "function"
+		) {
+			return;
+		}
 
 		for (const processor of this.requestProcessors) {
 			for await (const event of processor.runAsync(
@@ -86,7 +91,7 @@ export abstract class BaseLlmFlow {
 			}
 		}
 
-		for (const tool of await agent.canonical_tools(
+		for (const tool of await agent.canonicalTools(
 			new ReadonlyContext(invocationContext),
 		)) {
 			const toolContext = new ToolContext(invocationContext);
@@ -254,15 +259,12 @@ export abstract class BaseLlmFlow {
 		});
 
 		for (const callback of agent.canonicalBeforeAgentCallbacks) {
-			let beforeModelCallbackContent = callback({
-				callbackContext,
-				llmRequest,
-			});
+			let beforeModelCallbackContent = callback(callbackContext);
 			if (beforeModelCallbackContent instanceof Promise) {
 				beforeModelCallbackContent = await beforeModelCallbackContent;
 			}
 			if (beforeModelCallbackContent) {
-				return beforeModelCallbackContent;
+				return new LlmResponse({ content: beforeModelCallbackContent });
 			}
 		}
 	}
@@ -282,15 +284,12 @@ export abstract class BaseLlmFlow {
 		});
 
 		for (const callback of agent.canonicalAfterAgentCallbacks) {
-			let afterModelCallbackContent = callback({
-				callbackContext,
-				llmResponse,
-			});
+			let afterModelCallbackContent = callback(callbackContext);
 			if (afterModelCallbackContent instanceof Promise) {
 				afterModelCallbackContent = await afterModelCallbackContent;
 			}
 			if (afterModelCallbackContent) {
-				return afterModelCallbackContent;
+				return new LlmResponse({ content: afterModelCallbackContent });
 			}
 		}
 	}
@@ -301,17 +300,16 @@ export abstract class BaseLlmFlow {
 		modelResponseEvent: Event,
 	): Event {
 		// Merge modelResponseEvent and llmResponse
-		const merged = {
+		const event = {
 			...modelResponseEvent,
 			...llmResponse,
-		};
-		const event = Event.modelValidate(merged);
+		} as Event;
 
 		if (event.content) {
 			const functionCalls = event.getFunctionCalls();
 			if (functionCalls) {
 				functions.populateClientFunctionCallId(event);
-				event.long_running_tool_ids = functions.getLongRunningFunctionCalls(
+				event.longRunningToolIds = functions.getLongRunningFunctionCalls(
 					functionCalls,
 					llmRequest.toolsDict,
 				);
