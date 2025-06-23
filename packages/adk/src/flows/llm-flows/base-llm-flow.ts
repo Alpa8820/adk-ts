@@ -24,7 +24,7 @@ export abstract class BaseLlmFlow {
 				lastEvent = event;
 				yield event;
 			}
-			if (!lastEvent || lastEvent.isFinalResponse()) break;
+			if (!lastEvent || lastEvent.isFinalResponse?.()) break;
 			if (lastEvent.partial) {
 				throw new Error(
 					"Last event shouldn't be partial. LLM max output limit may be reached.",
@@ -130,7 +130,7 @@ export abstract class BaseLlmFlow {
 		);
 		yield finalizedEvent;
 
-		if (finalizedEvent.getFunctionCalls()) {
+		if (finalizedEvent.getFunctionCalls?.() || []) {
 			for await (const event of this._postprocessHandleFunctionCallsAsync(
 				invocationContext,
 				finalizedEvent,
@@ -306,7 +306,7 @@ export abstract class BaseLlmFlow {
 		} as Event;
 
 		if (event.content) {
-			const functionCalls = event.getFunctionCalls();
+			const functionCalls = event.getFunctionCalls?.() || [];
 			if (functionCalls) {
 				functions.populateClientFunctionCallId(event);
 				event.longRunningToolIds = functions.getLongRunningFunctionCalls(

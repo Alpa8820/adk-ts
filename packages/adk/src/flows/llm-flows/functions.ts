@@ -13,7 +13,7 @@ export function generateClientFunctionCallId(): string {
 }
 
 export function populateClientFunctionCallId(modelResponseEvent: Event): void {
-	const functionCalls = modelResponseEvent.getFunctionCalls();
+	const functionCalls = modelResponseEvent.getFunctionCalls?.() || [];
 	if (!functionCalls) return;
 	for (const functionCall of functionCalls) {
 		if (!functionCall.id) {
@@ -99,7 +99,7 @@ export async function handleFunctionCallsAsync(
 	// Only process if agent is LlmAgent (type check)
 	if (typeof agent.canonicalBeforeAgentCallbacks === "undefined") return;
 
-	const functionCalls = functionCallEvent.getFunctionCalls();
+	const functionCalls = functionCallEvent.getFunctionCalls?.() || [];
 	const functionResponseEvents: Event[] = [];
 	for (const functionCall of functionCalls) {
 		if (filters && !filters.has(functionCall.id)) continue;

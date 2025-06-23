@@ -1,7 +1,7 @@
+import type { Part } from "@google/genai";
 import type { CallbackContext } from "../agents/callback-context";
 import type { ReadonlyContext } from "../agents/readonly-context";
 import type { LlmRequest } from "../models/llm-request";
-import type { Part } from "../models/part";
 import type { ThinkingConfig } from "../models/thinking-config";
 import { BasePlanner } from "./base-planner";
 
