@@ -113,7 +113,7 @@ export interface LlmAgentConfig {
 }
 
 /**
- * LLM-based Agent that closely matches the Python implementation
+ * LLM-based Agent
  */
 export class LlmAgent extends BaseAgent {
 	/**

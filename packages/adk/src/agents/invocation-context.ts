@@ -123,7 +123,7 @@ export class InvocationContext {
 	/**
 	 * The current agent of this invocation context. Readonly.
 	 */
-	readonly agent: BaseAgent;
+	agent: BaseAgent;
 
 	/**
 	 * The user content that started this invocation. Readonly.

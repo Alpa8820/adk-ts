@@ -12,7 +12,6 @@ export * from "./base-llm";
 export * from "./base-llm-connection";
 
 // LLM implementations
-export * from "./anthropic-llm";
 export * from "./google-llm";
 export * from "./lite-llm";
 
