@@ -2,7 +2,6 @@ import { Logger } from "@adk/helpers/logger";
 import type { FunctionDeclaration } from "../../models/function-declaration";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
-import "../tool-context-extensions";
 
 /**
  * Tool that allows an agent to load memories relevant to a query

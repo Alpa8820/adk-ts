@@ -1,7 +1,6 @@
 import { Logger } from "@adk/helpers/logger";
 import { BaseTool } from "../base/base-tool";
 import type { ToolContext } from "../tool-context";
-import "../tool-context-extensions";
 
 /**
  * Tool that allows an agent to exit the current execution loop
