@@ -6,7 +6,7 @@ import {
 	StreamingMode,
 } from "@adk/agents";
 import { Event } from "@adk/events";
-import { type BaseLlm, LlmRequest, LlmResponse } from "@adk/models";
+import { LlmRequest, type LlmResponse, type BaseLlm } from "@adk/models";
 import { traceLlmCall } from "@adk/telemetry";
 import { ToolContext } from "@adk/tools";
 import * as functions from "./functions";
@@ -24,13 +24,26 @@ export abstract class BaseLlmFlow {
 				lastEvent = event;
 				yield event;
 			}
-			if (!lastEvent || lastEvent.isFinalResponse?.()) break;
+			if (!lastEvent || lastEvent.isFinalResponse()) break;
 			if (lastEvent.partial) {
 				throw new Error(
 					"Last event shouldn't be partial. LLM max output limit may be reached.",
 				);
 			}
 		}
+	}
+
+	async *runLive(invocationContext: InvocationContext): AsyncGenerator<Event> {
+		// TODO: Implement live streaming functionality
+		// This is a complex feature involving:
+		// - Live connection management with llm.connect()
+		// - Audio transcription caching and processing
+		// - Real-time bidirectional communication
+		// - Task cancellation and cleanup
+		// - Live request queue handling
+		// For now, delegate to runAsync for basic functionality
+		console.warn("runLive not fully implemented, delegating to runAsync");
+		yield* this.runAsync(invocationContext);
 	}
 
 	async *_runOneStepAsync(
@@ -95,10 +108,7 @@ export abstract class BaseLlmFlow {
 			new ReadonlyContext(invocationContext),
 		)) {
 			const toolContext = new ToolContext(invocationContext);
-			await tool.process_llm_request({
-				toolContext,
-				llmRequest,
-			});
+			await tool.processLlmRequest(toolContext, llmRequest);
 		}
 	}
 
@@ -130,13 +140,73 @@ export abstract class BaseLlmFlow {
 		);
 		yield finalizedEvent;
 
-		if (finalizedEvent.getFunctionCalls?.() || []) {
+		if (finalizedEvent.getFunctionCalls()) {
 			for await (const event of this._postprocessHandleFunctionCallsAsync(
 				invocationContext,
 				finalizedEvent,
 				llmRequest,
 			)) {
 				yield event;
+			}
+		}
+	}
+
+	async *_postprocessLive(
+		invocationContext: InvocationContext,
+		llmRequest: LlmRequest,
+		llmResponse: LlmResponse,
+		modelResponseEvent: Event,
+	): AsyncGenerator<Event> {
+		// Run processors
+		for await (const event of this._postprocessRunProcessorsAsync(
+			invocationContext,
+			llmResponse,
+		)) {
+			yield event;
+		}
+
+		// Skip model response event if no content, error, or turn completion
+		// This handles live-specific cases like turn_complete
+		if (
+			!llmResponse.content &&
+			!llmResponse.errorCode &&
+			!llmResponse.interrupted &&
+			!(llmResponse as any).turnComplete
+		) {
+			return;
+		}
+
+		// Build the event
+		const finalizedEvent = this._finalizeModelResponseEvent(
+			llmRequest,
+			llmResponse,
+			modelResponseEvent,
+		);
+		yield finalizedEvent;
+
+		// Handle function calls for live mode
+		if (finalizedEvent.getFunctionCalls()) {
+			// TODO: Implement functions.handleFunctionCallsLive when available
+			const functionResponseEvent = await functions.handleFunctionCallsAsync(
+				invocationContext,
+				finalizedEvent,
+				(llmRequest as any).toolsDict || {},
+			);
+
+			if (functionResponseEvent) {
+				yield functionResponseEvent;
+
+				const transferToAgent = functionResponseEvent.actions?.transferToAgent;
+				if (transferToAgent) {
+					const agentToRun = this._getAgentToRun(
+						invocationContext,
+						transferToAgent,
+					);
+					for await (const event of agentToRun.runLive?.(invocationContext) ||
+						agentToRun.runAsync(invocationContext)) {
+						yield event;
+					}
+				}
 			}
 		}
 	}
@@ -163,7 +233,7 @@ export abstract class BaseLlmFlow {
 		const functionResponseEvent = await functions.handleFunctionCallsAsync(
 			invocationContext,
 			functionCallEvent,
-			llmRequest.toolsDict,
+			(llmRequest as any).toolsDict || {},
 		);
 		if (functionResponseEvent) {
 			const authEvent = functions.generateAuthEvent(
@@ -173,7 +243,7 @@ export abstract class BaseLlmFlow {
 			if (authEvent) yield authEvent;
 
 			yield functionResponseEvent;
-			const transferToAgent = functionResponseEvent.actions.transferToAgent;
+			const transferToAgent = functionResponseEvent.actions?.transferToAgent;
 			if (transferToAgent) {
 				const agentToRun = this._getAgentToRun(
 					invocationContext,
@@ -214,9 +284,11 @@ export abstract class BaseLlmFlow {
 			return;
 		}
 
+		// Initialize config and labels
 		llmRequest.config = llmRequest.config || {};
 		llmRequest.config.labels = llmRequest.config.labels || {};
 
+		// Add agent name as label for billing/tracking
 		if (!(_ADK_AGENT_NAME_LABEL_KEY in llmRequest.config.labels)) {
 			llmRequest.config.labels[_ADK_AGENT_NAME_LABEL_KEY] =
 				invocationContext.agent.name;
@@ -224,22 +296,38 @@ export abstract class BaseLlmFlow {
 
 		const llm = this.__getLlm(invocationContext);
 
+		// Check for CFC (Continuous Function Calling) support
+		const runConfig = invocationContext.runConfig;
+		if ((runConfig as any).supportCfc) {
+			// TODO: Implement full CFC with live request queue
+			// This would involve setting up LiveRequestQueue and calling runLive
+			console.warn(
+				"CFC (supportCfc) not fully implemented, using standard flow",
+			);
+		}
+
+		// Standard LLM call flow
 		invocationContext.incrementLlmCallCount();
+
 		for await (const llmResponse of llm.generateContentAsync(
 			llmRequest,
 			invocationContext.runConfig.streamingMode === StreamingMode.SSE,
 		)) {
+			// Telemetry tracing
 			traceLlmCall(
 				invocationContext,
 				modelResponseEvent.id,
 				llmRequest,
 				llmResponse,
 			);
+
+			// After model callback
 			const alteredLlmResponse = await this._handleAfterModelCallback(
 				invocationContext,
 				llmResponse,
 				modelResponseEvent,
 			);
+
 			yield alteredLlmResponse || llmResponse;
 		}
 	}
@@ -250,21 +338,35 @@ export abstract class BaseLlmFlow {
 		modelResponseEvent: Event,
 	): Promise<LlmResponse | undefined> {
 		const agent = invocationContext.agent;
-		if (typeof agent.canonicalBeforeAgentCallbacks !== "object") return;
 
-		if (!agent.canonicalBeforeAgentCallbacks) return;
+		// Check if agent has LlmAgent-like structure
+		if (!("canonicalBeforeModelCallbacks" in agent)) {
+			return;
+		}
+
+		const beforeCallbacks = (agent as any).canonicalBeforeModelCallbacks;
+		if (!beforeCallbacks) {
+			return;
+		}
 
 		const callbackContext = new CallbackContext(invocationContext, {
 			eventActions: modelResponseEvent.actions,
 		});
 
-		for (const callback of agent.canonicalBeforeAgentCallbacks) {
-			let beforeModelCallbackContent = callback(callbackContext);
+		for (const callback of beforeCallbacks) {
+			// Python passes both callback_context and llm_request
+			let beforeModelCallbackContent = callback({
+				callbackContext,
+				llmRequest,
+			});
+
 			if (beforeModelCallbackContent instanceof Promise) {
 				beforeModelCallbackContent = await beforeModelCallbackContent;
 			}
+
 			if (beforeModelCallbackContent) {
-				return new LlmResponse({ content: beforeModelCallbackContent });
+				// Python callbacks return LlmResponse objects directly
+				return beforeModelCallbackContent;
 			}
 		}
 	}
@@ -275,21 +377,34 @@ export abstract class BaseLlmFlow {
 		modelResponseEvent: Event,
 	): Promise<LlmResponse | undefined> {
 		const agent = invocationContext.agent;
-		if (typeof agent.canonicalAfterAgentCallbacks !== "object") return;
 
-		if (!agent.canonicalAfterAgentCallbacks) return;
+		// Check if agent has LlmAgent-like structure
+		if (!("canonicalAfterModelCallbacks" in agent)) {
+			return;
+		}
+
+		const afterCallbacks = (agent as any).canonicalAfterModelCallbacks;
+		if (!afterCallbacks) {
+			return;
+		}
 
 		const callbackContext = new CallbackContext(invocationContext, {
 			eventActions: modelResponseEvent.actions,
 		});
 
-		for (const callback of agent.canonicalAfterAgentCallbacks) {
-			let afterModelCallbackContent = callback(callbackContext);
+		for (const callback of afterCallbacks) {
+			// Python passes both callback_context and llm_response
+			let afterModelCallbackContent = callback({
+				callbackContext,
+				llmResponse,
+			});
+
 			if (afterModelCallbackContent instanceof Promise) {
 				afterModelCallbackContent = await afterModelCallbackContent;
 			}
+
 			if (afterModelCallbackContent) {
-				return new LlmResponse({ content: afterModelCallbackContent });
+				return afterModelCallbackContent;
 			}
 		}
 	}
@@ -299,19 +414,26 @@ export abstract class BaseLlmFlow {
 		llmResponse: LlmResponse,
 		modelResponseEvent: Event,
 	): Event {
-		// Merge modelResponseEvent and llmResponse
-		const event = {
-			...modelResponseEvent,
-			...llmResponse,
-		} as Event;
+		// Python uses Pydantic model_validate with model_dump - we'll use object spreading
+		const eventData = { ...modelResponseEvent } as any;
+		const responseData = { ...llmResponse } as any;
+
+		// Merge excluding null/undefined values (similar to exclude_none=True)
+		Object.keys(responseData).forEach((key) => {
+			if (responseData[key] !== null && responseData[key] !== undefined) {
+				eventData[key] = responseData[key];
+			}
+		});
+
+		const event = new Event(eventData);
 
 		if (event.content) {
-			const functionCalls = event.getFunctionCalls?.() || [];
+			const functionCalls = event.getFunctionCalls();
 			if (functionCalls) {
 				functions.populateClientFunctionCallId(event);
 				event.longRunningToolIds = functions.getLongRunningFunctionCalls(
 					functionCalls,
-					llmRequest.toolsDict,
+					(llmRequest as any).toolsDict || {},
 				);
 			}
 		}

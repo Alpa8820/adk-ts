@@ -1,4 +1,5 @@
 import { Logger } from "@adk/helpers/logger";
+import type { GenerateContentConfig } from "@google/genai";
 import type { BaseArtifactService } from "../artifacts/base-artifact-service";
 import { Event } from "../events/event";
 import { AutoFlow, type BaseLlmFlow, SingleFlow } from "../flows/llm-flows";
@@ -110,6 +111,24 @@ export interface LlmAgentConfig {
 	 * Application name
 	 */
 	appName?: string;
+
+	/**
+	 * Additional content generation configurations
+	 * NOTE: not all fields are usable, e.g. tools must be configured via `tools`,
+	 * thinking_config must be configured via `planner` in LlmAgent.
+	 */
+	generateContentConfig?: GenerateContentConfig;
+
+	/**
+	 * The input schema when agent is used as a tool
+	 */
+	inputSchema?: any; // Schema type - depends on specific implementation
+
+	/**
+	 * The output schema when agent replies
+	 * NOTE: when this is set, agent can ONLY reply and CANNOT use any tools
+	 */
+	outputSchema?: any; // Schema type - depends on specific implementation
 }
 
 /**
@@ -188,6 +207,21 @@ export class LlmAgent extends BaseAgent {
 	 */
 	private appName?: string;
 
+	/**
+	 * Additional content generation configurations
+	 */
+	public generateContentConfig?: GenerateContentConfig;
+
+	/**
+	 * The input schema when agent is used as a tool
+	 */
+	public inputSchema?: any; // Schema type - depends on specific implementation
+
+	/**
+	 * The output schema when agent replies
+	 */
+	public outputSchema?: any; // Schema type - depends on specific implementation
+
 	private logger = new Logger({ name: "LlmAgent" });
 
 	/**
@@ -213,6 +247,9 @@ export class LlmAgent extends BaseAgent {
 		this.artifactService = config.artifactService;
 		this.userId = config.userId;
 		this.appName = config.appName;
+		this.generateContentConfig = config.generateContentConfig;
+		this.inputSchema = config.inputSchema;
+		this.outputSchema = config.outputSchema;
 	}
 
 	/**
