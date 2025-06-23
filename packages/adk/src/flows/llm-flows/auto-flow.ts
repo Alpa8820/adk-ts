@@ -1,5 +1,6 @@
 import { Logger } from "@adk/helpers/logger";
 import { SingleFlow } from "./single-flow";
+import { requestProcessor as agentTransferRequestProcessor } from "./agent-transfer";
 
 const logger = new Logger({ name: "AutoFlow" });
 
@@ -25,9 +26,7 @@ export class AutoFlow extends SingleFlow {
 		super();
 
 		// Add agent transfer request processor
-		this.requestProcessors.push(
-			// agent_transfer.request_processor,
-		);
+		this.requestProcessors.push(agentTransferRequestProcessor);
 
 		logger.debug("AutoFlow initialized with agent transfer capability");
 	}

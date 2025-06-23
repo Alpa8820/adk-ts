@@ -1,20 +1,32 @@
-import { CallbackContext, type InvocationContext } from "@adk/agents";
-import { Event, EventActions } from "@adk/events";
-import { traceToolCall } from "@adk/telemetry";
-import { type BaseTool, ToolContext } from "@adk/tools";
 import type { Content, FunctionCall, Part } from "@google/genai";
-import { v4 as uuidv4 } from "uuid";
+import type { InvocationContext } from "../../agents/invocation-context";
+import type { LlmAgent } from "../../agents/llm-agent";
+import { Event } from "../../events/event";
+import { EventActions } from "../../events/event-actions";
+import type { AuthConfig } from "../../auth/auth-config";
+import type { AuthToolArguments } from "../../auth/auth-tool";
+import type { BaseTool } from "../../tools/base/base-tool";
+import { ToolContext } from "../../tools/tool-context";
 
-const AF_FUNCTION_CALL_ID_PREFIX = "adk-";
-const REQUEST_EUC_FUNCTION_CALL_NAME = "adk_request_credential";
+export const AF_FUNCTION_CALL_ID_PREFIX = "adk-";
+export const REQUEST_EUC_FUNCTION_CALL_NAME = "adk_request_credential";
 
+/**
+ * Generates a client function call ID
+ */
 export function generateClientFunctionCallId(): string {
-	return `${AF_FUNCTION_CALL_ID_PREFIX}${uuidv4()}`;
+	return `${AF_FUNCTION_CALL_ID_PREFIX}${crypto.randomUUID()}`;
 }
 
+/**
+ * Populates function calls with client function call IDs if missing
+ */
 export function populateClientFunctionCallId(modelResponseEvent: Event): void {
-	const functionCalls = modelResponseEvent.getFunctionCalls?.() || [];
-	if (!functionCalls) return;
+	const functionCalls = modelResponseEvent.getFunctionCalls();
+	if (!functionCalls) {
+		return;
+	}
+
 	for (const functionCall of functionCalls) {
 		if (!functionCall.id) {
 			functionCall.id = generateClientFunctionCallId();
@@ -22,6 +34,9 @@ export function populateClientFunctionCallId(modelResponseEvent: Event): void {
 	}
 }
 
+/**
+ * Removes client function call IDs from content
+ */
 export function removeClientFunctionCallId(content: Content): void {
 	if (content?.parts) {
 		for (const part of content.parts) {
@@ -35,34 +50,42 @@ export function removeClientFunctionCallId(content: Content): void {
 	}
 }
 
+/**
+ * Gets long running function call IDs from a list of function calls
+ */
 export function getLongRunningFunctionCalls(
 	functionCalls: FunctionCall[],
 	toolsDict: Record<string, BaseTool>,
 ): Set<string> {
 	const longRunningToolIds = new Set<string>();
+
 	for (const functionCall of functionCalls) {
 		if (
+			functionCall.id &&
 			functionCall.name in toolsDict &&
 			toolsDict[functionCall.name].isLongRunning
 		) {
 			longRunningToolIds.add(functionCall.id);
 		}
 	}
+
 	return longRunningToolIds;
 }
 
+/**
+ * Generates an auth event for credential requests
+ */
 export function generateAuthEvent(
 	invocationContext: InvocationContext,
 	functionResponseEvent: Event,
-): Event | undefined {
-	if (
-		!functionResponseEvent.actions ||
-		!functionResponseEvent.actions.requestedAuthConfigs
-	) {
-		return undefined;
+): Event | null {
+	if (!functionResponseEvent.actions.requestedAuthConfigs) {
+		return null;
 	}
+
 	const parts: Part[] = [];
 	const longRunningToolIds = new Set<string>();
+
 	for (const [functionCallId, authConfig] of Object.entries(
 		functionResponseEvent.actions.requestedAuthConfigs,
 	)) {
@@ -71,12 +94,14 @@ export function generateAuthEvent(
 			args: {
 				function_call_id: functionCallId,
 				auth_config: authConfig,
-			},
+			} as AuthToolArguments,
 		};
+
 		requestEucFunctionCall.id = generateClientFunctionCallId();
 		longRunningToolIds.add(requestEucFunctionCall.id);
 		parts.push({ functionCall: requestEucFunctionCall });
 	}
+
 	return new Event({
 		invocationId: invocationContext.invocationId,
 		author: invocationContext.agent.name,
@@ -84,131 +109,160 @@ export function generateAuthEvent(
 		content: {
 			parts,
 			role: functionResponseEvent.content.role,
-		},
-		longRunningToolIds: longRunningToolIds,
+		} as Content,
+		longRunningToolIds,
 	});
 }
 
+/**
+ * Handles function calls asynchronously
+ */
 export async function handleFunctionCallsAsync(
 	invocationContext: InvocationContext,
 	functionCallEvent: Event,
-	toolsDict: { [name: string]: BaseTool },
+	toolsDict: Record<string, BaseTool>,
 	filters?: Set<string>,
-): Promise<Event | undefined> {
+): Promise<Event | null> {
 	const agent = invocationContext.agent;
-	// Only process if agent is LlmAgent (type check)
-	if (typeof agent.canonicalBeforeAgentCallbacks === "undefined") return;
 
-	const functionCalls = functionCallEvent.getFunctionCalls?.() || [];
+	// Only process LlmAgent instances
+	if (!isLlmAgent(agent)) {
+		return null;
+	}
+
+	const functionCalls = functionCallEvent.getFunctionCalls();
+	if (!functionCalls) {
+		return null;
+	}
+
 	const functionResponseEvents: Event[] = [];
+
 	for (const functionCall of functionCalls) {
-		if (filters && !filters.has(functionCall.id)) continue;
-		const [tool, toolContext] = getToolAndContext(
+		if (filters && functionCall.id && !filters.has(functionCall.id)) {
+			continue;
+		}
+
+		const { tool, toolContext } = getToolAndContext(
 			invocationContext,
 			functionCallEvent,
 			functionCall,
 			toolsDict,
 		);
 
-		// Tracing span (optional)
-		// tracer.startAsCurrentSpan(`execute_tool ${tool.name}`);
+		// Execute tool
 		const functionArgs = functionCall.args || {};
-		let functionResponse: any = undefined;
 
-		for (const callback of agent.canonicalBeforeAgentCallbacks || []) {
-			const ctx = new CallbackContext(invocationContext);
-			functionResponse = callback(ctx);
-			if (functionResponse instanceof Promise) {
-				functionResponse = await functionResponse;
-			}
-			if (functionResponse) break;
-		}
+		// Call tool directly (tool callbacks not implemented in current TypeScript version)
+		const functionResponse = await callToolAsync(
+			tool,
+			functionArgs,
+			toolContext,
+		);
 
-		if (!functionResponse) {
-			functionResponse = await callToolAsync(tool, functionArgs, toolContext);
-		}
-
-		for (const callback of agent.canonicalAfterAgentCallbacks || []) {
-			const ctx = new CallbackContext(invocationContext);
-			let alteredFunctionResponse = callback(ctx);
-			if (alteredFunctionResponse instanceof Promise) {
-				alteredFunctionResponse = await alteredFunctionResponse;
-			}
-			if (alteredFunctionResponse !== undefined) {
-				functionResponse = alteredFunctionResponse;
-				break;
+		// Handle long running tools
+		if (tool.isLongRunning) {
+			// Allow long running function to return null to not provide function response
+			if (!functionResponse) {
+				continue;
 			}
 		}
 
-		if (tool.isLongRunning && !functionResponse) {
-			continue;
-		}
-
+		// Build function response event
 		const functionResponseEvent = buildResponseEvent(
 			tool,
 			functionResponse,
 			toolContext,
 			invocationContext,
 		);
-		traceToolCall(tool, functionArgs, functionResponseEvent);
+
 		functionResponseEvents.push(functionResponseEvent);
 	}
 
-	if (!functionResponseEvents.length) return undefined;
-	const mergedEvent = mergeParallelFunctionResponseEvents(
-		functionResponseEvents,
-	);
+	if (!functionResponseEvents.length) {
+		return null;
+	}
 
-	return mergedEvent;
+	return mergeParallelFunctionResponseEvents(functionResponseEvents);
 }
 
+/**
+ * Handles function calls in live mode
+ */
+export async function handleFunctionCallsLive(
+	invocationContext: InvocationContext,
+	functionCallEvent: Event,
+	toolsDict: Record<string, BaseTool>,
+): Promise<Event | null> {
+	// For now, use the same logic as async handling
+	// Complex streaming functionality can be added later
+	return handleFunctionCallsAsync(
+		invocationContext,
+		functionCallEvent,
+		toolsDict,
+	);
+}
+
+/**
+ * Gets tool and context for a function call
+ */
 function getToolAndContext(
 	invocationContext: InvocationContext,
 	functionCallEvent: Event,
 	functionCall: FunctionCall,
 	toolsDict: Record<string, BaseTool>,
-): [BaseTool, ToolContext] {
+): { tool: BaseTool; toolContext: ToolContext } {
 	if (!(functionCall.name in toolsDict)) {
 		throw new Error(
-			`Function ${functionCall.name} is not found in the toolsDict.`,
+			`Function ${functionCall.name} is not found in the tools_dict.`,
 		);
 	}
+
 	const toolContext = new ToolContext(invocationContext, {
-		functionCallId: functionCall.id,
-		eventActions: functionCallEvent.actions,
+		functionCallId: functionCall.id || "",
 	});
+
 	const tool = toolsDict[functionCall.name];
-	return [tool, toolContext];
+
+	return { tool, toolContext };
 }
 
+/**
+ * Calls tool asynchronously
+ */
 async function callToolAsync(
 	tool: BaseTool,
-	args: { [key: string]: any },
+	args: Record<string, any>,
 	toolContext: ToolContext,
 ): Promise<any> {
 	return await tool.runAsync(args, toolContext);
 }
 
+/**
+ * Builds a function response event
+ */
 function buildResponseEvent(
 	tool: BaseTool,
-	functionResult: { [key: string]: any },
+	functionResult: any,
 	toolContext: ToolContext,
 	invocationContext: InvocationContext,
 ): Event {
-	let _functionResult = functionResult;
-	// Specs requires the result to be an object.
+	// Specs requires the result to be a dict
+	let result = functionResult;
 	if (typeof functionResult !== "object" || functionResult === null) {
-		_functionResult = { result: functionResult };
+		result = { result: functionResult };
 	}
-	const functionResponse: Part["functionResponse"] = {
-		name: tool.name,
-		response: _functionResult,
+
+	const partFunctionResponse: Part = {
+		functionResponse: {
+			name: tool.name,
+			response: result,
+			id: toolContext.functionCallId,
+		},
 	};
-	functionResponse.id = toolContext.functionCallId;
 
 	const content: Content = {
 		role: "user",
-		parts: [{ functionResponse }],
+		parts: [partFunctionResponse],
 	};
 
 	return new Event({
@@ -220,37 +274,47 @@ function buildResponseEvent(
 	});
 }
 
+/**
+ * Merges parallel function response events
+ */
 export function mergeParallelFunctionResponseEvents(
 	functionResponseEvents: Event[],
 ): Event {
 	if (!functionResponseEvents.length) {
 		throw new Error("No function response events provided.");
 	}
+
 	if (functionResponseEvents.length === 1) {
 		return functionResponseEvents[0];
 	}
+
 	const mergedParts: Part[] = [];
 	for (const event of functionResponseEvents) {
-		if (event.content) {
-			for (const part of event.content.parts || []) {
+		if (event.content?.parts) {
+			for (const part of event.content.parts) {
 				mergedParts.push(part);
 			}
 		}
 	}
+
+	// Use the first event as the "base" for common attributes
 	const baseEvent = functionResponseEvents[0];
 
 	// Merge actions from all events
 	const mergedActions = new EventActions();
-	const mergedRequestedAuthConfigs: { [key: string]: any } = {};
+	const mergedRequestedAuthConfigs: Record<string, AuthConfig> = {};
+
 	for (const event of functionResponseEvents) {
 		Object.assign(
 			mergedRequestedAuthConfigs,
 			event.actions.requestedAuthConfigs,
 		);
+		// Copy actions properties
 		Object.assign(mergedActions, event.actions);
 	}
 	mergedActions.requestedAuthConfigs = mergedRequestedAuthConfigs;
 
+	// Create the new merged event
 	const mergedEvent = new Event({
 		invocationId: Event.newId(),
 		author: baseEvent.author,
@@ -258,6 +322,15 @@ export function mergeParallelFunctionResponseEvents(
 		content: { role: "user", parts: mergedParts },
 		actions: mergedActions,
 	});
+
+	// Use the base_event timestamp
 	mergedEvent.timestamp = baseEvent.timestamp;
 	return mergedEvent;
+}
+
+/**
+ * Type guard to check if agent is an LlmAgent
+ */
+function isLlmAgent(agent: any): agent is LlmAgent {
+	return agent && typeof agent === "object" && "canonicalModel" in agent;
 }
