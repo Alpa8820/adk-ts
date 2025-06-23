@@ -51,14 +51,6 @@ export class LoadMemoryTool extends BaseTool {
 	): Promise<any> {
 		this.logger.debug(`Executing load_memory with query: ${args.query}`);
 
-		// Check if memory service is available
-		if (!context.memoryService) {
-			return {
-				error: "Memory service is not available",
-				message: "The memory service has not been configured for this agent.",
-			};
-		}
-
 		try {
 			// Search memory using the provided query
 			const searchResult = await context.searchMemory(args.query);

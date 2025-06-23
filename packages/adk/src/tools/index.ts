@@ -26,5 +26,5 @@ export { ExitLoopTool } from "./common/exit-loop-tool";
 export { GetUserChoiceTool } from "./common/get-user-choice-tool";
 export { TransferToAgentTool } from "./common/transfer-to-agent-tool";
 export { LoadMemoryTool } from "./common/load-memory-tool";
-export { ArtifactsTool } from "./common/artifacts-tool";
+export { LoadArtifactsTool } from "./common/load-artifacts-tool";
 export * from "./mcp";

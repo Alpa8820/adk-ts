@@ -69,15 +69,7 @@ export class GetUserChoiceTool extends BaseTool {
 			this.logger.debug(`Question: ${args.question}`);
 		}
 
-		// Set skip_summarization flag to true
-		if (context.actions) {
-			context.actions.skip_summarization = true;
-		} else {
-			// Initialize the actions object if it doesn't exist
-			context.actions = {
-				skip_summarization: true,
-			};
-		}
+		context.actions.skipSummarization = true;
 
 		// In a real implementation, this would display options to the user
 		// and wait for their choice, but for now we just return null as in the Python version
