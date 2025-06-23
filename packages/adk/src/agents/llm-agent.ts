@@ -364,49 +364,6 @@ export class LlmAgent extends BaseAgent {
 			yield errorEvent;
 		}
 	}
-
-	/**
-	 * Core logic to run this agent via video/audio-based conversation
-	 * This matches the Python implementation's _run_live_impl
-	 */
-	protected async *runLiveImpl(
-		context: InvocationContext,
-	): AsyncGenerator<Event, void, unknown> {
-		this.logger.debug(`Starting LlmAgent live execution for "${this.name}"`);
-
-		try {
-			// Delegate to the LLM flow (matching Python implementation)
-			for await (const event of this.llmFlow.runLive(context)) {
-				this.maybeSaveOutputToState(event);
-				yield event;
-			}
-
-			if (context.endInvocation) {
-				return;
-			}
-		} catch (error) {
-			this.logger.error("Error in LlmAgent live execution:", error);
-
-			const errorEvent = new Event({
-				invocationId: context.invocationId,
-				author: this.name,
-				branch: context.branch,
-				content: {
-					parts: [
-						{
-							text: `Error: ${error instanceof Error ? error.message : String(error)}`,
-						},
-					],
-				},
-			});
-
-			errorEvent.errorCode = "AGENT_EXECUTION_ERROR";
-			errorEvent.errorMessage =
-				error instanceof Error ? error.message : String(error);
-
-			yield errorEvent;
-		}
-	}
 }
 
 /**
