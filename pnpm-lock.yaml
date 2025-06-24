@@ -79,8 +79,8 @@ importers:
         specifier: ^0.5.0
         version: 0.5.0
       '@google/genai':
-        specifier: ^1.0.0
-        version: 1.3.0(@modelcontextprotocol/sdk@1.11.3)
+        specifier: ^1.6.0
+        version: 1.6.0(@modelcontextprotocol/sdk@1.11.3)
       '@modelcontextprotocol/sdk':
         specifier: ^1.11.1
         version: 1.11.3
@@ -453,11 +453,14 @@ packages:
     resolution: {integrity: sha512-qIFHYTXA5UCLdm9JG+Xf1suomCXxRqa1PKdYjqXuhZsCm8mn37Rb0Tf8djlhDzuRVWyWoQTmsWpsk28ZTmbqJg==}
     engines: {node: '>=18.0.0'}
 
-  '@google/genai@1.3.0':
-    resolution: {integrity: sha512-rrMzAELX4P902FUpuWy/W3NcQ7L3q/qtCzfCmGVqIce8yWpptTF9hkKsw744tvZpwqhuzD0URibcJA95wd8QFA==}
+  '@google/genai@1.6.0':
+    resolution: {integrity: sha512-0vn8wMGesjiEsHeFsl10T8+SFqLj7q+RSE6mml66sE+jwI7U9wW2LQ3qYtwUEaI+P8ZYeEYE5IpYmNLcRQUBPQ==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.11.0
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
 
   '@grpc/grpc-js@1.13.4':
     resolution: {integrity: sha512-GsFaMXCkMqkKIvwCQjCrwH+GHbPKBjhwo/8ZuUkWHqbI73Kky9I+pQltrlT0+MWpedCoosda53lgjYfyEPgxBg==}
@@ -3446,13 +3449,14 @@ snapshots:
       - encoding
       - supports-color
 
-  '@google/genai@1.3.0(@modelcontextprotocol/sdk@1.11.3)':
+  '@google/genai@1.6.0(@modelcontextprotocol/sdk@1.11.3)':
     dependencies:
-      '@modelcontextprotocol/sdk': 1.11.3
       google-auth-library: 9.15.1
       ws: 8.18.2
       zod: 3.24.4
       zod-to-json-schema: 3.24.5(zod@3.24.4)
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.11.3
     transitivePeerDependencies:
       - bufferutil
       - encoding

@@ -268,11 +268,17 @@ export class Runner {
 			}
 		}
 
+		// Ensure the newMessage has the correct role for content filtering
+		const userContent = {
+			...newMessage,
+			role: "user", // Ensure role is set for content filtering
+		};
+
 		// Appends only. We do not yield the event because it's not from the model.
 		const event = new Event({
 			invocationId: invocationContext.invocationId,
 			author: "user",
-			content: newMessage,
+			content: userContent,
 		});
 
 		await this.sessionService.appendEvent(session, event);

@@ -214,9 +214,7 @@ function rearrangeEventsForLatestFunctionResponse(events: Event[]): Event[] {
 	}
 
 	if (functionCallEventIdx === -1) {
-		throw new Error(
-			`No function call event found for function responses ids: ${Array.from(functionResponsesIds)}`,
-		);
+		return events;
 	}
 
 	// Collect all function response between last function response event
@@ -259,11 +257,19 @@ function getContents(
 			!event.content ||
 			!event.content.role ||
 			!event.content.parts ||
-			event.content.parts[0]?.text === ""
+			event.content.parts.length === 0
 		) {
 			// Skip events without content, or generated neither by user nor by model
-			// or has empty text.
+			// or has no parts.
 			// E.g. events purely for mutating session states.
+			continue;
+		}
+
+		// Skip events that have no meaningful content (no text, function calls, or function responses)
+		const hasAnyContent = event.content.parts.some(
+			(part) => part.text || part.functionCall || part.functionResponse,
+		);
+		if (!hasAnyContent) {
 			continue;
 		}
 
@@ -282,9 +288,7 @@ function getContents(
 		);
 	}
 
-	let resultEvents = rearrangeEventsForLatestFunctionResponse(filteredEvents);
-	resultEvents =
-		rearrangeEventsForAsyncFunctionResponsesInHistory(resultEvents);
+	const resultEvents = filteredEvents;
 
 	const contents = [];
 	for (const event of resultEvents) {
