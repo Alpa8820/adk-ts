@@ -5,15 +5,15 @@
  * to create, write, and read files through MCP tools.
  */
 
+import { env } from "node:process";
 import {
-	LlmAgent,
-	Runner,
 	InMemorySessionService,
+	LlmAgent,
 	type McpConfig,
 	McpError,
 	McpToolset,
+	Runner,
 } from "@iqai/adk";
-import { env } from "node:process";
 import { v4 as uuidv4 } from "uuid";
 
 const DEBUG = true;
@@ -21,7 +21,7 @@ const APP_NAME = "mcp-filesystem-example";
 const USER_ID = uuidv4();
 
 // Specify the allowed path for file operations
-const ALLOWED_PATH = "path/to/your/desktop";
+const ALLOWED_PATH = "~/desktop";
 
 /**
  * Demonstrates an agent using MCP filesystem tools
