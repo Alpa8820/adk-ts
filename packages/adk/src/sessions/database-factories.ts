@@ -1,15 +1,35 @@
+import dedent from "dedent";
 import { Kysely, MysqlDialect, PostgresDialect, SqliteDialect } from "kysely";
 import {
 	type Database,
 	DatabaseSessionService,
 } from "./database-session-service";
 
+function createDependencyError(packageName: string, dbType: string): Error {
+	return new Error(
+		dedent`
+		Missing required peer dependency: ${packageName}
+		To use ${dbType} sessions, install the required package:
+			npm install ${packageName}
+			# or
+			pnpm add ${packageName}
+			# or
+			yarn add ${packageName}`,
+	);
+}
+
 // For PostgreSQL
 export function createPostgresSessionService(
 	connectionString: string,
 	options?: any,
 ): DatabaseSessionService {
-	const { Pool } = require("pg");
+	let Pool: any;
+
+	try {
+		({ Pool } = require("pg"));
+	} catch (error) {
+		throw createDependencyError("pg", "PostgreSQL");
+	}
 
 	const db = new Kysely<Database>({
 		dialect: new PostgresDialect({
@@ -28,7 +48,13 @@ export function createMysqlSessionService(
 	connectionString: string,
 	options?: any,
 ): DatabaseSessionService {
-	const { createPool } = require("mysql2");
+	let createPool: any;
+
+	try {
+		({ createPool } = require("mysql2"));
+	} catch (error) {
+		throw createDependencyError("mysql2", "MySQL");
+	}
 
 	const db = new Kysely<Database>({
 		dialect: new MysqlDialect({
@@ -47,7 +73,13 @@ export function createSqliteSessionService(
 	filename: string,
 	options?: any,
 ): DatabaseSessionService {
-	const Database = require("better-sqlite3");
+	let Database: any;
+
+	try {
+		Database = require("better-sqlite3");
+	} catch (error) {
+		throw createDependencyError("better-sqlite3", "SQLite");
+	}
 
 	const db = new Kysely<Database>({
 		dialect: new SqliteDialect({

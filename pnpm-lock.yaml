@@ -29,24 +29,12 @@ importers:
       '@clack/prompts':
         specifier: ^0.11.0
         version: 0.11.0
-      '@electric-sql/pglite':
-        specifier: ^0.3.2
-        version: 0.3.2
       '@iqai/adk':
         specifier: workspace:*
         version: link:../../packages/adk
-      '@types/better-sqlite3':
-        specifier: ^7.6.13
-        version: 7.6.13
-      better-sqlite3:
-        specifier: ^11.10.0
-        version: 11.10.0
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
-      drizzle-orm:
-        specifier: ^0.43.1
-        version: 0.43.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.1)(better-sqlite3@11.10.0)(kysely@0.28.2)(mysql2@3.14.1)(pg@8.16.0)(sql.js@1.13.0)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -111,9 +99,6 @@ importers:
       axios:
         specifier: ^1.6.2
         version: 1.9.0
-      better-sqlite3:
-        specifier: ^11.10.0
-        version: 11.10.0
       dedent:
         specifier: ^1.6.0
         version: 1.6.0
@@ -126,15 +111,9 @@ importers:
       kysely:
         specifier: ^0.28.2
         version: 0.28.2
-      mysql2:
-        specifier: ^3.14.1
-        version: 3.14.1
       openai:
         specifier: ^4.93.0
         version: 4.104.0(ws@8.18.2)(zod@3.24.4)
-      pg:
-        specifier: ^8.16.0
-        version: 8.16.0
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -151,6 +130,15 @@ importers:
       '@types/node':
         specifier: ^20.17.30
         version: 20.17.57
+      better-sqlite3:
+        specifier: ^11.10.0
+        version: 11.10.0
+      mysql2:
+        specifier: ^3.14.1
+        version: 3.14.1
+      pg:
+        specifier: ^8.16.0
+        version: 8.16.0
       tsup:
         specifier: ^8.4.0
         version: 8.5.0(@swc/core@1.11.24(@swc/helpers@0.5.17))(jiti@1.21.7)(postcss@8.5.3)(tsx@4.19.4)(typescript@5.8.3)(yaml@2.8.0)
