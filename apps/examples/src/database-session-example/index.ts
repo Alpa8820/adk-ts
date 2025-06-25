@@ -24,7 +24,7 @@ async function main() {
 			name: "counter_agent",
 			model: env.LLM_MODEL || "gemini-2.5-flash",
 			description:
-				"You are a counter. Increment the count each time and remember previous runs.",
+				"You are a counter. Increment the count each time when i tell you so. Start with 1",
 		}),
 		sessionService: createDatabaseSessionService(
 			getSqliteConnectionString("counter"),

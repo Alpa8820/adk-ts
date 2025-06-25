@@ -5,8 +5,8 @@ import { Event } from "../../events/event";
 import type { LlmRequest } from "../../models/llm-request";
 import { BaseLlmRequestProcessor } from "./base-llm-processor";
 import {
-	removeClientFunctionCallId,
 	REQUEST_EUC_FUNCTION_CALL_NAME,
+	removeClientFunctionCallId,
 } from "./functions";
 
 /**
@@ -25,8 +25,16 @@ class ContentLlmRequestProcessor extends BaseLlmRequestProcessor {
 			return;
 		}
 
-		if (agent.includeContents !== "none") {
+		if (agent.includeContents === "default") {
+			// Include full conversation history
 			llmRequest.contents = getContents(
+				invocationContext.branch,
+				invocationContext.session.events,
+				agent.name,
+			);
+		} else if (agent.includeContents !== "none") {
+			// Include current turn context only (no conversation history)
+			llmRequest.contents = getCurrentTurnContents(
 				invocationContext.branch,
 				invocationContext.session.events,
 				agent.name,
@@ -95,7 +103,10 @@ function rearrangeEventsForAsyncFunctionResponsesInHistory(
 
 		if (event.getFunctionResponses()) {
 			// function_response should be handled together with function_call below.
-		} else if (event.getFunctionCalls()) {
+			continue;
+		}
+
+		if (event.getFunctionCalls()) {
 			const functionResponseEventsIndices = new Set<number>();
 
 			for (const functionCall of event.getFunctionCalls()) {
@@ -242,6 +253,7 @@ function rearrangeEventsForLatestFunctionResponse(events: Event[]): Event[] {
 
 /**
  * Gets the contents for the LLM request.
+ * Applies filtering, rearrangement, and content processing to events.
  */
 function getContents(
 	currentBranch: string | undefined,
@@ -288,7 +300,10 @@ function getContents(
 		);
 	}
 
-	const resultEvents = filteredEvents;
+	// Rearrange events for proper function call/response pairing
+	let resultEvents = rearrangeEventsForLatestFunctionResponse(filteredEvents);
+	resultEvents =
+		rearrangeEventsForAsyncFunctionResponsesInHistory(resultEvents);
 
 	const contents = [];
 	for (const event of resultEvents) {
@@ -298,6 +313,32 @@ function getContents(
 	}
 
 	return contents;
+}
+
+/**
+ * Gets contents for the current turn only (no conversation history).
+ *
+ * When include_contents='none', we want to include:
+ * - The current user input
+ * - Tool calls and responses from the current turn
+ * But exclude conversation history from previous turns.
+ *
+ * In multi-agent scenarios, the "current turn" for an agent starts from an
+ * actual user or from another agent.
+ */
+function getCurrentTurnContents(
+	currentBranch: string | undefined,
+	events: Event[],
+	agentName = "",
+): Content[] {
+	// Find the latest event that starts the current turn and process from there
+	for (let i = events.length - 1; i >= 0; i--) {
+		const event = events[i];
+		if (event.author === "user" || isOtherAgentReply(agentName, event)) {
+			return getContents(currentBranch, events.slice(i), agentName);
+		}
+	}
+	return [];
 }
 
 /**
