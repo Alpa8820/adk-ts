@@ -215,6 +215,25 @@ export class DatabaseSessionService extends BaseSessionService {
 		}
 	}
 
+	/**
+	 * Convert database timestamp to Unix seconds
+	 * Handles different timestamp formats from different databases
+	 */
+	private timestampToUnixSeconds(timestamp: any): number {
+		if (timestamp instanceof Date) {
+			return timestamp.getTime() / 1000;
+		}
+		if (typeof timestamp === "string") {
+			return new Date(timestamp).getTime() / 1000;
+		}
+		if (typeof timestamp === "number") {
+			// Assume it's already Unix timestamp in seconds or milliseconds
+			return timestamp > 10000000000 ? timestamp / 1000 : timestamp;
+		}
+		// Fallback to current time
+		return Date.now() / 1000;
+	}
+
 	async createSession(
 		appName: string,
 		userId: string,
@@ -322,7 +341,7 @@ export class DatabaseSessionService extends BaseSessionService {
 				userId: result.user_id,
 				state: mergedState,
 				events: [] as Event[], // Fixed type annotation
-				lastUpdateTime: (result.update_time as Date).getTime() / 1000, // Fixed Generated<Date> access
+				lastUpdateTime: this.timestampToUnixSeconds(result.update_time),
 			};
 		});
 	}
@@ -406,8 +425,7 @@ export class DatabaseSessionService extends BaseSessionService {
 				userId,
 				state: mergedState,
 				events, // Now properly typed as Event[]
-				lastUpdateTime:
-					(storageSession.update_time as unknown as Date).getTime() / 1000, // Fixed casting
+				lastUpdateTime: this.timestampToUnixSeconds(storageSession.update_time),
 			};
 		});
 	}
@@ -446,7 +464,7 @@ export class DatabaseSessionService extends BaseSessionService {
 			userId: storageSession.user_id,
 			state: {},
 			events: [] as Event[], // Fixed type annotation
-			lastUpdateTime: (storageSession.update_time as Date).getTime() / 1000, // Fixed Generated<Date> access
+			lastUpdateTime: this.timestampToUnixSeconds(storageSession.update_time),
 		}));
 
 		return { sessions };
@@ -485,7 +503,7 @@ export class DatabaseSessionService extends BaseSessionService {
 				.executeTakeFirstOrThrow();
 
 			if (
-				(storageSession.update_time as Date).getTime() / 1000 >
+				this.timestampToUnixSeconds(storageSession.update_time) >
 				session.lastUpdateTime
 			) {
 				// Fixed Generated<Date> access
@@ -567,7 +585,10 @@ export class DatabaseSessionService extends BaseSessionService {
 			// Store the event
 			await trx
 				.insertInto("events")
-				.values(this.eventToStorageEvent(session, event))
+				.values({
+					...this.eventToStorageEvent(session, event),
+					timestamp: sql`CURRENT_TIMESTAMP`,
+				})
 				.execute();
 
 			// Get updated session timestamp
@@ -580,8 +601,9 @@ export class DatabaseSessionService extends BaseSessionService {
 				.executeTakeFirstOrThrow();
 
 			// Update session timestamp
-			session.lastUpdateTime =
-				(updatedSession.update_time as Date).getTime() / 1000; // Fixed Generated<Date> access
+			session.lastUpdateTime = this.timestampToUnixSeconds(
+				updatedSession.update_time,
+			);
 
 			return event;
 		});
@@ -643,7 +665,7 @@ export class DatabaseSessionService extends BaseSessionService {
 	private eventToStorageEvent(
 		session: Session,
 		event: Event,
-	): Omit<EventsTable, "timestamp"> & { timestamp?: Date } {
+	): Omit<EventsTable, "timestamp"> {
 		return {
 			id: event.id,
 			app_name: session.appName,
@@ -652,7 +674,6 @@ export class DatabaseSessionService extends BaseSessionService {
 			invocation_id: event.invocationId || "",
 			author: event.author || "",
 			branch: event.branch || null,
-			timestamp: new Date(event.timestamp * 1000),
 			content: event.content ? JSON.stringify(event.content) : null,
 			actions: event.actions ? JSON.stringify(event.actions) : null,
 			long_running_tool_ids_json: event.longRunningToolIds
@@ -682,7 +703,7 @@ export class DatabaseSessionService extends BaseSessionService {
 			invocationId: storageEvent.invocation_id,
 			author: storageEvent.author,
 			branch: storageEvent.branch || undefined,
-			timestamp: storageEvent.timestamp.getTime() / 1000,
+			timestamp: this.timestampToUnixSeconds(storageEvent.timestamp),
 			content: storageEvent.content
 				? this.parseJsonSafely(storageEvent.content, null)
 				: undefined,
