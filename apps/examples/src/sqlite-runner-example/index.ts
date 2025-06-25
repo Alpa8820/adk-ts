@@ -9,193 +9,122 @@ import {
 	StreamingMode,
 	createDatabaseSessionService,
 } from "@iqai/adk";
-import { v4 as uuidv4 } from "uuid";
 
-const APP_NAME = "SqliteRunnerDemo";
-const USER_ID = uuidv4();
+const APP_NAME = "CounterDemo";
+const USER_ID = "demo-user"; // Fixed user ID to maintain state across runs
 
-const dbPath = path.join(__dirname, "data", "session.db");
+// Setup persistent SQLite database
+const dbPath = path.join(__dirname, "data", "counter.db");
 if (!fs.existsSync(path.dirname(dbPath))) {
 	fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 }
 
-// Create session service using the generic factory with sqlite:// URL
+// Step 1: Create database session service with SQLite
 const sessionService = createDatabaseSessionService(`sqlite://${dbPath}`);
 
-// Initialize the agent with Google's Gemini model
+// Step 2: Initialize agent with counter instructions
 const agent = new LlmAgent({
-	name: "sqlite_runner_assistant",
+	name: "counter_agent",
 	model: env.LLM_MODEL || "gemini-2.5-flash",
-	description:
-		"A simple assistant demonstrating Runner usage with SQLite session persistence",
-	instruction:
-		"You are a helpful assistant with persistent session storage. Answer questions directly and accurately. When asked about databases, explain the benefits of using persistent storage over in-memory storage.",
+	description: "A counter agent that remembers count across script runs",
+	instruction: `You are a counter agent. Your job is to:
+1. Keep track of how many times you've been run
+2. Always increment the count when asked
+3. Remember the count from previous script executions
+4. Be friendly and show the current count clearly`,
 });
 
-// Create a runner with the unified database session service
+// Step 3: Create runner with persistent session service
 const runner = new Runner({
 	appName: APP_NAME,
 	agent,
-	sessionService,
+	sessionService, // This enables persistence across runs!
 	memoryService: new InMemoryMemoryService(),
 });
 
-async function runConversation() {
-	console.log(
-		"🤖 Starting a SQLite runner example with persistent sessions...",
-	);
-	console.log(`🗄️  Using database URL: sqlite://${dbPath}`);
-	console.log("🗄️  SQLite database will be initialized automatically...");
+async function main() {
+	console.log("🔢 Counter Agent with Persistent SQLite Storage");
+	console.log("=".repeat(50));
 
-	// Create a session using the unified DatabaseSessionService
-	// The database tables will be created automatically on first use
-	console.log("📝 Creating a new session with SQLite persistence...");
-	const session = await runner.sessionService.createSession(APP_NAME, USER_ID, {
-		example: "sqlite-runner",
-		timestamp: new Date().toISOString(),
-	});
-	const sessionId = session.id;
-
-	console.log(`🔑 Session ID: ${sessionId}`);
-	console.log(`👤 User ID: ${USER_ID}`);
-	console.log("📊 Session State:", session.state);
-
-	// Run the first question
-	console.log(
-		"\n📝 First question: 'What are the advantages of using persistent storage over in-memory storage?'",
-	);
-	await processMessage(
-		"What are the advantages of using persistent storage over in-memory storage?",
-		sessionId,
-	);
-
-	// Run a follow-up question
-	console.log(
-		"\n📝 Follow-up question: 'Can you explain what SQLite is and how it differs from PostgreSQL?'",
-	);
-	await processMessage(
-		"Can you explain what SQLite is and how it differs from PostgreSQL?",
-		sessionId,
-	);
-
-	// Demonstrate session persistence by retrieving the session
-	console.log("\n🔍 Demonstrating session persistence...");
-	const retrievedSession = await runner.sessionService.getSession(
-		APP_NAME,
-		USER_ID,
-		sessionId,
-	);
-	if (retrievedSession) {
-		console.log(
-			`📋 Retrieved session has ${retrievedSession.events?.length || 0} events`,
-		);
-		console.log(`🆔 Session ID: ${retrievedSession.id}`);
-		console.log("📊 Session state:", retrievedSession.state);
-	}
-
-	// Run another question to show continued conversation
-	console.log(
-		"\n📝 Third question: 'Based on our conversation, what would you recommend for a small application?'",
-	);
-	await processMessage(
-		"Based on our conversation, what would you recommend for a small application?",
-		sessionId,
-	);
-
-	// List all sessions for this user
-	console.log("\n📋 Listing all sessions for this user...");
-	const userSessionsResponse = await runner.sessionService.listSessions(
+	// Try to find existing session or create new one
+	const { sessions } = await runner.sessionService.listSessions(
 		APP_NAME,
 		USER_ID,
 	);
-	console.log(
-		`Found ${userSessionsResponse.sessions.length} session(s) for user ${USER_ID}`,
-	);
 
-	// Display session information
-	for (const sessionSummary of userSessionsResponse.sessions) {
-		console.log(
-			`  📋 Session ${sessionSummary.id}: ${sessionSummary.events.length} events`,
+	let sessionId: string;
+
+	if (sessions.length > 0) {
+		// Use existing session to maintain counter state
+		sessionId = sessions[0].id;
+		console.log("📂 Found existing session - counter state will be preserved!");
+		console.log(`📋 Session has ${sessions[0].events.length} previous events`);
+	} else {
+		// Create new session
+		const session = await runner.sessionService.createSession(
+			APP_NAME,
+			USER_ID,
 		);
+		sessionId = session.id;
+		console.log("🆕 Created new session - starting fresh counter!");
 	}
 
-	console.log("\n✅ SQLite runner example completed successfully!");
-	console.log("\n🔧 Key Features Demonstrated:");
-	console.log("✅ Generic database URL support (sqlite://)");
-	console.log("✅ Automatic database type detection from URL");
-	console.log("✅ Unified database session service for all SQL databases");
-	console.log("✅ Automatic database table creation via Kysely");
-	console.log("✅ Session retrieval and listing");
-	console.log("✅ Event streaming with proper content handling");
-	console.log("✅ Multi-turn conversation continuity");
-	console.log("✅ Cross-database compatibility (SQLite/PostgreSQL/MySQL)");
-	console.log("✅ Automatic database connection management");
+	console.log(`\n🔑 Session ID: ${sessionId}`);
+	console.log(`\n${"=".repeat(50)}`);
+
+	// Ask agent to increment counter and show current state
+	await chat(
+		"Please increment the counter and tell me the current count. If this is the first time, start at 1.",
+		sessionId,
+	);
+
+	console.log(`\n${"=".repeat(50)}`);
+	console.log(
+		"💡 TIP: Run this script multiple times to see the counter persist!",
+	);
+	console.log(
+		"💡 Each run will remember the previous count from SQLite database.",
+	);
+	console.log(`💾 Database location: ${dbPath}`);
 }
 
-async function processMessage(messageContent: string, sessionId: string) {
-	console.log(`👤 User: ${messageContent}`);
-	console.log("🤖 Assistant: ");
+async function chat(message: string, sessionId: string) {
+	console.log(`👤 User: ${message}`);
+	console.log("🤖 Counter Agent: ");
 
-	try {
-		// Set up streaming configuration
-		const runConfig = new RunConfig({
-			streamingMode: StreamingMode.SSE,
-		});
+	const runConfig = new RunConfig({
+		streamingMode: StreamingMode.SSE,
+	});
 
-		// Track streaming state
-		let isStreaming = false;
-		let streamedContent = "";
+	let response = "";
 
-		// Process the message through the runner
-		for await (const event of runner.runAsync({
-			userId: USER_ID,
-			sessionId,
-			newMessage: {
-				parts: [{ text: messageContent }],
-			},
-			runConfig,
-		})) {
-			// Skip events without content
-			if (!event.content?.parts) continue;
+	for await (const event of runner.runAsync({
+		userId: USER_ID,
+		sessionId,
+		newMessage: { parts: [{ text: message }] },
+		runConfig,
+	})) {
+		if (event.content?.parts && event.author === agent.name) {
+			const content = event.content.parts
+				.map((part) => part.text || "")
+				.join("");
 
-			// Only process assistant messages
-			if (event.author === agent.name) {
-				const content = event.content.parts
-					.map((part) => part.text || "")
-					.join("");
-
-				if (event.partial) {
-					// Handle streaming chunks
-					isStreaming = true;
-					process.stdout.write(content);
-					streamedContent += content;
+			if (event.partial) {
+				process.stdout.write(content);
+				response += content;
+			} else {
+				if (!response) {
+					console.log(content);
 				} else {
-					// Handle complete response
-					if (!isStreaming) {
-						// If we haven't streamed anything yet, print the full response
-						console.log(content);
-					} else if (streamedContent.trim() !== content.trim()) {
-						// If the final content is different from what we've streamed, print it
-						console.log("\nFull response:", content);
-					} else {
-						// We've already streamed the content, just add a newline
-						console.log();
-					}
+					console.log(); // New line after streaming
 				}
 			}
 		}
-
-		// Ensure there's a newline after streaming
-		if (isStreaming && !streamedContent.endsWith("\n")) {
-			console.log();
-		}
-	} catch (error: any) {
-		console.error("Error processing message:", error?.message || String(error));
 	}
 }
 
-// Run the example
-runConversation().catch((error) => {
-	console.error("❌ Error in SQLite runner example:", error);
+// Run the counter demo
+main().catch((error) => {
+	console.error("❌ Error:", error);
 	process.exit(1);
 });
