@@ -13,8 +13,8 @@ const USER_ID = uuidv4();
 /**
  * Example function to calculate the sum of two numbers.
  *
- * @param a First number to add
- * @param b Second number to add
+ * @param {number} a First number to add
+ * @param {number} b Second number to add
  * @returns The sum of a and b
  */
 function calculateSum(a: number, b: number): number {
@@ -69,6 +69,10 @@ async function main() {
 	const calculatorTool = new FunctionTool(calculateSum, {
 		name: "calculator",
 		description: "Calculates the sum of two numbers",
+		parameterTypes: {
+			a: "number",
+			b: "number",
+		},
 	});
 
 	const weatherTool = new FunctionTool(getWeather, {
