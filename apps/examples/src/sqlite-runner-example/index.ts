@@ -7,7 +7,7 @@ import {
 	RunConfig,
 	Runner,
 	StreamingMode,
-	createSqliteSessionService,
+	createDatabaseSessionService,
 } from "@iqai/adk";
 import { v4 as uuidv4 } from "uuid";
 
@@ -19,8 +19,8 @@ if (!fs.existsSync(path.dirname(dbPath))) {
 	fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 }
 
-// Create session service using the factory function
-const sessionService = createSqliteSessionService(dbPath);
+// Create session service using the generic factory with sqlite:// URL
+const sessionService = createDatabaseSessionService(`sqlite://${dbPath}`);
 
 // Initialize the agent with Google's Gemini model
 const agent = new LlmAgent({
@@ -44,6 +44,7 @@ async function runConversation() {
 	console.log(
 		"🤖 Starting a SQLite runner example with persistent sessions...",
 	);
+	console.log(`🗄️  Using database URL: sqlite://${dbPath}`);
 	console.log("🗄️  SQLite database will be initialized automatically...");
 
 	// Create a session using the unified DatabaseSessionService
@@ -120,7 +121,9 @@ async function runConversation() {
 
 	console.log("\n✅ SQLite runner example completed successfully!");
 	console.log("\n🔧 Key Features Demonstrated:");
-	console.log("✅ Unified database session service for SQLite");
+	console.log("✅ Generic database URL support (sqlite://)");
+	console.log("✅ Automatic database type detection from URL");
+	console.log("✅ Unified database session service for all SQL databases");
 	console.log("✅ Automatic database table creation via Kysely");
 	console.log("✅ Session retrieval and listing");
 	console.log("✅ Event streaming with proper content handling");
