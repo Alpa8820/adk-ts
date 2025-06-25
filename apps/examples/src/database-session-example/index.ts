@@ -11,6 +11,11 @@ import {
 const APP_NAME = "CounterDemo";
 const USER_ID = "demo-user";
 
+/**
+ * Demonstrates a counter application using a persistent SQLite session
+ * Creates a runner with a counter agent, finds or creates a session,
+ * and runs an interaction to increment and display the current count
+ */
 async function main() {
 	// Create runner with SQLite persistence
 	const runner = new Runner({
