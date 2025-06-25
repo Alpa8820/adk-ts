@@ -30,7 +30,7 @@ telemetryService.initialize({
 // Initialize the agent with Google's Gemini model
 const agent = new LlmAgent({
 	name: "telemetry_assistant",
-	model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+	model: env.LLM_MODEL || "gemini-2.5-flash",
 	description: "An assistant with telemetry tracking enabled",
 	instruction:
 		"You are a helpful assistant. Answer questions concisely and accurately.",

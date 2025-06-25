@@ -101,7 +101,7 @@ async function main() {
 		// Create the agent with MCP ATP tools
 		const agent = new LlmAgent({
 			name: "mcp_atp_assistant",
-			model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+			model: env.LLM_MODEL || "gemini-2.5-flash",
 			description:
 				"An assistant that can interact with the IQ AI ATP via MCP using Google Gemini",
 			instruction:

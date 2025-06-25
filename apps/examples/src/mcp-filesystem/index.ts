@@ -1,10 +1,4 @@
-/**
- * MCP Filesystem Server Example
- *
- * This example shows how to use the Model Context Protocol (MCP) filesystem server
- * to create, write, and read files through MCP tools.
- */
-
+import * as path from "node:path";
 import { env } from "node:process";
 import {
 	InMemorySessionService,
@@ -20,20 +14,15 @@ const DEBUG = true;
 const APP_NAME = "mcp-filesystem-example";
 const USER_ID = uuidv4();
 
-// Specify the allowed path for file operations
-const ALLOWED_PATH = "~/desktop";
+// Use a temp directory for allowed path, similar to file-operations-tool example
+const ALLOWED_PATH = path.join(process.cwd(), "temp-examples");
 
-/**
- * Demonstrates an agent using MCP filesystem tools
- */
 async function main() {
-	// Initialize toolset outside try block to enable cleanup in finally
 	let toolset: McpToolset | null = null;
 
 	try {
-		console.log("🚀 Starting MCP Filesystem Agent Example");
+		console.log("🚀 Starting MCP Filesystem Agent Example", ALLOWED_PATH);
 
-		// Configure the MCP client
 		const mcpConfig: McpConfig = {
 			name: "Filesystem Client",
 			description: "Client for MCP Filesystem Server",
@@ -52,11 +41,9 @@ async function main() {
 			},
 		};
 
-		// Create a toolset for the MCP server
 		console.log("Connecting to MCP filesystem server...");
 		toolset = new McpToolset(mcpConfig);
 
-		// Get tools from the toolset
 		const mcpTools = await toolset.getTools();
 
 		console.log(`Retrieved ${mcpTools.length} tools from the MCP server:`);
@@ -64,20 +51,17 @@ async function main() {
 			console.log(`- ${tool.name}: ${tool.description}`);
 		});
 
-		// Create the agent with MCP filesystem tools
 		const agent = new LlmAgent({
 			name: "filesystem_assistant",
-			model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+			model: env.LLM_MODEL || "gemini-2.5-flash",
 			description: "An assistant that can manipulate files using Google Gemini",
-			instruction: `You are a helpful assistant that can manipulate files on the user's desktop.
+			instruction: `You are a helpful assistant that can manipulate files in the application's temp directory.
 				You have access to tools that let you write, read, and manage files.
-				You can only access files in this path: ${ALLOWED_PATH}
 				When asked to create a rhyme, be creative and write a short, original rhyme to a file.
 				When reading files, summarize the content appropriately.`,
 			tools: mcpTools,
 		});
 
-		// Create session service and runner
 		const sessionService = new InMemorySessionService();
 		const session = await sessionService.createSession(APP_NAME, USER_ID);
 
@@ -87,7 +71,6 @@ async function main() {
 			sessionService,
 		});
 
-		// Helper function to run agent and get response
 		async function runAgentTask(userMessage: string): Promise<string> {
 			const newMessage = {
 				parts: [
@@ -132,7 +115,6 @@ async function main() {
 		console.log("Agent initialized with MCP filesystem tools");
 		console.log("-----------------------------------");
 
-		// Example 1: Create a file with a rhyme
 		console.log("\nExample 1: Creating a rhyme file");
 		console.log(
 			"Question: Create a short nursery rhyme about coding and save it to a file called coding_rhyme.txt",
@@ -146,7 +128,6 @@ async function main() {
 		console.log("Final Response:", createResponse);
 		console.log("-----------------------------------");
 
-		// Example 2: Read the created file
 		console.log("\nExample 2: Reading the rhyme file");
 		console.log(
 			"Question: Now read the coding_rhyme.txt file you just created and tell me what it says.",
@@ -160,11 +141,9 @@ async function main() {
 		console.log("Final Response:", readResponse);
 		console.log("-----------------------------------");
 
-		// Example 3: Multi-step conversation
 		console.log("\nExample 3: Multi-step conversation");
 		console.log("-----------------------------------");
 
-		// First turn: Create the file
 		const createFileResponse = await runAgentTask(
 			"Create a new file called desktop_report.txt with a list of 3 benefits of keeping your desktop organized.",
 		);
@@ -173,14 +152,12 @@ async function main() {
 		);
 		console.log("Assistant:", createFileResponse);
 
-		// Second turn: Read the file
 		console.log("\nUser: Read the desktop_report.txt file you just created.");
 		const readFileResponse = await runAgentTask(
 			"Read the desktop_report.txt file you just created.",
 		);
 		console.log("Assistant:", readFileResponse);
 
-		// Third turn: Modify the file
 		console.log(
 			"\nUser: Update the desktop_report.txt file to include a fourth benefit about productivity.",
 		);
@@ -198,7 +175,6 @@ async function main() {
 		console.log("✅ File modification and updates");
 		console.log("✅ Proper error handling and resource cleanup");
 	} catch (error) {
-		// Proper error handling with McpError
 		if (error instanceof McpError) {
 			console.error(`MCP Error (${error.type}): ${error.message}`);
 			if (error.originalError) {
@@ -208,7 +184,6 @@ async function main() {
 			console.error("Error:", error);
 		}
 	} finally {
-		// Ensure resources are cleaned up properly
 		if (toolset) {
 			console.log("Cleaning up MCP resources...");
 			await toolset

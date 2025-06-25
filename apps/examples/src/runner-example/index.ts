@@ -7,7 +7,7 @@ const APP_NAME = "RunnerDemo";
 // Initialize the agent with Google's Gemini model
 const agent = new LlmAgent({
 	name: "runner_assistant",
-	model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
+	model: env.LLM_MODEL || "gemini-2.5-flash", // This will use the LLMRegistry to get the right provider
 	description:
 		"A simple assistant demonstrating Runner usage with Google Gemini",
 	instruction:

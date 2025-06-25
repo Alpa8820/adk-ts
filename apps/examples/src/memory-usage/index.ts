@@ -57,7 +57,7 @@ async function memoryUsageExample() {
 	const agent = new LlmAgent({
 		name: "memory_assistant",
 		description: "An assistant with memory capabilities using Google Gemini",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
 		instruction:
 			"You are a helpful assistant with memory. You can remember previous conversations and refer back to them when relevant. Be conversational and helpful.",
 	});

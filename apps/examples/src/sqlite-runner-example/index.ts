@@ -26,7 +26,7 @@ const sessionService = new SqliteSessionService({ sqlite });
 // Initialize the agent with Google's Gemini model
 const agent = new LlmAgent({
 	name: "sqlite_runner_assistant",
-	model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+	model: env.LLM_MODEL || "gemini-2.5-flash",
 	description:
 		"A simple assistant demonstrating Runner usage with SQLite session persistence",
 	instruction:

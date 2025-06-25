@@ -24,7 +24,7 @@ const sessionService =
 // Initialize the agent
 const agent = new LlmAgent({
 	name: "postgres_runner_assistant",
-	model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+	model: env.LLM_MODEL || "gemini-2.5-flash",
 	description:
 		"A simple assistant demonstrating Runner usage with Postgres session persistence",
 	instruction:

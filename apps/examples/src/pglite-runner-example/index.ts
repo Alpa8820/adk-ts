@@ -27,7 +27,7 @@ const sessionService = new PgLiteSessionService({ pglite: db });
 // Initialize the agent
 const agent = new LlmAgent({
 	name: "pglite_runner_assistant",
-	model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+	model: env.LLM_MODEL || "gemini-2.5-flash",
 	description:
 		"A simple assistant demonstrating Runner usage with PgLite session persistence",
 	instruction:

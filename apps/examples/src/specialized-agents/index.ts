@@ -19,10 +19,10 @@ const USER_ID = uuidv4();
 async function runSpecializedAgentExamples() {
 	console.log("==== Specialized Agents Examples ====");
 
-	// Create component agents - using gemini-2.5-flash-preview-05-20 which works in the simple-agent example
+	// Create component agents - using gemini-2.5-flash which works in the simple-agent example
 	const researchAgent = new LlmAgent({
 		name: "researcher",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
+		model: env.LLM_MODEL || "gemini-2.5-flash", // This will use the LLMRegistry to get the right provider
 		description: "Conducts research on a topic",
 		instruction:
 			"You are a research assistant. Your job is to find information about topics.",
@@ -30,7 +30,7 @@ async function runSpecializedAgentExamples() {
 
 	const summaryAgent = new LlmAgent({
 		name: "summarizer",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
+		model: env.LLM_MODEL || "gemini-2.5-flash", // This will use the LLMRegistry to get the right provider
 		description: "Summarizes information",
 		instruction:
 			"You are a summarization expert. Your job is to create concise summaries.",
@@ -38,7 +38,7 @@ async function runSpecializedAgentExamples() {
 
 	const analyzerAgent = new LlmAgent({
 		name: "analyzer",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
+		model: env.LLM_MODEL || "gemini-2.5-flash", // This will use the LLMRegistry to get the right provider
 		description: "Analyzes information",
 		instruction:
 			"You are an analytical assistant. Your job is to analyze information and provide insights.",
@@ -46,7 +46,7 @@ async function runSpecializedAgentExamples() {
 
 	const weatherAgent = new LlmAgent({
 		name: "weather_expert",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
+		model: env.LLM_MODEL || "gemini-2.5-flash", // This will use the LLMRegistry to get the right provider
 		description: "Provides information about weather",
 		instruction:
 			"You are a weather expert. Provide information about weather patterns.",
@@ -54,7 +54,7 @@ async function runSpecializedAgentExamples() {
 
 	const drafterAgent = new LlmAgent({
 		name: "content_drafter",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20", // This will use the LLMRegistry to get the right provider
+		model: env.LLM_MODEL || "gemini-2.5-flash", // This will use the LLMRegistry to get the right provider
 		description: "Drafts content iteratively",
 		instruction:
 			"You are a content writer. Your job is to draft and refine content.",
@@ -148,7 +148,7 @@ async function runSpecializedAgentExamples() {
 	// Create new agents for LangGraph (can't reuse agents that already have parents)
 	const graphResearchAgent = new LlmAgent({
 		name: "graph_researcher",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Conducts research on a topic",
 		instruction:
 			"You are a research assistant. Your job is to find information about topics.",
@@ -156,7 +156,7 @@ async function runSpecializedAgentExamples() {
 
 	const graphSummaryAgent = new LlmAgent({
 		name: "graph_summarizer",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Summarizes information",
 		instruction:
 			"You are a summarization expert. Your job is to create concise summaries.",
@@ -164,7 +164,7 @@ async function runSpecializedAgentExamples() {
 
 	const graphAnalyzerAgent = new LlmAgent({
 		name: "graph_analyzer",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Analyzes information",
 		instruction:
 			"You are an analytical assistant. Your job is to analyze information and provide insights.",
@@ -172,7 +172,7 @@ async function runSpecializedAgentExamples() {
 
 	const graphDrafterAgent = new LlmAgent({
 		name: "graph_drafter",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Drafts content iteratively",
 		instruction:
 			"You are a content writer. Your job is to draft and refine content.",

@@ -127,7 +127,7 @@ async function main() {
 	// Create an agent that uses the LoadMemoryTool
 	const agent = new LlmAgent({
 		name: "memory_assistant",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
 		description:
 			"An assistant that can search through memory to find relevant information",
 		instruction: `You are a helpful assistant that can search through memory to find relevant information.

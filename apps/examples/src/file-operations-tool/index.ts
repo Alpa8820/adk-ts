@@ -24,7 +24,7 @@ async function main() {
 	// Create an agent with this tool
 	const agent = new LlmAgent({
 		name: "file_operations_demo",
-		model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
 		description:
 			"An agent that demonstrates file operations capabilities using Google Gemini",
 		instruction: `You are a helpful assistant that can perform file system operations.

@@ -26,7 +26,7 @@ async function demonstrateSingleFlow() {
 	// Create an agent with file operations tool (SingleFlow will be used automatically)
 	const fileAgent = new LlmAgent({
 		name: "file_specialist",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Handles file operations and file management tasks",
 		instruction: `You are a file management specialist. Use the file_operations tool to handle file requests.
 When asked to create a file, use the file_operations tool with operation: "write".
@@ -83,7 +83,7 @@ async function demonstrateAutoFlow() {
 	// Create specialized agents first
 	const fileAgent = new LlmAgent({
 		name: "file_specialist",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Handles file operations and file management tasks",
 		instruction:
 			"You specialize in file operations. Use file_operations tool for all file-related tasks.",
@@ -94,7 +94,7 @@ async function demonstrateAutoFlow() {
 
 	const apiAgent = new LlmAgent({
 		name: "api_specialist",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Handles HTTP requests and API calls",
 		instruction:
 			"You specialize in HTTP requests and API calls. Use http_request tool for all API-related tasks.",
@@ -106,7 +106,7 @@ async function demonstrateAutoFlow() {
 	// Create a coordinator agent with sub-agents
 	const coordinator = new LlmAgent({
 		name: "task_coordinator",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Coordinates tasks between specialized agents",
 		instruction: `You coordinate tasks between specialist agents. You can transfer tasks to:
 - file_specialist: for file operations
@@ -165,7 +165,7 @@ async function demonstratePlanningFlows() {
 	// Test with BuiltInPlanner
 	const builtInPlannerAgent = new LlmAgent({
 		name: "planning_agent_builtin",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Agent with built-in planning capabilities",
 		instruction:
 			"You are a planning agent. Break down complex tasks into steps and use available tools.",
@@ -178,7 +178,7 @@ async function demonstratePlanningFlows() {
 	// Test with PlanReActPlanner
 	const planReActAgent = new LlmAgent({
 		name: "planning_agent_react",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash",
 		description: "Agent with Plan-ReAct planning",
 		instruction:
 			"You are a ReAct planning agent. Think, plan, and act systematically.",
@@ -273,7 +273,7 @@ async function demonstrateSessionPersistence() {
 
 	const persistentAgent = new LlmAgent({
 		name: "persistent_agent",
-		model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+		model: process.env.LLM_MODEL || "gemini-2.5-flash",
 		description: "An agent with session persistence",
 		instruction:
 			"You remember our conversation and can reference previous interactions.",

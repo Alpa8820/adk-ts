@@ -19,7 +19,7 @@ async function main() {
 		// Create the agent with custom tools
 		const agent = new LlmAgent({
 			name: "tool_assistant",
-			model: env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+			model: env.LLM_MODEL || "gemini-2.5-flash",
 			description:
 				"An assistant that demonstrates tool usage with Google Gemini",
 			instruction:
