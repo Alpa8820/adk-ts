@@ -1,16 +1,15 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { env } from "node:process";
 import {
-	LlmAgent,
 	InMemoryMemoryService,
+	LlmAgent,
 	RunConfig,
 	Runner,
-	SqliteSessionService,
 	StreamingMode,
+	createSqliteSessionService,
 } from "@iqai/adk";
-import Database from "better-sqlite3";
 import { v4 as uuidv4 } from "uuid";
-import { env } from "node:process";
 
 const APP_NAME = "SqliteRunnerDemo";
 const USER_ID = uuidv4();
@@ -19,9 +18,9 @@ const dbPath = path.join(__dirname, "data", "session.db");
 if (!fs.existsSync(path.dirname(dbPath))) {
 	fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 }
-const sqlite = new Database(dbPath);
 
-const sessionService = new SqliteSessionService({ sqlite });
+// Create session service using the factory function
+const sessionService = createSqliteSessionService(dbPath);
 
 // Initialize the agent with Google's Gemini model
 const agent = new LlmAgent({
@@ -33,7 +32,7 @@ const agent = new LlmAgent({
 		"You are a helpful assistant with persistent session storage. Answer questions directly and accurately. When asked about databases, explain the benefits of using persistent storage over in-memory storage.",
 });
 
-// Create a runner with SQLite session service
+// Create a runner with the unified database session service
 const runner = new Runner({
 	appName: APP_NAME,
 	agent,
@@ -47,7 +46,7 @@ async function runConversation() {
 	);
 	console.log("🗄️  SQLite database will be initialized automatically...");
 
-	// Create a session using the SqliteSessionService
+	// Create a session using the unified DatabaseSessionService
 	// The database tables will be created automatically on first use
 	console.log("📝 Creating a new session with SQLite persistence...");
 	const session = await runner.sessionService.createSession(APP_NAME, USER_ID, {
@@ -121,15 +120,13 @@ async function runConversation() {
 
 	console.log("\n✅ SQLite runner example completed successfully!");
 	console.log("\n🔧 Key Features Demonstrated:");
-	console.log("✅ SQLite session persistence across conversations");
-	console.log("✅ Automatic database table creation");
+	console.log("✅ Unified database session service for SQLite");
+	console.log("✅ Automatic database table creation via Kysely");
 	console.log("✅ Session retrieval and listing");
 	console.log("✅ Event streaming with proper content handling");
 	console.log("✅ Multi-turn conversation continuity");
-	console.log("✅ Database connection management");
-
-	// Close the database connection
-	sqlite.close();
+	console.log("✅ Cross-database compatibility (SQLite/PostgreSQL/MySQL)");
+	console.log("✅ Automatic database connection management");
 }
 
 async function processMessage(messageContent: string, sessionId: string) {

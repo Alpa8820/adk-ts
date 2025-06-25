@@ -17,3 +17,6 @@ export { PostgresSessionService } from "./postgres-session-service";
 export { PgLiteSessionService } from "./pglite-session-service";
 export { SqliteSessionService } from "./sqlite-session-service";
 export { VertexAiSessionService } from "./vertex-ai-session-service";
+export { DatabaseSessionService } from "./database-session-service";
+
+export * from "./database-factories";
