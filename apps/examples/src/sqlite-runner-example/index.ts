@@ -11,26 +11,22 @@ import {
 const APP_NAME = "CounterDemo";
 const USER_ID = "demo-user";
 
-// Setup SQLite database
-const dbPath = path.join(__dirname, "data", "counter.db");
-if (!fs.existsSync(path.dirname(dbPath))) {
-	fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-}
-
-// Create runner with SQLite persistence
-const runner = new Runner({
-	appName: APP_NAME,
-	agent: new LlmAgent({
-		name: "counter_agent",
-		model: env.LLM_MODEL || "gemini-2.5-flash",
-		description:
-			"You are a counter. Increment the count each time and remember previous runs.",
-	}),
-	sessionService: createDatabaseSessionService(`sqlite://${dbPath}`),
-	memoryService: new InMemoryMemoryService(),
-});
-
 async function main() {
+	// Create runner with SQLite persistence
+	const runner = new Runner({
+		appName: APP_NAME,
+		agent: new LlmAgent({
+			name: "counter_agent",
+			model: env.LLM_MODEL || "gemini-2.5-flash",
+			description:
+				"You are a counter. Increment the count each time and remember previous runs.",
+		}),
+		sessionService: createDatabaseSessionService(
+			getSqliteConnectionString("counter"),
+		),
+		memoryService: new InMemoryMemoryService(),
+	});
+
 	// Find existing session or create new one
 	const { sessions } = await runner.sessionService.listSessions(
 		APP_NAME,
@@ -59,6 +55,23 @@ async function main() {
 	}
 
 	console.log("\n💡 Run this script multiple times to see persistence!");
+}
+
+/**
+ * Get SQLite connection string for the given database name
+ * Creates the directory if it doesn't exist
+ * @param dbName - Name of the database file (without extension)
+ * @returns SQLite connection string
+ */
+function getSqliteConnectionString(dbName: string): string {
+	const dbPath = path.join(__dirname, "data", `${dbName}.db`);
+
+	// Ensure the directory exists
+	if (!fs.existsSync(path.dirname(dbPath))) {
+		fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+	}
+
+	return `sqlite://${dbPath}`;
 }
 
 main().catch(console.error);
