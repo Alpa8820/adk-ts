@@ -280,7 +280,7 @@ export class SqliteSessionService extends BaseSessionService {
 		session.events.push(event);
 
 		// Update session timestamp
-		session.lastUpdateTime = Date.now() / 1000;
+		session.lastUpdateTime = Math.floor(Date.now() / 1000);
 
 		// Save the updated session to the database
 		await this.updateSession(session);

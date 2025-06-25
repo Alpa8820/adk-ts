@@ -129,7 +129,7 @@ export class PgLiteSessionService extends BaseSessionService {
 			userId,
 			createdAt: new Date(),
 			lastUpdateTime: Math.floor(now),
-			state: sessionState.toObject(),
+			state: sessionState,
 			events: [],
 		};
 
@@ -195,7 +195,7 @@ export class PgLiteSessionService extends BaseSessionService {
 			appName: session.appName,
 			userId: session.userId,
 			lastUpdateTime: session.lastUpdateTime,
-			state: session.state.toObject(),
+			state: session.state,
 			events: session.events || [],
 		};
 
@@ -257,7 +257,7 @@ export class PgLiteSessionService extends BaseSessionService {
 		session.events.push(event);
 
 		// Update session timestamp
-		session.lastUpdateTime = Date.now() / 1000;
+		session.lastUpdateTime = Math.floor(Date.now() / 1000);
 
 		// Save the updated session to the database
 		await this.updateSession(session);
