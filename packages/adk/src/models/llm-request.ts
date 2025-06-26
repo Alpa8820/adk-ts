@@ -1,9 +1,11 @@
+import { Logger } from "@adk/helpers/logger";
 import type { BaseTool } from "@adk/tools";
 import type {
 	Content,
 	GenerateContentConfig,
 	LiveConnectConfig,
 } from "@google/genai";
+const logger = new Logger({ name: "LlmRequest" });
 
 /**
  * LLM request class that allows passing in tools, output schema and system
@@ -99,5 +101,68 @@ export class LlmRequest {
 		if (!this.config) this.config = {};
 		this.config.responseSchema = baseModel;
 		this.config.responseMimeType = "application/json";
+	}
+
+	/**
+	 * Extracts the system instruction as plain text from Content.
+	 * System instructions are always Content type (not PartUnion for files/media).
+	 * @returns The system instruction as a string, or undefined if not set.
+	 */
+	getSystemInstructionText(): string | undefined {
+		if (!this.config?.systemInstruction) {
+			return undefined;
+		}
+		try {
+			// System instruction is always Content type
+			const content = this.config.systemInstruction as Content;
+
+			// Extract text from all parts
+			if (content.parts) {
+				return content.parts
+					.map((part) => part.text || "")
+					.filter(Boolean)
+					.join("");
+			}
+		} catch {
+			// If the system instruction is not a Content type.
+			// TODO: Handle this case later
+			logger.warn(
+				"System instruction is not a Content type. This is not supported yet.",
+			);
+		}
+
+		return "";
+	}
+
+	/**
+	 * Extracts text content from a Content object.
+	 * Used for extracting text from message contents.
+	 * @param content The Content object to extract text from.
+	 * @returns The extracted text as a string.
+	 */
+	static extractTextFromContent(content: any): string {
+		// If it's already a string, return it
+		if (typeof content === "string") {
+			return content;
+		}
+
+		// If it's an array, assume it's already processed content parts
+		if (Array.isArray(content)) {
+			return content
+				.map((part) => part.text || "")
+				.filter(Boolean)
+				.join("");
+		}
+
+		// Handle Content type with parts
+		if (content?.parts) {
+			return content.parts
+				.map((part: any) => part.text || "")
+				.filter(Boolean)
+				.join("");
+		}
+
+		// Fallback to string conversion
+		return String(content || "");
 	}
 }
