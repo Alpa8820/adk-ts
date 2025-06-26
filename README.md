@@ -82,7 +82,7 @@ dotenv.config();
 const basicAgent = new Agent({
   name: "introductory_assistant",
   // Supported models include "gpt-4-turbo", "claude-3-opus", etc.
-  model: "gemini-2.5-flash-preview-05-20",
+  model: "gemini-2.5-flash",
   description: "A foundational assistant agent.",
   instructions: "You are an AI assistant. Please provide concise and accurate responses."
 });
@@ -193,7 +193,7 @@ const memoryService = new PersistentMemoryService({
 
 const contextualAgent = new Agent({
   name: "context_aware_assistant",
-  model: "gemini-2.5-flash-preview-05-20",
+  model: "gemini-2.5-flash",
   instructions:
     "You are equipped with persistent memory. Recall user preferences and past conversation details.",
   memoryService,

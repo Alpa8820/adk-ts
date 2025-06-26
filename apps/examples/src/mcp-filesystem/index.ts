@@ -1,38 +1,28 @@
-/**
- * MCP Filesystem Server Example
- *
- * This example shows how to use the Model Context Protocol (MCP) filesystem server
- * to create, write, and read files through MCP tools.
- */
-
+import * as path from "node:path";
+import { env } from "node:process";
 import {
-	Agent,
-	GoogleLLM,
-	LLMRegistry,
+	InMemorySessionService,
+	LlmAgent,
 	type McpConfig,
 	McpError,
 	McpToolset,
-	type MessageRole,
+	Runner,
 } from "@iqai/adk";
-
-LLMRegistry.registerLLM(GoogleLLM);
+import { v4 as uuidv4 } from "uuid";
 
 const DEBUG = true;
+const APP_NAME = "mcp-filesystem-example";
+const USER_ID = uuidv4();
 
-// Specify the allowed path for file operations
-const ALLOWED_PATH = "path/to/your/desktop";
+// Use a temp directory for allowed path, similar to file-operations-tool example
+const ALLOWED_PATH = path.join(process.cwd(), "temp-examples");
 
-/**
- * Demonstrates an agent using MCP filesystem tools
- */
 async function main() {
-	// Initialize toolset outside try block to enable cleanup in finally
 	let toolset: McpToolset | null = null;
 
 	try {
-		console.log("🚀 Starting MCP Filesystem Agent Example");
+		console.log("🚀 Starting MCP Filesystem Agent Example", ALLOWED_PATH);
 
-		// Configure the MCP client
 		const mcpConfig: McpConfig = {
 			name: "Filesystem Client",
 			description: "Client for MCP Filesystem Server",
@@ -51,11 +41,9 @@ async function main() {
 			},
 		};
 
-		// Create a toolset for the MCP server
 		console.log("Connecting to MCP filesystem server...");
 		toolset = new McpToolset(mcpConfig);
 
-		// Get tools from the toolset
 		const mcpTools = await toolset.getTools();
 
 		console.log(`Retrieved ${mcpTools.length} tools from the MCP server:`);
@@ -63,134 +51,130 @@ async function main() {
 			console.log(`- ${tool.name}: ${tool.description}`);
 		});
 
-		// Create the agent with MCP filesystem tools
-		const agent = new Agent({
+		const agent = new LlmAgent({
 			name: "filesystem_assistant",
-			model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+			model: env.LLM_MODEL || "gemini-2.5-flash",
 			description: "An assistant that can manipulate files using Google Gemini",
-			instructions: `You are a helpful assistant that can manipulate files on the user's desktop.
+			instruction: `You are a helpful assistant that can manipulate files in the application's temp directory.
 				You have access to tools that let you write, read, and manage files.
-				You can only access files in this path: ${ALLOWED_PATH}
 				When asked to create a rhyme, be creative and write a short, original rhyme to a file.
 				When reading files, summarize the content appropriately.`,
 			tools: mcpTools,
-			maxToolExecutionSteps: 5,
 		});
+
+		const sessionService = new InMemorySessionService();
+		const session = await sessionService.createSession(APP_NAME, USER_ID);
+
+		const runner = new Runner({
+			appName: APP_NAME,
+			agent,
+			sessionService,
+		});
+
+		async function runAgentTask(userMessage: string): Promise<string> {
+			const newMessage = {
+				parts: [
+					{
+						text: userMessage,
+					},
+				],
+			};
+
+			let agentResponse = "";
+
+			if (DEBUG) {
+				console.log(`\n[DEBUG] Starting agent loop with query: ${userMessage}`);
+			}
+
+			try {
+				for await (const event of runner.runAsync({
+					userId: USER_ID,
+					sessionId: session.id,
+					newMessage,
+				})) {
+					if (event.author === agent.name && event.content?.parts) {
+						const content = event.content.parts
+							.map((part) => part.text || "")
+							.join("");
+						if (content) {
+							agentResponse += content;
+						}
+					}
+				}
+			} catch (error) {
+				return `❌ Error: ${error instanceof Error ? error.message : String(error)}`;
+			}
+
+			if (DEBUG) {
+				console.log("[DEBUG] Agent loop completed");
+			}
+
+			return agentResponse || "No response from agent";
+		}
 
 		console.log("Agent initialized with MCP filesystem tools");
 		console.log("-----------------------------------");
 
-		if (DEBUG) {
-			// Add debug wrapper for agent.run
-			const originalRun = agent.run.bind(agent);
-			agent.run = async (options) => {
-				console.log(
-					"\n[DEBUG] Starting agent loop with query:",
-					options.messages[options.messages.length - 1].content,
-				);
-				const result = await originalRun(options);
-				console.log("[DEBUG] Agent loop completed");
-				return result;
-			};
-		}
-
-		// Example 1: Create a file with a rhyme
 		console.log("\nExample 1: Creating a rhyme file");
 		console.log(
 			"Question: Create a short nursery rhyme about coding and save it to a file called coding_rhyme.txt",
 		);
 		console.log("-----------------------------------");
 
-		const createResponse = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content:
-						"Create a short nursery rhyme about coding and save it to a file called coding_rhyme.txt",
-				},
-			],
-		});
+		const createResponse = await runAgentTask(
+			"Create a short nursery rhyme about coding and save it to a file called coding_rhyme.txt",
+		);
 
-		console.log("Final Response:", createResponse.content);
+		console.log("Final Response:", createResponse);
 		console.log("-----------------------------------");
 
-		// Example 2: Read the created file
 		console.log("\nExample 2: Reading the rhyme file");
 		console.log(
 			"Question: Now read the coding_rhyme.txt file you just created and tell me what it says.",
 		);
 		console.log("-----------------------------------");
 
-		const readResponse = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content:
-						"Now read the coding_rhyme.txt file you just created and tell me what it says.",
-				},
-			],
-		});
+		const readResponse = await runAgentTask(
+			"Now read the coding_rhyme.txt file you just created and tell me what it says.",
+		);
 
-		console.log("Final Response:", readResponse.content);
+		console.log("Final Response:", readResponse);
 		console.log("-----------------------------------");
 
-		// Example 3: Multi-step conversation
 		console.log("\nExample 3: Multi-step conversation");
 		console.log("-----------------------------------");
 
-		const conversation = [
-			{
-				role: "user" as MessageRole,
-				content:
-					"Create a new file called desktop_report.txt with a list of 3 benefits of keeping your desktop organized.",
-			},
-		];
-
-		// First turn: Create the file
-		let response = await agent.run({ messages: [...conversation] });
+		const createFileResponse = await runAgentTask(
+			"Create a new file called desktop_report.txt with a list of 3 benefits of keeping your desktop organized.",
+		);
 		console.log(
 			"User: Create a new file called desktop_report.txt with a list of 3 benefits of keeping your desktop organized.",
 		);
-		console.log("Assistant:", response.content);
+		console.log("Assistant:", createFileResponse);
 
-		// Add response to conversation
-		conversation.push({
-			role: "assistant" as MessageRole,
-			content: response.content || "",
-		});
-
-		// Second turn: Read the file
-		conversation.push({
-			role: "user" as MessageRole,
-			content: "Read the desktop_report.txt file you just created.",
-		});
 		console.log("\nUser: Read the desktop_report.txt file you just created.");
+		const readFileResponse = await runAgentTask(
+			"Read the desktop_report.txt file you just created.",
+		);
+		console.log("Assistant:", readFileResponse);
 
-		response = await agent.run({ messages: [...conversation] });
-		console.log("Assistant:", response.content);
-
-		// Add response to conversation
-		conversation.push({
-			role: "assistant" as MessageRole,
-			content: response.content || "",
-		});
-
-		// Third turn: Modify the file
-		conversation.push({
-			role: "user" as MessageRole,
-			content:
-				"Update the desktop_report.txt file to include a fourth benefit about productivity.",
-		});
 		console.log(
 			"\nUser: Update the desktop_report.txt file to include a fourth benefit about productivity.",
 		);
+		const updateFileResponse = await runAgentTask(
+			"Update the desktop_report.txt file to include a fourth benefit about productivity.",
+		);
+		console.log("Assistant:", updateFileResponse);
 
-		response = await agent.run({ messages: [...conversation] });
-		console.log("Assistant:", response.content);
-
-		console.log("\nMCP Filesystem Agent examples complete!");
+		console.log("\n🎉 MCP Filesystem Agent examples complete!");
+		console.log("\n📊 What we demonstrated:");
+		console.log("✅ Connecting to MCP filesystem server");
+		console.log("✅ Creating and writing files through MCP tools");
+		console.log("✅ Reading file contents through MCP tools");
+		console.log("✅ Multi-step file operations with session persistence");
+		console.log("✅ File modification and updates");
+		console.log("✅ Proper error handling and resource cleanup");
 	} catch (error) {
-		// Proper error handling with McpError
 		if (error instanceof McpError) {
 			console.error(`MCP Error (${error.type}): ${error.message}`);
 			if (error.originalError) {
@@ -200,7 +184,6 @@ async function main() {
 			console.error("Error:", error);
 		}
 	} finally {
-		// Ensure resources are cleaned up properly
 		if (toolset) {
 			console.log("Cleaning up MCP resources...");
 			await toolset

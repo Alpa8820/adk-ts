@@ -1,10 +1,15 @@
 import {
-	Agent,
+	LlmAgent,
+	Runner,
+	InMemorySessionService,
 	BuiltInPlanner,
 	PlanReActPlanner,
-	type Message,
 } from "@iqai/adk";
 import { env } from "node:process";
+import { v4 as uuidv4 } from "uuid";
+
+const APP_NAME = "planner-demo";
+const USER_ID = uuidv4();
 
 /**
  * Planner Usage Examples
@@ -17,11 +22,11 @@ import { env } from "node:process";
 async function demonstrateBuiltInPlanner() {
 	console.log("🧠 === BuiltInPlanner Example ===");
 
-	const agent = new Agent({
+	const agent = new LlmAgent({
 		name: "ThinkingAgent",
 		description: "An agent that uses built-in thinking",
 		model: env.LLM_MODEL || "gemini-2.5-pro",
-		instructions:
+		instruction:
 			"You are a helpful assistant that thinks through problems carefully.",
 		planner: new BuiltInPlanner({
 			thinkingConfig: {
@@ -30,17 +35,43 @@ async function demonstrateBuiltInPlanner() {
 		}),
 	});
 
-	const messages: Message[] = [
-		{
-			role: "user",
-			content: "What's 2 + 2? Please explain your reasoning.",
-		},
-	];
+	// Create services and runner
+	const sessionService = new InMemorySessionService();
+	const session = await sessionService.createSession(APP_NAME, USER_ID);
+
+	const runner = new Runner({
+		appName: APP_NAME,
+		agent,
+		sessionService,
+	});
+
+	const userMessage = "What's 2 + 2? Please explain your reasoning.";
 
 	try {
-		const response = await agent.run({ messages });
+		console.log(`👤 User: ${userMessage}`);
+		console.log("🤖 Agent Response:");
+
+		let agentResponse = "";
+
+		for await (const event of runner.runAsync({
+			userId: USER_ID,
+			sessionId: session.id,
+			newMessage: {
+				parts: [{ text: userMessage }],
+			},
+		})) {
+			if (event.author === agent.name && event.content?.parts) {
+				const content = event.content.parts
+					.map((part) => part.text || "")
+					.join("");
+				if (content) {
+					agentResponse += content;
+				}
+			}
+		}
+
 		console.log("📝 BuiltInPlanner Response:");
-		console.log(response.content);
+		console.log(agentResponse);
 	} catch (error) {
 		console.error("Error with BuiltInPlanner:", error);
 	}
@@ -51,26 +82,52 @@ async function demonstrateBuiltInPlanner() {
 async function demonstratePlanReActPlanner() {
 	console.log("📋 === PlanReActPlanner Example ===");
 
-	const agent = new Agent({
+	const agent = new LlmAgent({
 		name: "PlanningAgent",
 		description: "An agent that uses structured planning",
 		model: env.LLM_MODEL || "gemini-2.5-pro",
-		instructions: "You are a helpful assistant that plans before acting.",
+		instruction: "You are a helpful assistant that plans before acting.",
 		planner: new PlanReActPlanner(),
 	});
 
-	const messages: Message[] = [
-		{
-			role: "user",
-			content:
-				"I need to plan a birthday party for 20 people. Help me organize this.",
-		},
-	];
+	// Create services and runner
+	const sessionService = new InMemorySessionService();
+	const session = await sessionService.createSession(APP_NAME, USER_ID);
+
+	const runner = new Runner({
+		appName: APP_NAME,
+		agent,
+		sessionService,
+	});
+
+	const userMessage =
+		"I need to plan a birthday party for 20 people. Help me organize this.";
 
 	try {
-		const response = await agent.run({ messages });
+		console.log(`👤 User: ${userMessage}`);
+		console.log("🤖 Agent Response:");
+
+		let agentResponse = "";
+
+		for await (const event of runner.runAsync({
+			userId: USER_ID,
+			sessionId: session.id,
+			newMessage: {
+				parts: [{ text: userMessage }],
+			},
+		})) {
+			if (event.author === agent.name && event.content?.parts) {
+				const content = event.content.parts
+					.map((part) => part.text || "")
+					.join("");
+				if (content) {
+					agentResponse += content;
+				}
+			}
+		}
+
 		console.log("📝 PlanReActPlanner Response:");
-		console.log(response.content);
+		console.log(agentResponse);
 		console.log("\n📊 Notice the structured planning tags in the response!");
 	} catch (error) {
 		console.error("Error with PlanReActPlanner:", error);
@@ -82,25 +139,51 @@ async function demonstratePlanReActPlanner() {
 async function demonstrateNoPlannerComparison() {
 	console.log("⚡ === No Planner Comparison ===");
 
-	const agent = new Agent({
+	const agent = new LlmAgent({
 		name: "SimpleAgent",
 		description: "An agent without any planner",
 		model: env.LLM_MODEL || "gemini-2.5-pro",
-		instructions: "You are a helpful assistant.",
+		instruction: "You are a helpful assistant.",
 		// No planner specified
 	});
 
-	const messages: Message[] = [
-		{
-			role: "user",
-			content: "What's the capital of France?",
-		},
-	];
+	// Create services and runner
+	const sessionService = new InMemorySessionService();
+	const session = await sessionService.createSession(APP_NAME, USER_ID);
+
+	const runner = new Runner({
+		appName: APP_NAME,
+		agent,
+		sessionService,
+	});
+
+	const userMessage = "What's the capital of France?";
 
 	try {
-		const response = await agent.run({ messages });
+		console.log(`👤 User: ${userMessage}`);
+		console.log("🤖 Agent Response:");
+
+		let agentResponse = "";
+
+		for await (const event of runner.runAsync({
+			userId: USER_ID,
+			sessionId: session.id,
+			newMessage: {
+				parts: [{ text: userMessage }],
+			},
+		})) {
+			if (event.author === agent.name && event.content?.parts) {
+				const content = event.content.parts
+					.map((part) => part.text || "")
+					.join("");
+				if (content) {
+					agentResponse += content;
+				}
+			}
+		}
+
 		console.log("📝 No Planner Response (for comparison):");
-		console.log(response.content);
+		console.log(agentResponse);
 	} catch (error) {
 		console.error("Error with no planner:", error);
 	}
@@ -131,9 +214,18 @@ async function main() {
 	);
 	console.log("• PlanReActPlanner uses explicit tags to organize responses");
 	console.log("• Both planners can improve response quality and reasoning");
+
+	console.log("\n📊 What we demonstrated:");
+	console.log("✅ BuiltInPlanner with thinking configuration");
+	console.log("✅ PlanReActPlanner with structured planning");
+	console.log("✅ No planner baseline for comparison");
+	console.log("✅ Runner pattern with session management");
+	console.log("✅ Event-based response processing");
+	console.log("✅ Multiple agent configurations");
 }
 
 // Run the examples
-if (require.main === module) {
-	main().catch(console.error);
-}
+main().catch((error) => {
+	console.error("❌ Error in planner examples:", error);
+	process.exit(1);
+});

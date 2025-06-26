@@ -1,12 +1,17 @@
 import {
 	InMemoryMemoryService,
-	InvocationContext,
+	InMemorySessionService,
 	LoadMemoryTool,
+	LlmAgent,
+	Runner,
+	Event,
 	type Session,
-	SessionState,
-	ToolContext,
 } from "@iqai/adk";
-// Load environment variables
+import { env } from "node:process";
+import { v4 as uuidv4 } from "uuid";
+
+const APP_NAME = "load-memory-example";
+const USER_ID = uuidv4();
 
 async function main() {
 	console.log("=== LoadMemoryTool Example ===");
@@ -15,99 +20,230 @@ async function main() {
 	);
 	console.log("\n");
 
-	// Create a memory service with some sample data
+	// Create services
 	const memoryService = new InMemoryMemoryService();
+	const sessionService = new InMemorySessionService();
 
-	// Add some sample memory data
-	const sampleSession: Session = {
+	// Create some sample sessions with events to populate memory
+	const sampleSession1: Session = {
 		id: "sample-session-1",
-		userId: "sample-user",
-		messages: [
-			{ role: "user", content: "What is the capital of France?" },
-			{ role: "assistant", content: "The capital of France is Paris." },
-			{ role: "user", content: "What about Germany?" },
-			{ role: "assistant", content: "The capital of Germany is Berlin." },
+		appName: APP_NAME,
+		userId: USER_ID,
+		state: {},
+		events: [
+			new Event({
+				invocationId: "inv-1",
+				author: "user",
+				content: {
+					role: "user",
+					parts: [{ text: "What is the capital of France?" }],
+				},
+			}),
+			new Event({
+				invocationId: "inv-1",
+				author: "geography_agent",
+				content: {
+					role: "model",
+					parts: [{ text: "The capital of France is Paris." }],
+				},
+			}),
+			new Event({
+				invocationId: "inv-2",
+				author: "user",
+				content: {
+					role: "user",
+					parts: [{ text: "What about Germany?" }],
+				},
+			}),
+			new Event({
+				invocationId: "inv-2",
+				author: "geography_agent",
+				content: {
+					role: "model",
+					parts: [{ text: "The capital of Germany is Berlin." }],
+				},
+			}),
 		],
-		metadata: { topic: "geography", appName: "memory-demo" },
-		createdAt: new Date(),
-		updatedAt: new Date(),
-		state: new SessionState(),
+		lastUpdateTime: Date.now(),
 	};
-
-	await memoryService.addSessionToMemory(sampleSession);
 
 	const sampleSession2: Session = {
 		id: "sample-session-2",
-		userId: "sample-user",
-		messages: [
-			{ role: "user", content: "Tell me about machine learning" },
-			{
-				role: "assistant",
-				content:
-					"Machine learning is a subset of artificial intelligence that allows systems to learn and improve from experience without being explicitly programmed.",
-			},
-			{ role: "user", content: "What about deep learning?" },
-			{
-				role: "assistant",
-				content:
-					"Deep learning is a subset of machine learning that uses neural networks with many layers to analyze various factors of data.",
-			},
+		appName: APP_NAME,
+		userId: USER_ID,
+		state: {},
+		events: [
+			new Event({
+				invocationId: "inv-3",
+				author: "user",
+				content: {
+					role: "user",
+					parts: [{ text: "Tell me about machine learning" }],
+				},
+			}),
+			new Event({
+				invocationId: "inv-3",
+				author: "tech_agent",
+				content: {
+					role: "model",
+					parts: [
+						{
+							text: "Machine learning is a subset of artificial intelligence that allows systems to learn and improve from experience without being explicitly programmed.",
+						},
+					],
+				},
+			}),
+			new Event({
+				invocationId: "inv-4",
+				author: "user",
+				content: {
+					role: "user",
+					parts: [{ text: "What about deep learning?" }],
+				},
+			}),
+			new Event({
+				invocationId: "inv-4",
+				author: "tech_agent",
+				content: {
+					role: "model",
+					parts: [
+						{
+							text: "Deep learning is a subset of machine learning that uses neural networks with many layers to analyze various factors of data.",
+						},
+					],
+				},
+			}),
 		],
-		metadata: { topic: "technology", appName: "memory-demo" },
-		createdAt: new Date(),
-		updatedAt: new Date(),
-		state: new SessionState(),
+		lastUpdateTime: Date.now(),
 	};
 
+	// Add sessions to memory
+	await memoryService.addSessionToMemory(sampleSession1);
 	await memoryService.addSessionToMemory(sampleSession2);
 
-	// Create an invocation context with the memory service
-	const invocationContext = new InvocationContext({
-		sessionId: "current-session",
-		messages: [],
-		memoryService: memoryService,
-		userId: "sample-user",
-		appName: "memory-demo",
+	// Create a session for our current example
+	const currentSession = await sessionService.createSession(APP_NAME, USER_ID);
+
+	// Create an agent that uses the LoadMemoryTool
+	const agent = new LlmAgent({
+		name: "memory_assistant",
+		model: env.LLM_MODEL || "gemini-2.5-flash",
+		description:
+			"An assistant that can search through memory to find relevant information",
+		instruction: `You are a helpful assistant that can search through memory to find relevant information.
+Use the load_memory tool to search for information when users ask questions.
+Present the memory results in a clear and helpful way.`,
+		tools: [new LoadMemoryTool()],
 	});
 
-	// Create a tool context
-	const toolContext = new ToolContext({
-		invocationContext: invocationContext,
+	const runner = new Runner({
+		appName: APP_NAME,
+		agent,
+		sessionService,
+		memoryService,
 	});
 
-	// Create the LoadMemoryTool
+	// Helper function to run agent and get response
+	async function runAgentTask(userMessage: string): Promise<string> {
+		const newMessage = {
+			parts: [
+				{
+					text: userMessage,
+				},
+			],
+		};
+
+		let agentResponse = "";
+
+		try {
+			for await (const event of runner.runAsync({
+				userId: USER_ID,
+				sessionId: currentSession.id,
+				newMessage,
+			})) {
+				if (event.author === agent.name && event.content?.parts) {
+					const content = event.content.parts
+						.map((part) => part.text || "")
+						.join("");
+					if (content) {
+						agentResponse += content;
+					}
+				}
+			}
+		} catch (error) {
+			return `❌ Error: ${error instanceof Error ? error.message : String(error)}`;
+		}
+
+		return agentResponse || "No response from agent";
+	}
+
+	// Also demonstrate the tool directly for educational purposes
+	console.log("=== Direct Tool Usage Examples ===\n");
+
 	const loadMemoryTool = new LoadMemoryTool();
-
-	// Demonstrate the tool using different queries
 	console.log("Tool name:", loadMemoryTool.name);
 	console.log("Tool description:", loadMemoryTool.description);
-
 	console.log("\nTool declaration:");
 	console.log(JSON.stringify(loadMemoryTool.getDeclaration(), null, 2));
 
-	// Example 1: Search for geography-related memories
-	console.log("\nExample 1: Searching for 'capital'");
-	const result1 = await loadMemoryTool.runAsync(
-		{ query: "capital" },
-		toolContext,
-	);
-	console.log("Result:", JSON.stringify(result1, null, 2));
+	// Direct memory search examples (for educational purposes)
+	console.log("\n=== Direct Memory Searches ===");
 
-	// Example 2: Search for technology-related memories
-	console.log("\nExample 2: Searching for 'machine learning'");
-	const result2 = await loadMemoryTool.runAsync(
-		{ query: "machine learning" },
-		toolContext,
-	);
-	console.log("Result:", JSON.stringify(result2, null, 2));
+	// Search for geography-related memories
+	console.log("\nDirect search for 'capital':");
+	const directResult1 = await memoryService.searchMemory({
+		appName: APP_NAME,
+		userId: USER_ID,
+		query: "capital",
+	});
+	console.log("Result:", JSON.stringify(directResult1, null, 2));
 
-	// Example 3: Search for something not in memory
-	console.log("\nExample 3: Searching for something not in memory");
-	const result3 = await loadMemoryTool.runAsync(
-		{ query: "quantum physics" },
-		toolContext,
+	// Search for technology-related memories
+	console.log("\nDirect search for 'machine learning':");
+	const directResult2 = await memoryService.searchMemory({
+		appName: APP_NAME,
+		userId: USER_ID,
+		query: "machine learning",
+	});
+	console.log("Result:", JSON.stringify(directResult2, null, 2));
+
+	// Agent-based examples using LoadMemoryTool
+	console.log("\n=== Agent-Based Memory Usage ===");
+
+	// Example 1: Ask about geography
+	console.log("\nExample 1: Ask about European capitals");
+	const result1 = await runAgentTask(
+		"Search my memory for information about European capitals",
 	);
-	console.log("Result:", JSON.stringify(result3, null, 2));
+	console.log("Agent response:", result1);
+
+	// Example 2: Ask about technology
+	console.log("\nExample 2: Ask about artificial intelligence");
+	const result2 = await runAgentTask(
+		"What do I know about artificial intelligence and machine learning?",
+	);
+	console.log("Agent response:", result2);
+
+	// Example 3: Ask about something not in memory
+	console.log("\nExample 3: Ask about something not in memory");
+	const result3 = await runAgentTask("What do I know about quantum physics?");
+	console.log("Agent response:", result3);
+
+	// Example 4: General memory search
+	console.log("\nExample 4: General memory search");
+	const result4 = await runAgentTask(
+		"Search my memory for any conversations about learning",
+	);
+	console.log("Agent response:", result4);
+
+	console.log("\n🎉 Load memory tool example completed!");
+	console.log("\n📊 What we demonstrated:");
+	console.log("✅ Setting up InMemoryMemoryService with sample data");
+	console.log("✅ Creating proper Session objects with Event arrays");
+	console.log("✅ Direct memory service searches");
+	console.log("✅ LoadMemoryTool integration with LlmAgent");
+	console.log("✅ Agent-based memory retrieval and presentation");
+	console.log("✅ Handling cases where no relevant memories exist");
 }
 
 // Run the example

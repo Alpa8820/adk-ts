@@ -1,15 +1,16 @@
 import {
-	Agent,
-	GoogleLLM,
-	LLMRegistry,
+	LlmAgent,
+	Runner,
+	InMemorySessionService,
 	type McpConfig,
 	McpError,
 	McpToolset,
-	type MessageRole,
 } from "@iqai/adk";
-// Load environment variables from .env file
+import { env } from "node:process";
+import { v4 as uuidv4 } from "uuid";
 
-LLMRegistry.registerLLM(GoogleLLM);
+const APP_NAME = "mcp-atp-example";
+const USER_ID = uuidv4();
 
 /**
  * Demonstrates an agent using MCP tools from the @iqai/mcp-atp server.
@@ -20,9 +21,9 @@ async function main() {
 	console.log("🚀 Starting MCP ATP Agent Example");
 
 	// Retrieve required environment variables
-	const walletPrivateKey = process.env.WALLET_PRIVATE_KEY;
-	const atpApiKey = process.env.ATP_API_KEY;
-	const exampleTokenContract = process.env.EXAMPLE_ATP_TOKEN_CONTRACT;
+	const walletPrivateKey = env.WALLET_PRIVATE_KEY;
+	const atpApiKey = env.ATP_API_KEY;
+	const exampleTokenContract = env.EXAMPLE_ATP_TOKEN_CONTRACT;
 
 	if (!exampleTokenContract) {
 		console.error(
@@ -49,7 +50,7 @@ async function main() {
 		const mcpConfig: McpConfig = {
 			name: "ATP MCP Client",
 			description: "Client for the @iqai/mcp-atp server",
-			debug: process.env.DEBUG === "true",
+			debug: env.DEBUG === "true",
 			retryOptions: {
 				maxRetries: 2,
 				initialDelay: 200,
@@ -62,16 +63,16 @@ async function main() {
 				command: "pnpm",
 				args: ["dlx", "@iqai/mcp-atp"],
 				env: {
-					...(process.env.WALLET_PRIVATE_KEY && {
-						WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+					...(env.WALLET_PRIVATE_KEY && {
+						WALLET_PRIVATE_KEY: env.WALLET_PRIVATE_KEY,
 					}),
-					...(process.env.ATP_API_KEY && {
-						ATP_API_KEY: process.env.ATP_API_KEY,
+					...(env.ATP_API_KEY && {
+						ATP_API_KEY: env.ATP_API_KEY,
 					}),
-					...(process.env.ATP_USE_DEV && {
-						ATP_USE_DEV: process.env.ATP_USE_DEV,
+					...(env.ATP_USE_DEV && {
+						ATP_USE_DEV: env.ATP_USE_DEV,
 					}),
-					PATH: process.env.PATH || "", // important to pass PATH to child processes
+					PATH: env.PATH || "", // important to pass PATH to child processes
 				},
 			},
 		};
@@ -98,16 +99,59 @@ async function main() {
 		});
 
 		// Create the agent with MCP ATP tools
-		const agent = new Agent({
+		const agent = new LlmAgent({
 			name: "mcp_atp_assistant",
-			model: process.env.LLM_MODEL || "gemini-2.5-flash-preview-05-20",
+			model: env.LLM_MODEL || "gemini-2.5-flash",
 			description:
 				"An assistant that can interact with the IQ AI ATP via MCP using Google Gemini",
-			instructions:
+			instruction:
 				"You are a helpful assistant that can interact with the IQ AI Agent Tokenization Platform (ATP).",
 			tools: mcpTools,
-			maxToolExecutionSteps: 3,
 		});
+
+		// Create session service and runner
+		const sessionService = new InMemorySessionService();
+		const session = await sessionService.createSession(APP_NAME, USER_ID);
+
+		const runner = new Runner({
+			appName: APP_NAME,
+			agent,
+			sessionService,
+		});
+
+		// Helper function to run agent and get response
+		async function runAgentTask(userMessage: string): Promise<string> {
+			const newMessage = {
+				parts: [
+					{
+						text: userMessage,
+					},
+				],
+			};
+
+			let agentResponse = "";
+
+			try {
+				for await (const event of runner.runAsync({
+					userId: USER_ID,
+					sessionId: session.id,
+					newMessage,
+				})) {
+					if (event.author === agent.name && event.content?.parts) {
+						const content = event.content.parts
+							.map((part) => part.text || "")
+							.join("");
+						if (content) {
+							agentResponse += content;
+						}
+					}
+				}
+			} catch (error) {
+				return `❌ Error: ${error instanceof Error ? error.message : String(error)}`;
+			}
+
+			return agentResponse || "No response from agent";
+		}
 
 		console.log("🤖 Agent initialized with MCP ATP tools.");
 		console.log("-----------------------------------");
@@ -119,16 +163,8 @@ async function main() {
 		console.log(`💬 User Query: ${statsQuery}`);
 		console.log("-----------------------------------");
 
-		const statsResponse = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content: statsQuery,
-				},
-			],
-		});
-
-		console.log(`💡 Agent Response: ${statsResponse.content}`);
+		const statsResponse = await runAgentTask(statsQuery);
+		console.log(`💡 Agent Response: ${statsResponse}`);
 		console.log("-----------------------------------");
 
 		// Example 2: Get Agent Logs
@@ -138,16 +174,8 @@ async function main() {
 		console.log(`💬 User Query: ${logsQuery}`);
 		console.log("-----------------------------------");
 
-		const logsResponse = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content: logsQuery,
-				},
-			],
-		});
-
-		console.log(`💡 Agent Response: ${logsResponse.content}`);
+		const logsResponse = await runAgentTask(logsQuery);
+		console.log(`💡 Agent Response: ${logsResponse}`);
 		console.log("-----------------------------------");
 
 		// Example 3: Add Agent Log
@@ -158,15 +186,8 @@ async function main() {
 		console.log(`💬 User Query: ${addLogQuery}`);
 		console.log("-----------------------------------");
 
-		const addLogResponse = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content: addLogQuery,
-				},
-			],
-		});
-		console.log(`💡 Agent Response: ${addLogResponse.content}`);
+		const addLogResponse = await runAgentTask(addLogQuery);
+		console.log(`💡 Agent Response: ${addLogResponse}`);
 		console.log("-----------------------------------");
 
 		// Example 4: Buy Agent Tokens
@@ -177,15 +198,8 @@ async function main() {
 		console.log(`💬 User Query: ${buyQuery}`);
 		console.log("-----------------------------------");
 
-		const buyResponse = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content: buyQuery,
-				},
-			],
-		});
-		console.log(`💡 Agent Response: ${buyResponse.content}`);
+		const buyResponse = await runAgentTask(buyQuery);
+		console.log(`💡 Agent Response: ${buyResponse}`);
 		console.log("-----------------------------------");
 
 		// Example 5: Sell Agent Tokens
@@ -196,18 +210,22 @@ async function main() {
 		console.log(`💬 User Query: ${sellQuery}`);
 		console.log("-----------------------------------");
 
-		const sellResponse = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content: sellQuery,
-				},
-			],
-		});
-		console.log(`💡 Agent Response: ${sellResponse.content}`);
+		const sellResponse = await runAgentTask(sellQuery);
+		console.log(`💡 Agent Response: ${sellResponse}`);
 		console.log("-----------------------------------");
 
 		console.log("✅ MCP ATP Agent examples complete!");
+
+		console.log("\n🎉 MCP ATP agent example completed!");
+		console.log("\n📊 What we demonstrated:");
+		console.log("✅ Connecting to @iqai/mcp-atp server via MCP protocol");
+		console.log("✅ Retrieving MCP tools dynamically from the server");
+		console.log("✅ Creating LlmAgent with MCP tools integrated");
+		console.log("✅ Using Runner pattern for proper session management");
+		console.log("✅ Agent statistics retrieval");
+		console.log("✅ Agent logs management (get and add)");
+		console.log("✅ Agent token trading (buy and sell operations)");
+		console.log("✅ Proper error handling and resource cleanup");
 	} catch (error) {
 		if (error instanceof McpError) {
 			console.error(`❌ MCP Error (${error.type}): ${error.message}`);

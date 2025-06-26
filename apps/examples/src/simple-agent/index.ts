@@ -1,17 +1,8 @@
-import { Agent, GoogleLLM, LLMRegistry, type MessageRole } from "@iqai/adk";
-// Load environment variables from .env file if it exists
-
-// Register the Google LLM
-LLMRegistry.registerLLM(GoogleLLM);
+import { Agent, type Content, InMemorySessionService, Runner } from "@iqai/adk";
 
 // Initialize the agent with Google's Gemini model
-const agent = new Agent({
-	name: "gemini_assistant",
-	model: "gemini-2.5-flash-preview-05-20", // Use Gemini model through LLMRegistry
-	description: "A simple assistant using Google's gemini 2.5Flash model",
-	instructions:
-		"You are a helpful assistant. Answer questions concisely and accurately.",
-});
+const APP_NAME = "simple-example";
+const USER_ID = "user_id";
 
 async function main() {
 	try {
@@ -19,60 +10,31 @@ async function main() {
 			"🤖 Starting a simple agent example with Google's gemini 2.5Flash model...",
 		);
 
-		// Example 1: Basic question answering
-		console.log("\n📝 Example 1: Basic question answering");
-		const response1 = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content: "What are the three laws of robotics?",
-				},
-			],
+		const agent = new Agent({
+			name: "gemini_assistant",
+			model: "gemini-2.5-flash",
+			description: "A simple assistant using Google's gemini 2.5 Flash model",
 		});
-		console.log(`🤖 ${response1.content || "No response content"}`);
 
-		// Example 2: Follow-up question (using conversation history)
-		console.log("\n📝 Example 2: Follow-up question");
-		const response2 = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content: "What are the three laws of robotics?",
-				},
-				{
-					role: "assistant" as MessageRole,
-					content: response1.content || "No response",
-				},
-				{ role: "user" as MessageRole, content: "Who formulated these laws?" },
-			],
-		});
-		console.log(`🤖 ${response2.content || "No response content"}`);
+		const sessionService = new InMemorySessionService();
+		const newSession = await sessionService.createSession(APP_NAME, USER_ID);
 
-		// Example 3: More complex reasoning
-		console.log("\n📝 Example 3: More complex reasoning");
-		const response3 = await agent.run({
-			messages: [
-				{
-					role: "user" as MessageRole,
-					content: "What are the three laws of robotics?",
-				},
-				{
-					role: "assistant" as MessageRole,
-					content: response1.content || "No response",
-				},
-				{ role: "user" as MessageRole, content: "Who formulated these laws?" },
-				{
-					role: "assistant" as MessageRole,
-					content: response2.content || "No response",
-				},
-				{
-					role: "user" as MessageRole,
-					content:
-						"Can you suggest three practical applications of these laws in modern AI systems?",
-				},
-			],
+		const runner = new Runner({
+			appName: APP_NAME,
+			agent,
+			sessionService,
 		});
-		console.log(`🤖 ${response3.content || "No response content"}`);
+
+		const text = "What is capital of Australia?";
+		const newMessage: Content = { parts: [{ text }] };
+
+		for await (const event of runner.runAsync({
+			userId: newSession.userId,
+			sessionId: newSession.id,
+			newMessage,
+		})) {
+			console.log(JSON.stringify(event.content.parts, null, 4));
+		}
 
 		console.log("\n✅ Example completed successfully!");
 	} catch (error) {
