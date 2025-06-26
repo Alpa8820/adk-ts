@@ -101,15 +101,16 @@ function rearrangeEventsForAsyncFunctionResponsesInHistory(
 			continue;
 		}
 
-		if (event.getFunctionResponses()) {
+		if (event.getFunctionResponses().length > 0) {
 			// function_response should be handled together with function_call below.
 			continue;
 		}
 
-		if (event.getFunctionCalls()) {
+		const functionCalls = event.getFunctionCalls();
+		if (functionCalls.length > 0) {
 			const functionResponseEventsIndices = new Set<number>();
 
-			for (const functionCall of event.getFunctionCalls()) {
+			for (const functionCall of functionCalls) {
 				const functionCallId = functionCall.id;
 				if (
 					functionCallId &&
@@ -166,10 +167,13 @@ function rearrangeEventsForLatestFunctionResponse(events: Event[]): Event[] {
 	}
 
 	const functionResponses = lastEvent.getFunctionResponses();
-	if (!functionResponses) {
+
+	if (!functionResponses || functionResponses.length === 0) {
 		// No need to process, since the latest event is not function_response.
 		return events;
 	}
+
+	// Rest of the function continues with function response processing...
 
 	const functionResponsesIds = new Set<string>();
 	for (const functionResponse of functionResponses) {

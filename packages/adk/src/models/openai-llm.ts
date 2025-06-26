@@ -1,11 +1,14 @@
 import { Logger } from "@adk/helpers/logger";
 import OpenAI from "openai";
+import dedent from "dedent";
 import { BaseLlm } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
 import { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 
 const logger = new Logger({ name: "OpenAiLlm" });
+
+const NEW_LINE = "\n";
 
 type OpenAIRole = "user" | "assistant" | "system";
 
@@ -38,6 +41,7 @@ function toAdkFinishReason(
 			return "FINISH_REASON_UNSPECIFIED";
 	}
 }
+
 /**
  * Convert ADK Part to OpenAI message content
  */
@@ -191,6 +195,7 @@ function functionDeclarationToOpenAiTool(
 
 /**
  * OpenAI LLM implementation using GPT models
+ * Enhanced with comprehensive debug logging similar to Google LLM
  */
 export class OpenAiLlm extends BaseLlm {
 	private _client?: OpenAI;
@@ -213,9 +218,13 @@ export class OpenAiLlm extends BaseLlm {
 		llmRequest: LlmRequest,
 		stream = false,
 	): AsyncGenerator<LlmResponse, void, unknown> {
+		// Preprocess request
+		this.preprocessRequest(llmRequest);
+
 		logger.debug(
 			`Sending OpenAI request, model: ${llmRequest.model || this.model}, stream: ${stream}`,
 		);
+		logger.debug(this.buildRequestLog(llmRequest));
 
 		const model = llmRequest.model || this.model;
 		const messages = (llmRequest.contents || []).map(contentToOpenAiMessage);
@@ -236,26 +245,9 @@ export class OpenAiLlm extends BaseLlm {
 			});
 		}
 
-		const openAiMessages: OpenAI.ChatCompletionMessageParam[] = messages.map(
-			(msg) => {
-				// For text-based messages, extract text content
-				// For complex content (images, etc.), keep the array format
-				let content: string | OpenAI.ChatCompletionContentPart[];
+		// Messages are already in OpenAI format from contentToOpenAiMessage
+		const openAiMessages: OpenAI.ChatCompletionMessageParam[] = messages;
 
-				if (Array.isArray(msg.content)) {
-					// Already processed content parts - keep as is for multimodal
-					content = msg.content as OpenAI.ChatCompletionContentPart[];
-				} else {
-					// Extract text from Content type
-					content = LlmRequest.extractTextFromContent(msg.content);
-				}
-
-				return {
-					...msg,
-					content,
-				} as OpenAI.ChatCompletionMessageParam;
-			},
-		);
 		const requestParams:
 			| OpenAI.ChatCompletionCreateParamsNonStreaming
 			| OpenAI.ChatCompletionCreateParamsStreaming = {
@@ -275,32 +267,70 @@ export class OpenAiLlm extends BaseLlm {
 				stream: true,
 			});
 
-			let accumulatedContent = "";
+			let thoughtText = "";
+			let text = "";
+			let usageMetadata: OpenAI.CompletionUsage | undefined;
 			const accumulatedToolCalls: OpenAI.ChatCompletionChunk.Choice.Delta.ToolCall[] =
 				[];
-			let usage: OpenAI.CompletionUsage | undefined;
 
 			for await (const chunk of streamResponse) {
 				const choice = chunk.choices[0];
 				if (!choice) continue;
 
 				const delta = choice.delta;
-				console.log("Delta:", delta.content);
-				// Accumulate content
-				if (delta.content) {
-					accumulatedContent += delta.content;
+				logger.debug("Delta content:", delta.content);
 
-					// Yield partial response
-					yield new LlmResponse({
-						content: {
-							role: "model",
-							parts: [{ text: accumulatedContent }],
-						},
-						partial: true,
-					});
+				// Create LlmResponse for this chunk
+				const llmResponse = this.createChunkResponse(delta, chunk.usage);
+				if (chunk.usage) {
+					usageMetadata = chunk.usage;
 				}
 
-				// Handle tool calls
+				// Log each chunk response similar to Google LLM
+				logger.debug(this.buildResponseLog(llmResponse));
+
+				// Handle content accumulation similar to Google LLM
+				if (llmResponse.content?.parts?.[0]?.text) {
+					const part0 = llmResponse.content.parts[0];
+					if ((part0 as any).thought) {
+						thoughtText += part0.text;
+					} else {
+						text += part0.text;
+					}
+					llmResponse.partial = true;
+				} else if (
+					(thoughtText || text) &&
+					(!llmResponse.content ||
+						!llmResponse.content.parts ||
+						!this.hasInlineData(llmResponse))
+				) {
+					// Yield merged content - equivalent to Google's pattern
+					const parts: any[] = [];
+					if (thoughtText) {
+						parts.push({ text: thoughtText, thought: true });
+					}
+					if (text) {
+						parts.push({ text });
+					}
+
+					yield new LlmResponse({
+						content: {
+							parts,
+							role: "model",
+						},
+						usageMetadata: usageMetadata
+							? {
+									promptTokenCount: usageMetadata.prompt_tokens,
+									candidatesTokenCount: usageMetadata.completion_tokens,
+									totalTokenCount: usageMetadata.total_tokens,
+								}
+							: undefined,
+					});
+					thoughtText = "";
+					text = "";
+				}
+
+				// Handle tool calls accumulation
 				if (delta.tool_calls) {
 					for (const toolCall of delta.tool_calls) {
 						const index = toolCall.index || 0;
@@ -324,19 +354,19 @@ export class OpenAiLlm extends BaseLlm {
 					}
 				}
 
-				// Track usage from final chunk
-				if (chunk.usage) {
-					usage = chunk.usage;
-				}
-
-				// Final response
+				// Handle final response - similar to Google's finish reason handling
 				if (choice.finish_reason) {
 					const parts: any[] = [];
 
-					if (accumulatedContent) {
-						parts.push({ text: accumulatedContent });
+					// Add accumulated text content
+					if (thoughtText) {
+						parts.push({ text: thoughtText, thought: true });
+					}
+					if (text) {
+						parts.push({ text });
 					}
 
+					// Add accumulated tool calls
 					if (accumulatedToolCalls.length > 0) {
 						for (const toolCall of accumulatedToolCalls) {
 							if (toolCall.function?.name) {
@@ -351,21 +381,53 @@ export class OpenAiLlm extends BaseLlm {
 						}
 					}
 
-					yield new LlmResponse({
+					const finalResponse = new LlmResponse({
 						content: {
 							role: "model",
 							parts,
 						},
-						usageMetadata: usage
+						usageMetadata: usageMetadata
 							? {
-									promptTokenCount: usage.prompt_tokens,
-									candidatesTokenCount: usage.completion_tokens,
-									totalTokenCount: usage.total_tokens,
+									promptTokenCount: usageMetadata.prompt_tokens,
+									candidatesTokenCount: usageMetadata.completion_tokens,
+									totalTokenCount: usageMetadata.total_tokens,
 								}
 							: undefined,
 						finishReason: toAdkFinishReason(choice.finish_reason),
 					});
+
+					logger.debug(this.buildResponseLog(finalResponse));
+					yield finalResponse;
+				} else {
+					// Yield partial response if we have content
+					yield llmResponse;
 				}
+			}
+
+			// Final yield condition - equivalent to Google's final check
+			if (
+				(text || thoughtText) &&
+				usageMetadata
+			) {
+				const parts: any[] = [];
+				if (thoughtText) {
+					parts.push({ text: thoughtText, thought: true });
+				}
+				if (text) {
+					parts.push({ text });
+				}
+
+				yield new LlmResponse({
+					content: {
+						parts,
+						role: "model",
+					},
+					usageMetadata: {
+						promptTokenCount: usageMetadata.prompt_tokens,
+						candidatesTokenCount: usageMetadata.completion_tokens,
+						totalTokenCount: usageMetadata.total_tokens,
+					},
+				});
 			}
 		} else {
 			const response = await this.client.chat.completions.create({
@@ -375,9 +437,212 @@ export class OpenAiLlm extends BaseLlm {
 
 			const choice = response.choices[0];
 			if (choice) {
-				yield openAiMessageToLlmResponse(choice, response.usage);
+				const llmResponse = openAiMessageToLlmResponse(choice, response.usage);
+				logger.debug(this.buildResponseLog(llmResponse));
+				yield llmResponse;
 			}
 		}
+	}
+
+	/**
+	 * Create LlmResponse from streaming chunk - similar to Google's LlmResponse.create
+	 */
+	private createChunkResponse(
+		delta: OpenAI.ChatCompletionChunk.Choice.Delta,
+		usage?: OpenAI.CompletionUsage,
+	): LlmResponse {
+		const parts: any[] = [];
+
+		// Handle text content
+		if (delta.content) {
+			const contentType = this.getContentType(delta.content);
+			if (contentType === "thought") {
+				parts.push({ text: delta.content, thought: true });
+			} else {
+				parts.push({ text: delta.content });
+			}
+		}
+
+		// Handle tool calls in chunks (though usually they come complete)
+		if (delta.tool_calls) {
+			for (const toolCall of delta.tool_calls) {
+				if (toolCall.type === "function" && toolCall.function?.name) {
+					parts.push({
+						functionCall: {
+							id: toolCall.id || "",
+							name: toolCall.function.name,
+							args: JSON.parse(toolCall.function.arguments || "{}"),
+						},
+					});
+				}
+			}
+		}
+
+		return new LlmResponse({
+			content: parts.length > 0 ? {
+				role: "model",
+				parts,
+			} : undefined,
+			usageMetadata: usage
+				? {
+						promptTokenCount: usage.prompt_tokens,
+						candidatesTokenCount: usage.completion_tokens,
+						totalTokenCount: usage.total_tokens,
+					}
+				: undefined,
+		});
+	}
+
+	/**
+	 * Detect content type for flow control
+	 * This is a simplified implementation - you may need to adjust based on your specific requirements
+	 */
+	private getContentType(content: string): "thought" | "regular" {
+		// Simple heuristic - you may want to implement more sophisticated logic
+		// based on your specific use case and how you identify "thought" content
+
+		// Example: if content starts with certain markers or patterns
+		if (content.includes("<thinking>") || content.includes("[thinking]")) {
+			return "thought";
+		}
+
+		// Default to regular content
+		return "regular";
+	}
+
+	/**
+	 * Check if response has inline data (similar to Google LLM)
+	 */
+	private hasInlineData(response: LlmResponse): boolean {
+		// OpenAI doesn't typically return inline data in the same way as Google
+		// but this method is here for consistency with the flow control pattern
+		const parts = response.content?.parts;
+		return parts?.some((part: any) => part.inlineData) || false;
+	}
+
+	/**
+	 * Preprocess request similar to Google LLM
+	 */
+	private preprocessRequest(llmRequest: LlmRequest): void {
+		// OpenAI-specific preprocessing can be added here
+		// For example, handling specific content types or configurations
+
+		// Remove any OpenAI-incompatible configurations
+		if (llmRequest.config) {
+			// OpenAI doesn't support labels like Google's Vertex AI
+			(llmRequest.config as any).labels = undefined;
+
+			// Handle any other OpenAI-specific preprocessing
+			if (llmRequest.contents) {
+				for (const content of llmRequest.contents) {
+					if (!content.parts) continue;
+					for (const part of content.parts) {
+						// OpenAI-specific part preprocessing if needed
+						this.preprocessPart(part);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Preprocess individual parts for OpenAI compatibility
+	 */
+	private preprocessPart(part: any): void {
+		// Handle any part-specific preprocessing for OpenAI
+		// For example, converting certain data formats or removing unsupported fields
+
+		if (part.inline_data) {
+			// Ensure inline data is in the correct format for OpenAI
+			if (!part.inline_data.mime_type || !part.inline_data.data) {
+				// biome-ignore lint/performance/noDelete: Remove invalid inline data
+				delete part.inline_data;
+			}
+		}
+	}
+
+	/**
+	 * Build request log string for debugging (similar to Google LLM)
+	 */
+	private buildRequestLog(req: LlmRequest): string {
+		const functionDecls =
+			(req.config?.tools?.[0] as any)?.functionDeclarations || [];
+
+		const functionLogs =
+			functionDecls.length > 0
+				? functionDecls.map(
+						(funcDecl: any) =>
+							`${funcDecl.name}: ${JSON.stringify(funcDecl.parameters?.properties || {})}`,
+					)
+				: [];
+
+		const contentsLogs =
+			req.contents?.map((content) =>
+				JSON.stringify(content, (key, value) => {
+					// Exclude large data fields from logs
+					if (
+						key === "data" &&
+						typeof value === "string" &&
+						value.length > 100
+					) {
+						return "[EXCLUDED]";
+					}
+					return value;
+				}),
+			) || [];
+
+		return dedent`
+		LLM Request:
+		-----------------------------------------------------------
+		System Instruction:
+		${req.getSystemInstructionText() || ""}
+		-----------------------------------------------------------
+		Contents:
+		${contentsLogs.join(NEW_LINE)}
+		-----------------------------------------------------------
+		Functions:
+		${functionLogs.join(NEW_LINE)}
+		-----------------------------------------------------------`;
+	}
+
+	/**
+	 * Build response log string for debugging (similar to Google LLM)
+	 */
+	private buildResponseLog(response: LlmResponse): string {
+		const functionCallsText: string[] = [];
+
+		if (response.content?.parts) {
+			for (const part of response.content.parts) {
+				if ((part as any).functionCall) {
+					const funcCall = (part as any).functionCall;
+					functionCallsText.push(
+						`name: ${funcCall.name}, args: ${JSON.stringify(funcCall.args)}`,
+					);
+				}
+			}
+		}
+
+		const text =
+			response.content?.parts
+				?.filter((part: any) => part.text)
+				?.map((part: any) => part.text)
+				?.join("") || "";
+
+		return dedent`
+		LLM Response:
+		-----------------------------------------------------------
+		Text:
+		${text}
+		-----------------------------------------------------------
+		Function calls:
+		${functionCallsText.join(NEW_LINE)}
+		-----------------------------------------------------------
+		Usage:
+		${JSON.stringify(response.usageMetadata, null, 2)}
+		-----------------------------------------------------------
+		Finish Reason:
+		${response.finishReason}
+		-----------------------------------------------------------`;
 	}
 
 	/**
@@ -406,4 +671,6 @@ export class OpenAiLlm extends BaseLlm {
 	override connect(_llmRequest: LlmRequest): BaseLLMConnection {
 		throw new Error(`Live connection is not supported for ${this.model}.`);
 	}
+
+
 }
