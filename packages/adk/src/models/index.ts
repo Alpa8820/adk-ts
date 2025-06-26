@@ -13,6 +13,8 @@ export * from "./base-llm-connection";
 
 // LLM implementations
 export * from "./google-llm";
+export * from "./anthropic-llm";
+export * from "./openai-llm";
 export * from "./lite-llm";
 
 // LLM registry
