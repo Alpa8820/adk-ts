@@ -605,6 +605,9 @@ export class DatabaseSessionService extends BaseSessionService {
 				updatedSession.update_time,
 			);
 
+			// Also update the in-memory session
+			super.appendEvent(session, event);
+
 			return event;
 		});
 	}
