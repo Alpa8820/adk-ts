@@ -7,72 +7,36 @@ Welcome to the Agent Development Kit (ADK) TypeScript implementation! This guide
 ```mermaid
 graph TB
     %% User Layer
-    User[👤 User] --> Runner[🚀 Runner]
+    User[👤 User Input] --> Runner[🚀 Runner]
     
     %% Core Orchestration
     Runner --> SessionService[📊 Session Service]
-    Runner --> Agent[🤖 Agent]
+    Runner --> Agent[🤖 LlmAgent]
     
-    %% Agent Layer
-    Agent --> BaseAgent[⚡ BaseAgent]
-    BaseAgent --> LlmAgent[🧠 LlmAgent]
-    
-    %% Flow Processing
-    LlmAgent --> LlmFlow[🔄 LLM Flow]
-    LlmFlow --> SingleFlow[📝 SingleFlow]
-    LlmFlow --> AutoFlow[🔀 AutoFlow]
-    
-    %% Processors
-    SingleFlow --> Processors[⚙️ Processors]
-    Processors --> Contents[📄 Contents]
-    Processors --> Instructions[📋 Instructions]
-    Processors --> Identity[🏷️ Identity]
-    Processors --> Planning[🎯 Planning]
-    Processors --> Auth[🔐 Auth]
-    
-    %% Models & Context
-    LlmFlow --> LlmRequest[📤 LlmRequest]
-    LlmFlow --> LlmResponse[📥 LlmResponse]
-    LlmFlow --> InvocationContext[🔍 InvocationContext]
+    %% Agent Processing
+    Agent --> LlmFlow[🔄 LLM Flow]
+    LlmFlow --> Processors[⚙️ Request Processors]
+    Processors --> LlmRequest[📤 LLM Request]
     
     %% LLM Providers
-    LlmRequest --> BaseLlm[⚙️ BaseLLM]
-    BaseLlm --> OpenAiLlm[🔵 OpenAI]
-    BaseLlm --> GoogleLlm[🟢 Google]
-    BaseLlm --> Registry[📚 LLM Registry]
+    LlmRequest --> LlmProvider[🤖 LLM Provider]
+    LlmProvider --> LlmResponse[📥 LLM Response]
     
-    %% Events & Actions
+    %% Response Processing  
     LlmResponse --> Event[📝 Event]
-    Event --> EventActions[⚡ Event Actions]
+    Event --> SessionService
+    
+    %% Tools Integration
+    Agent --> Tools[🛠️ Tools]
+    Tools --> LlmRequest
+    
+    %% Support Services
+    Agent --> MemoryService[🧠 Memory Service]
+    Agent --> ArtifactService[📎 Artifact Service]
     
     %% Session Management
     SessionService --> Session[💾 Session]
     Session --> State[🗃️ State]
-    Session --> Events[📜 Events]
-    
-    %% Tools & Extensions
-    LlmAgent --> Tools[🛠️ Tools]
-    Tools --> BaseTool[🔧 BaseTool]
-    Tools --> FunctionDeclaration[📋 Function Declaration]
-    
-    %% Context Hierarchy
-    InvocationContext --> ReadonlyContext[👁️ ReadonlyContext]
-    ReadonlyContext --> CallbackContext[🔄 CallbackContext]
-    CallbackContext --> ToolContext[🛠️ ToolContext]
-    
-    %% Support Services
-    InvocationContext --> MemoryService[🧠 Memory Service]
-    InvocationContext --> ArtifactService[📎 Artifact Service]
-    
-    %% Planning
-    LlmAgent --> Planner[🎯 Planner]
-    Planner --> BuiltInPlanner[🏗️ Built-in Planner]
-    Planner --> ReActPlanner[🔄 ReAct Planner]
-    
-    %% Authentication
-    Auth --> AuthHandler[🔐 Auth Handler]
-    Auth --> AuthCredential[🎫 Credential]
-    Auth --> AuthConfig[⚙️ Auth Config]
     
     %% Styling
     classDef userLayer fill:#e1f5fe
@@ -82,10 +46,10 @@ graph TB
     classDef serviceLayer fill:#fce4ec
     
     class User,Runner userLayer
-    class Agent,BaseAgent,LlmAgent agentLayer
-    class LlmRequest,LlmResponse,Event,Session,State coreLayer
-    class OpenAiLlm,GoogleLlm,BaseLlm modelLayer
-    class SessionService,MemoryService,ArtifactService serviceLayer
+    class Agent,LlmFlow,Event agentLayer
+    class LlmRequest,LlmResponse,Session,State coreLayer
+    class LlmProvider modelLayer
+    class SessionService,MemoryService,ArtifactService,Tools serviceLayer
 ```
 
 ## Table of Contents
@@ -161,7 +125,6 @@ The ADK framework is built on several core components that work together to prov
          Request Processors:
 ┌─────────────────────────────────────┐
 │  - basic.ts (Base request setup)    │
-│  - auth-preprocessor.ts (Auth)      │
 │  - instructions.ts (System prompts) │
 │  - identity.ts (Agent identity)     │
 │  - contents.ts (Content injection)  │
@@ -376,41 +339,7 @@ The ADK framework is built on several core components that work together to prov
 - `packages/adk/src/agents/callback-context.ts` - Mutable context for callbacks
 - `packages/adk/src/tools/tool-context.ts` - Tool execution context
 
-### 8. Authentication System
-
-```
-┌─────────────────────────────────────┐
-│       AuthHandler                   │
-│  - Authentication flow management   │
-│  - Credential validation            │
-└─────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│      AuthCredential                 │
-│  - Credential storage & retrieval   │
-│  - Multiple auth scheme support     │
-└─────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│       AuthConfig                    │
-│  - Authentication configuration     │
-│  - Security policies                │
-└─────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│    AuthPreprocessor                 │
-│  - Request authentication           │
-│  - Flow integration                 │
-└─────────────────────────────────────┘
-```
-
-**Key Files:**
-- `packages/adk/src/auth/auth-handler.ts` - Authentication flow management
-- `packages/adk/src/auth/auth-credential.ts` - Credential management
-- `packages/adk/src/auth/auth-config.ts` - Configuration interface
-- `packages/adk/src/auth/auth-preprocessor.ts` - Flow integration
-
-### 9. Artifact Management
+### 8. Artifact Management
 
 ```
 ┌─────────────────────────────────────┐
@@ -832,44 +761,7 @@ export class YourMemoryService extends BaseMemoryService {
 }
 ```
 
-### 7. Building Authentication Handlers
-
-Create `packages/adk/src/auth/your-auth-handler.ts`:
-
-```typescript
-import { AuthHandler } from "./auth-handler";
-import type { AuthCredential } from "./auth-credential";
-import type { AuthConfig } from "./auth-config";
-
-export class YourAuthHandler extends AuthHandler {
-  async authenticate(config: AuthConfig): Promise<AuthCredential> {
-    // Implement your authentication flow
-    switch (config.scheme) {
-      case "oauth2":
-        return await this.handleOAuth2(config);
-      case "api_key":
-        return await this.handleApiKey(config);
-      default:
-        throw new Error(`Unsupported auth scheme: ${config.scheme}`);
-    }
-  }
-  
-  private async handleOAuth2(config: AuthConfig): Promise<AuthCredential> {
-    // OAuth2 flow implementation
-    const authUrl = this.buildAuthUrl(config);
-    // Redirect user, handle callback, exchange code for token
-    
-    return new AuthCredential({
-      scheme: "oauth2",
-      token: accessToken,
-      refreshToken: refreshToken,
-      expiresAt: Date.now() + (expiresIn * 1000),
-    });
-  }
-}
-```
-
-### 8. Creating Artifact Services
+### 7. Creating Artifact Services
 
 Create `packages/adk/src/artifacts/your-artifact-service.ts`:
 
@@ -1081,49 +973,43 @@ async *safeGenerator(): AsyncGenerator<Event, void, unknown> {
 - Create specialized flows for different use cases
 - Enhance multi-agent coordination and transfer logic
 
-### 5. **Authentication & Security**
-- Implement additional authentication schemes
-- Add credential management and rotation
-- Enhance security policies and access controls
-- Develop audit logging and compliance features
-
-### 6. **Artifact Management**
+### 5. **Artifact Management**
 - Add new storage backends (AWS S3, Azure Blob, etc.)
 - Implement artifact versioning and metadata
 - Add file type detection and validation
 - Develop artifact sharing and collaboration features
 
-### 7. **Planning & Reasoning**
+### 6. **Planning & Reasoning**
 - Create new planner implementations
 - Enhance existing planning strategies
 - Add multi-step reasoning capabilities
 - Develop plan execution and monitoring
 
-### 8. **Context Management**
+### 7. **Context Management**
 - Improve context hierarchy and inheritance
 - Add context-aware tool selection
 - Enhance state management patterns
 - Develop context serialization and restoration
 
-### 9. **Examples & Documentation**
+### 8. **Examples & Documentation**
 - Create comprehensive examples for different use cases
 - Improve existing documentation and API references
 - Add tutorials and guides for common patterns
 - Develop video tutorials and interactive demos
 
-### 10. **Testing & Quality**
+### 9. **Testing & Quality**
 - Increase test coverage across all components
 - Add integration tests for complex scenarios
 - Improve error handling and edge case coverage
 - Develop performance benchmarks and optimization
 
-### 11. **Developer Experience**
+### 10. **Developer Experience**
 - Enhance CLI tools and scaffolding
 - Improve debugging and introspection capabilities
 - Add development tools and extensions
 - Create IDE integrations and language support
 
-### 12. **Performance & Scalability**
+### 11. **Performance & Scalability**
 - Optimize memory usage and garbage collection
 - Improve streaming and concurrency handling
 - Add metrics collection and monitoring
