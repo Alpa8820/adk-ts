@@ -27,198 +27,15 @@ export class OpenAiLlm extends BaseLlm {
 	}
 
 	/**
-	 * Convert ADK role to OpenAI role format
-	 */
-	private toOpenAiRole(role?: string): OpenAIRole {
-		if (role === "model") {
-			return "assistant";
-		}
-		if (role === "system") {
-			return "system";
-		}
-		return "user";
-	}
-
-	/**
-	 * Convert OpenAI finish reason to ADK finish reason
-	 */
-	private toAdkFinishReason(
-		openaiFinishReason?: string,
-	): "STOP" | "MAX_TOKENS" | "FINISH_REASON_UNSPECIFIED" {
-		switch (openaiFinishReason) {
-			case "stop":
-			case "tool_calls":
-				return "STOP";
-			case "length":
-				return "MAX_TOKENS";
-			default:
-				return "FINISH_REASON_UNSPECIFIED";
-		}
-	}
-
-	/**
-	 * Convert ADK Part to OpenAI message content
-	 */
-	private partToOpenAiContent(part: any): OpenAI.ChatCompletionContentPart {
-		if (part.text) {
-			return {
-				type: "text",
-				text: part.text,
-			};
-		}
-
-		if (part.inline_data?.mime_type && part.inline_data?.data) {
-			return {
-				type: "image_url",
-				image_url: {
-					url: `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`,
-				},
-			};
-		}
-
-		throw new Error("Unsupported part type for OpenAI conversion");
-	}
-
-	/**
-	 * Convert ADK Content to OpenAI ChatCompletionMessage
-	 */
-	private contentToOpenAiMessage(
-		content: any,
-	): OpenAI.ChatCompletionMessageParam {
-		const role = this.toOpenAiRole(content.role);
-
-		if (role === "system") {
-			return {
-				role: "system",
-				content: content.parts?.[0]?.text || "",
-			};
-		}
-
-		// Handle function calls
-		if (content.parts?.some((part: any) => part.functionCall)) {
-			const functionCallPart = content.parts.find(
-				(part: any) => part.functionCall,
-			);
-			return {
-				role: "assistant",
-				tool_calls: [
-					{
-						id: functionCallPart.functionCall.id || "",
-						type: "function",
-						function: {
-							name: functionCallPart.functionCall.name,
-							arguments: JSON.stringify(
-								functionCallPart.functionCall.args || {},
-							),
-						},
-					},
-				],
-			};
-		}
-
-		// Handle function responses
-		if (content.parts?.some((part: any) => part.functionResponse)) {
-			const functionResponsePart = content.parts.find(
-				(part: any) => part.functionResponse,
-			);
-			return {
-				role: "tool",
-				tool_call_id: functionResponsePart.functionResponse.id || "",
-				content: JSON.stringify(
-					functionResponsePart.functionResponse.response || {},
-				),
-			};
-		}
-
-		// Handle regular content
-		if (content.parts?.length === 1 && content.parts[0].text) {
-			return {
-				role,
-				content: content.parts[0].text,
-			};
-		}
-
-		// Handle multi-part content
-		return {
-			role,
-			content: (content.parts || []).map(this.partToOpenAiContent),
-		};
-	}
-
-	/**
-	 * Convert OpenAI message to ADK LlmResponse
-	 */
-	private openAiMessageToLlmResponse(
-		choice: OpenAI.ChatCompletion.Choice,
-		usage?: OpenAI.CompletionUsage,
-	): LlmResponse {
-		const message = choice.message;
-		logger.debug(
-			"OpenAI response:",
-			JSON.stringify({ message, usage }, null, 2),
-		);
-
-		const parts: any[] = [];
-
-		// Handle text content
-		if (message.content) {
-			parts.push({ text: message.content });
-		}
-
-		// Handle tool calls
-		if (message.tool_calls) {
-			for (const toolCall of message.tool_calls) {
-				if (toolCall.type === "function") {
-					parts.push({
-						functionCall: {
-							id: toolCall.id,
-							name: toolCall.function.name,
-							args: JSON.parse(toolCall.function.arguments || "{}"),
-						},
-					});
-				}
-			}
-		}
-
-		return new LlmResponse({
-			content: {
-				role: "model",
-				parts,
-			},
-			usageMetadata: usage
-				? {
-						promptTokenCount: usage.prompt_tokens,
-						candidatesTokenCount: usage.completion_tokens,
-						totalTokenCount: usage.total_tokens,
-					}
-				: undefined,
-			finishReason: this.toAdkFinishReason(choice.finish_reason),
-		});
-	}
-
-	/**
-	 * Convert ADK function declaration to OpenAI tool
-	 */
-	private functionDeclarationToOpenAiTool(
-		functionDeclaration: any,
-	): OpenAI.ChatCompletionTool {
-		return {
-			type: "function",
-			function: {
-				name: functionDeclaration.name,
-				description: functionDeclaration.description || "",
-				parameters: functionDeclaration.parameters || {},
-			},
-		};
-	}
-
-	/**
 	 * Provides the list of supported models
 	 */
 	static override supportedModels(): string[] {
 		return ["gpt-3.5-.*", "gpt-4.*", "gpt-4o.*", "o1-.*", "o3-.*"];
 	}
 
+	/**
+	 * Main content generation method - handles both streaming and non-streaming
+	 */
 	protected async *generateContentAsyncImpl(
 		llmRequest: LlmRequest,
 		stream = false,
@@ -452,6 +269,13 @@ export class OpenAiLlm extends BaseLlm {
 	}
 
 	/**
+	 * Live connection is not supported for OpenAI models
+	 */
+	override connect(_llmRequest: LlmRequest): BaseLLMConnection {
+		throw new Error(`Live connection is not supported for ${this.model}.`);
+	}
+
+	/**
 	 * Create LlmResponse from streaming chunk - similar to Google's LlmResponse.create
 	 */
 	private createChunkResponse(
@@ -504,30 +328,189 @@ export class OpenAiLlm extends BaseLlm {
 	}
 
 	/**
-	 * Detect content type for flow control
-	 * This is a simplified implementation - you may need to adjust based on your specific requirements
+	 * Convert OpenAI message to ADK LlmResponse
 	 */
-	private getContentType(content: string): "thought" | "regular" {
-		// Simple heuristic - you may want to implement more sophisticated logic
-		// based on your specific use case and how you identify "thought" content
+	private openAiMessageToLlmResponse(
+		choice: OpenAI.ChatCompletion.Choice,
+		usage?: OpenAI.CompletionUsage,
+	): LlmResponse {
+		const message = choice.message;
+		logger.debug(
+			"OpenAI response:",
+			JSON.stringify({ message, usage }, null, 2),
+		);
 
-		// Example: if content starts with certain markers or patterns
-		if (content.includes("<thinking>") || content.includes("[thinking]")) {
-			return "thought";
+		const parts: any[] = [];
+
+		// Handle text content
+		if (message.content) {
+			parts.push({ text: message.content });
 		}
 
-		// Default to regular content
-		return "regular";
+		// Handle tool calls
+		if (message.tool_calls) {
+			for (const toolCall of message.tool_calls) {
+				if (toolCall.type === "function") {
+					parts.push({
+						functionCall: {
+							id: toolCall.id,
+							name: toolCall.function.name,
+							args: JSON.parse(toolCall.function.arguments || "{}"),
+						},
+					});
+				}
+			}
+		}
+
+		return new LlmResponse({
+			content: {
+				role: "model",
+				parts,
+			},
+			usageMetadata: usage
+				? {
+						promptTokenCount: usage.prompt_tokens,
+						candidatesTokenCount: usage.completion_tokens,
+						totalTokenCount: usage.total_tokens,
+					}
+				: undefined,
+			finishReason: this.toAdkFinishReason(choice.finish_reason),
+		});
 	}
 
 	/**
-	 * Check if response has inline data (similar to Google LLM)
+	 * Convert ADK Content to OpenAI ChatCompletionMessage
 	 */
-	private hasInlineData(response: LlmResponse): boolean {
-		// OpenAI doesn't typically return inline data in the same way as Google
-		// but this method is here for consistency with the flow control pattern
-		const parts = response.content?.parts;
-		return parts?.some((part: any) => part.inlineData) || false;
+	private contentToOpenAiMessage(
+		content: any,
+	): OpenAI.ChatCompletionMessageParam {
+		const role = this.toOpenAiRole(content.role);
+
+		if (role === "system") {
+			return {
+				role: "system",
+				content: content.parts?.[0]?.text || "",
+			};
+		}
+
+		// Handle function calls
+		if (content.parts?.some((part: any) => part.functionCall)) {
+			const functionCallPart = content.parts.find(
+				(part: any) => part.functionCall,
+			);
+			return {
+				role: "assistant",
+				tool_calls: [
+					{
+						id: functionCallPart.functionCall.id || "",
+						type: "function",
+						function: {
+							name: functionCallPart.functionCall.name,
+							arguments: JSON.stringify(
+								functionCallPart.functionCall.args || {},
+							),
+						},
+					},
+				],
+			};
+		}
+
+		// Handle function responses
+		if (content.parts?.some((part: any) => part.functionResponse)) {
+			const functionResponsePart = content.parts.find(
+				(part: any) => part.functionResponse,
+			);
+			return {
+				role: "tool",
+				tool_call_id: functionResponsePart.functionResponse.id || "",
+				content: JSON.stringify(
+					functionResponsePart.functionResponse.response || {},
+				),
+			};
+		}
+
+		// Handle regular content
+		if (content.parts?.length === 1 && content.parts[0].text) {
+			return {
+				role,
+				content: content.parts[0].text,
+			};
+		}
+
+		// Handle multi-part content
+		return {
+			role,
+			content: (content.parts || []).map(this.partToOpenAiContent),
+		};
+	}
+
+	/**
+	 * Convert ADK Part to OpenAI message content
+	 */
+	private partToOpenAiContent(part: any): OpenAI.ChatCompletionContentPart {
+		if (part.text) {
+			return {
+				type: "text",
+				text: part.text,
+			};
+		}
+
+		if (part.inline_data?.mime_type && part.inline_data?.data) {
+			return {
+				type: "image_url",
+				image_url: {
+					url: `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`,
+				},
+			};
+		}
+
+		throw new Error("Unsupported part type for OpenAI conversion");
+	}
+
+	/**
+	 * Convert ADK function declaration to OpenAI tool
+	 */
+	private functionDeclarationToOpenAiTool(
+		functionDeclaration: any,
+	): OpenAI.ChatCompletionTool {
+		return {
+			type: "function",
+			function: {
+				name: functionDeclaration.name,
+				description: functionDeclaration.description || "",
+				parameters: functionDeclaration.parameters || {},
+			},
+		};
+	}
+
+	/**
+	 * Convert ADK role to OpenAI role format
+	 */
+	private toOpenAiRole(role?: string): OpenAIRole {
+		if (role === "model") {
+			return "assistant";
+		}
+		if (role === "system") {
+			return "system";
+		}
+		return "user";
+	}
+
+	/**
+	 * Convert OpenAI finish reason to ADK finish reason
+	 */
+	private toAdkFinishReason(
+		openaiFinishReason?: string,
+	): "STOP" | "MAX_TOKENS" | "FINISH_REASON_UNSPECIFIED" {
+		switch (openaiFinishReason) {
+			case "stop":
+			case "tool_calls":
+				return "STOP";
+			case "length":
+				return "MAX_TOKENS";
+			default:
+				return "FINISH_REASON_UNSPECIFIED";
+		}
 	}
 
 	/**
@@ -569,6 +552,33 @@ export class OpenAiLlm extends BaseLlm {
 				delete part.inline_data;
 			}
 		}
+	}
+
+	/**
+	 * Detect content type for flow control
+	 * This is a simplified implementation - you may need to adjust based on your specific requirements
+	 */
+	private getContentType(content: string): "thought" | "regular" {
+		// Simple heuristic - you may want to implement more sophisticated logic
+		// based on your specific use case and how you identify "thought" content
+
+		// Example: if content starts with certain markers or patterns
+		if (content.includes("<thinking>") || content.includes("[thinking]")) {
+			return "thought";
+		}
+
+		// Default to regular content
+		return "regular";
+	}
+
+	/**
+	 * Check if response has inline data (similar to Google LLM)
+	 */
+	private hasInlineData(response: LlmResponse): boolean {
+		// OpenAI doesn't typically return inline data in the same way as Google
+		// but this method is here for consistency with the flow control pattern
+		const parts = response.content?.parts;
+		return parts?.some((part: any) => part.inlineData) || false;
 	}
 
 	/**
@@ -673,12 +683,5 @@ export class OpenAiLlm extends BaseLlm {
 			});
 		}
 		return this._client;
-	}
-
-	/**
-	 * Live connection is not supported for OpenAI models
-	 */
-	override connect(_llmRequest: LlmRequest): BaseLLMConnection {
-		throw new Error(`Live connection is not supported for ${this.model}.`);
 	}
 }
