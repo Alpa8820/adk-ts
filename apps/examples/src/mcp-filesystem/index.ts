@@ -3,7 +3,6 @@ import { env } from "node:process";
 import {
 	InMemorySessionService,
 	LlmAgent,
-	type McpConfig,
 	McpToolset,
 	Runner,
 } from "@iqai/adk";
