@@ -8,41 +8,121 @@ import {
 	createDatabaseSessionService,
 } from "@iqai/adk";
 
+/**
+ * Application configuration constants
+ */
 const APP_NAME = "CounterDemo";
 const USER_ID = "demo-user";
 
 /**
- * Demonstrates a counter application using a persistent SQLite session
- * Creates a runner with a counter agent, finds or creates a session,
- * and runs an interaction to increment and display the current count
+ * Database Session Example
+ *
+ * This example demonstrates how to use persistent SQLite sessions with the ADK.
+ * It shows how conversations and application state can be preserved across
+ * multiple runs, allowing for continuity between application sessions.
+ *
+ * The example:
+ * 1. Creates a counter agent that maintains state
+ * 2. Uses SQLite for persistent session storage
+ * 3. Automatically finds existing sessions or creates new ones
+ * 4. Demonstrates persistence across multiple script runs
+ * 5. Shows how state accumulates over time
+ *
+ * Expected Output:
+ * - Counter increments with each run
+ * - Session persistence across application restarts
+ * - Automatic session discovery and reuse
+ *
+ * Prerequisites:
+ * - Node.js environment
+ * - LLM_MODEL environment variable (optional, defaults to gemini-2.5-flash)
+ * - Write permissions for creating SQLite database files
  */
 async function main() {
-	// Create runner with SQLite persistence
-	const runner = new Runner({
+	console.log("📊 Starting Database Session example...");
+
+	try {
+		/**
+		 * Create runner with SQLite persistence
+		 * The database session service provides persistent storage for conversations
+		 */
+		const runner = await createRunnerWithPersistence();
+
+		/**
+		 * Find existing session or create new one
+		 * Sessions are automatically persisted and can be resumed
+		 */
+		const sessionId = await getOrCreateSession(runner);
+
+		/**
+		 * Execute counter interaction with persistent memory
+		 * The counter state persists across multiple runs
+		 */
+		await runCounterInteraction(runner, sessionId);
+
+		console.log("\n💡 Run this script multiple times to see persistence!");
+		console.log("✅ Database Session example completed!");
+	} catch (error) {
+		console.error("❌ Error in database session example:", error);
+		process.exit(1);
+	}
+}
+
+/**
+ * Creates a runner with persistent SQLite storage
+ * @returns Configured Runner with database session service
+ */
+function createRunnerWithPersistence(): Runner {
+	return new Runner({
 		appName: APP_NAME,
 		agent: new LlmAgent({
 			name: "counter_agent",
 			model: env.LLM_MODEL || "gemini-2.5-flash",
 			description:
-				"You are a counter. Increment the count each time when i tell you so. Start with 1",
+				"You are a counter. Increment the count each time when I tell you so. Start with 1",
 		}),
 		sessionService: createDatabaseSessionService(
 			getSqliteConnectionString("counter"),
 		),
 		memoryService: new InMemoryMemoryService(),
 	});
+}
 
-	// Find existing session or create new one
+/**
+ * Finds existing session or creates a new one
+ * @param runner The Runner instance with session service
+ * @returns Session ID for the counter demo
+ */
+async function getOrCreateSession(runner: Runner): Promise<string> {
 	const { sessions } = await runner.sessionService.listSessions(
 		APP_NAME,
 		USER_ID,
 	);
-	const sessionId =
-		sessions.length > 0
-			? sessions[0].id
-			: (await runner.sessionService.createSession(APP_NAME, USER_ID)).id;
 
-	// Chat with persistent memory
+	if (sessions.length > 0) {
+		console.log(`🔄 Resuming existing session: ${sessions[0].id}`);
+		return sessions[0].id;
+	}
+
+	console.log("🆕 Creating new session...");
+	const newSession = await runner.sessionService.createSession(
+		APP_NAME,
+		USER_ID,
+	);
+	return newSession.id;
+}
+
+/**
+ * Executes a counter interaction with the agent
+ * @param runner The Runner instance for executing agent tasks
+ * @param sessionId The session ID to use for the interaction
+ */
+async function runCounterInteraction(
+	runner: Runner,
+	sessionId: string,
+): Promise<void> {
+	console.log("🔢 Incrementing counter...");
+
 	for await (const event of runner.runAsync({
 		userId: USER_ID,
 		sessionId,
@@ -55,17 +135,16 @@ async function main() {
 			event.author === "counter_agent" &&
 			!event.partial
 		) {
-			console.log(event.content.parts.map((p) => p.text).join(""));
+			const response = event.content.parts.map((p) => p.text).join("");
+			console.log("🤖 Agent:", response);
 		}
 	}
-
-	console.log("\n💡 Run this script multiple times to see persistence!");
 }
 
 /**
  * Get SQLite connection string for the given database name
  * Creates the directory if it doesn't exist
- * @param dbName - Name of the database file (without extension)
+ * @param dbName Name of the database file (without extension)
  * @returns SQLite connection string
  */
 function getSqliteConnectionString(dbName: string): string {
@@ -79,4 +158,10 @@ function getSqliteConnectionString(dbName: string): string {
 	return `sqlite://${dbPath}`;
 }
 
-main().catch(console.error);
+/**
+ * Execute the main function and handle any errors
+ */
+main().catch((error) => {
+	console.error("💥 Fatal error:", error);
+	process.exit(1);
+});

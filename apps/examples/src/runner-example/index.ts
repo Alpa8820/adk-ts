@@ -1,5 +1,5 @@
-import { LlmAgent, InMemoryRunner, RunConfig, StreamingMode } from "@iqai/adk";
 import { env } from "node:process";
+import { InMemoryRunner, LlmAgent, RunConfig, StreamingMode } from "@iqai/adk";
 import { v4 as uuidv4 } from "uuid";
 
 const APP_NAME = "RunnerDemo";
@@ -49,13 +49,6 @@ async function runConversation() {
 	);
 
 	console.log("\n✅ Example completed successfully!");
-	console.log("\n📊 What we demonstrated:");
-	console.log("✅ InMemoryRunner usage for quick prototyping");
-	console.log("✅ Session management with in-memory storage");
-	console.log("✅ Multi-turn conversation handling");
-	console.log("✅ Streaming response processing");
-	console.log("✅ Event-based response collection");
-	console.log("✅ Proper content extraction from parts");
 }
 
 async function processMessage(messageContent: string, sessionId: string) {
