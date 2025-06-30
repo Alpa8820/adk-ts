@@ -92,6 +92,68 @@ async function runQuery() {
 runQuery();
 ```
 
+## 🎯 AgentBuilder - Simplified Agent Creation
+
+The `AgentBuilder` provides a fluent interface for creating agents with minimal boilerplate. It's perfect for rapid prototyping and reduces the complexity of agent setup.
+
+```typescript
+import { AgentBuilder } from '@iqai/adk';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Simple agent creation and execution in one fluent chain
+async function quickQuery() {
+  const response = await AgentBuilder
+    .create("query_assistant")
+    .withModel("gemini-2.5-flash")
+    .withInstruction("You are a helpful AI. Respond clearly and concisely.")
+    .withQuickSession("my-app", "user-123")
+    .ask("What is the capital of France?");
+
+  console.log(response);
+}
+
+// For more complex scenarios, build the agent and get full control
+async function advancedSetup() {
+  const { agent, runner, session } = await AgentBuilder
+    .create("research_assistant")
+    .withModel("gpt-4-turbo")
+    .withDescription("An advanced research assistant")
+    .withInstruction("You are a research assistant with access to various tools")
+    .withTools(new GoogleSearchTool(), new FileOperationsTool())
+    .withQuickSession("research-app", "researcher-456")
+    .build();
+
+  // Now you have full access to agent, runner, and session for advanced usage
+  console.log(`Created agent: ${agent.name}`);
+}
+
+// Specialized agent types for orchestration
+async function createWorkflowAgent() {
+  // Sequential execution of multiple agents
+  const workflow = await AgentBuilder
+    .create("data_pipeline")
+    .asSequential([dataCollector, dataProcessor, dataAnalyzer])
+    .withQuickSession("pipeline-app", "admin")
+    .build();
+
+  // Parallel execution for concurrent tasks
+  const parallelAnalysis = await AgentBuilder
+    .create("multi_analysis")
+    .asParallel([sentimentAnalyzer, topicExtractor, summaryGenerator])
+    .build();
+}
+```
+
+**Benefits of AgentBuilder:**
+- **Reduced Boilerplate**: ~80% less setup code compared to manual configuration
+- **Fluent Interface**: Readable, chainable method calls
+- **Automatic Management**: Handles session and runner creation automatically
+- **Quick Execution**: Built-in `ask()` method for immediate responses
+- **Flexible**: Supports all agent types (LLM, Sequential, Parallel, Loop, LangGraph)
+- **Backward Compatible**: Works alongside existing ADK patterns
+
 ## 🛠️ Using Tools with an Agent
 
 Extend your agent's capabilities by defining and integrating custom tools.
