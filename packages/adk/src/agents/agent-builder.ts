@@ -68,7 +68,12 @@ export type AgentType =
  *
  * Examples:
  * ```typescript
- * // Simple agent
+ * // Simplest possible usage
+ * const response = await AgentBuilder
+ *   .withModel("gemini-2.5-flash")
+ *   .ask("What is the capital of Australia?");
+ *
+ * // Simple agent with name
  * const { agent } = AgentBuilder
  *   .create("my-agent")
  *   .withModel("gemini-2.5-flash")
@@ -81,13 +86,6 @@ export type AgentType =
  *   .withModel("gemini-2.5-flash")
  *   .withSession(sessionService, "user123", "myApp")
  *   .build();
- *
- * // Quick execution
- * const response = await AgentBuilder
- *   .create("my-agent")
- *   .withModel("gemini-2.5-flash")
- *   .withQuickSession("myApp", "user123")
- *   .ask("Hello!");
  * ```
  */
 export class AgentBuilder {
@@ -104,11 +102,20 @@ export class AgentBuilder {
 
 	/**
 	 * Create a new AgentBuilder instance
-	 * @param name The name of the agent
+	 * @param name The name of the agent (defaults to "default_agent")
 	 * @returns New AgentBuilder instance
 	 */
-	static create(name: string): AgentBuilder {
+	static create(name = "default_agent"): AgentBuilder {
 		return new AgentBuilder(name);
+	}
+
+	/**
+	 * Convenience method to start building with a model directly
+	 * @param model The model identifier (e.g., "gemini-2.5-flash")
+	 * @returns New AgentBuilder instance with model set
+	 */
+	static withModel(model: string): AgentBuilder {
+		return new AgentBuilder("default_agent").withModel(model);
 	}
 
 	/**
@@ -286,10 +293,11 @@ export class AgentBuilder {
 	 * @returns Agent response
 	 */
 	async ask(message: string): Promise<string> {
+		// If no session config is provided, create a temporary one automatically
 		if (!this.sessionConfig) {
-			throw new Error(
-				"Session configuration required for ask(). Use withSession() or withQuickSession()",
-			);
+			const userId = `user-${this.config.name}`;
+			const appName = `session-${this.config.name}`;
+			this.withQuickSession(appName, userId);
 		}
 
 		const { runner, session } = await this.build();
@@ -301,7 +309,7 @@ export class AgentBuilder {
 		let response = "";
 
 		for await (const event of runner.runAsync({
-			userId: this.sessionConfig.userId,
+			userId: this.sessionConfig!.userId,
 			sessionId: session.id,
 			newMessage: {
 				parts: [{ text: message }],
