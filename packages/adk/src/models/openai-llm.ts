@@ -13,187 +13,6 @@ const NEW_LINE = "\n";
 type OpenAIRole = "user" | "assistant" | "system";
 
 /**
- * Convert ADK role to OpenAI role format
- */
-function toOpenAiRole(role?: string): OpenAIRole {
-	if (role === "model") {
-		return "assistant";
-	}
-	if (role === "system") {
-		return "system";
-	}
-	return "user";
-}
-
-/**
- * Convert OpenAI finish reason to ADK finish reason
- */
-function toAdkFinishReason(
-	openaiFinishReason?: string,
-): "STOP" | "MAX_TOKENS" | "FINISH_REASON_UNSPECIFIED" {
-	switch (openaiFinishReason) {
-		case "stop":
-		case "tool_calls":
-			return "STOP";
-		case "length":
-			return "MAX_TOKENS";
-		default:
-			return "FINISH_REASON_UNSPECIFIED";
-	}
-}
-
-/**
- * Convert ADK Part to OpenAI message content
- */
-function partToOpenAiContent(part: any): OpenAI.ChatCompletionContentPart {
-	if (part.text) {
-		return {
-			type: "text",
-			text: part.text,
-		};
-	}
-
-	if (part.inline_data?.mime_type && part.inline_data?.data) {
-		return {
-			type: "image_url",
-			image_url: {
-				url: `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`,
-			},
-		};
-	}
-
-	throw new Error("Unsupported part type for OpenAI conversion");
-}
-
-/**
- * Convert ADK Content to OpenAI ChatCompletionMessage
- */
-function contentToOpenAiMessage(
-	content: any,
-): OpenAI.ChatCompletionMessageParam {
-	const role = toOpenAiRole(content.role);
-
-	if (role === "system") {
-		return {
-			role: "system",
-			content: content.parts?.[0]?.text || "",
-		};
-	}
-
-	// Handle function calls
-	if (content.parts?.some((part: any) => part.functionCall)) {
-		const functionCallPart = content.parts.find(
-			(part: any) => part.functionCall,
-		);
-		return {
-			role: "assistant",
-			tool_calls: [
-				{
-					id: functionCallPart.functionCall.id || "",
-					type: "function",
-					function: {
-						name: functionCallPart.functionCall.name,
-						arguments: JSON.stringify(functionCallPart.functionCall.args || {}),
-					},
-				},
-			],
-		};
-	}
-
-	// Handle function responses
-	if (content.parts?.some((part: any) => part.functionResponse)) {
-		const functionResponsePart = content.parts.find(
-			(part: any) => part.functionResponse,
-		);
-		return {
-			role: "tool",
-			tool_call_id: functionResponsePart.functionResponse.id || "",
-			content: JSON.stringify(
-				functionResponsePart.functionResponse.response || {},
-			),
-		};
-	}
-
-	// Handle regular content
-	if (content.parts?.length === 1 && content.parts[0].text) {
-		return {
-			role,
-			content: content.parts[0].text,
-		};
-	}
-
-	// Handle multi-part content
-	return {
-		role,
-		content: (content.parts || []).map(partToOpenAiContent),
-	};
-}
-
-/**
- * Convert OpenAI message to ADK LlmResponse
- */
-function openAiMessageToLlmResponse(
-	choice: OpenAI.ChatCompletion.Choice,
-	usage?: OpenAI.CompletionUsage,
-): LlmResponse {
-	const message = choice.message;
-	logger.debug("OpenAI response:", JSON.stringify({ message, usage }, null, 2));
-
-	const parts: any[] = [];
-
-	// Handle text content
-	if (message.content) {
-		parts.push({ text: message.content });
-	}
-
-	// Handle tool calls
-	if (message.tool_calls) {
-		for (const toolCall of message.tool_calls) {
-			if (toolCall.type === "function") {
-				parts.push({
-					functionCall: {
-						id: toolCall.id,
-						name: toolCall.function.name,
-						args: JSON.parse(toolCall.function.arguments || "{}"),
-					},
-				});
-			}
-		}
-	}
-
-	return new LlmResponse({
-		content: {
-			role: "model",
-			parts,
-		},
-		usageMetadata: usage
-			? {
-					promptTokenCount: usage.prompt_tokens,
-					candidatesTokenCount: usage.completion_tokens,
-					totalTokenCount: usage.total_tokens,
-				}
-			: undefined,
-		finishReason: toAdkFinishReason(choice.finish_reason),
-	});
-}
-
-/**
- * Convert ADK function declaration to OpenAI tool
- */
-function functionDeclarationToOpenAiTool(
-	functionDeclaration: any,
-): OpenAI.ChatCompletionTool {
-	return {
-		type: "function",
-		function: {
-			name: functionDeclaration.name,
-			description: functionDeclaration.description || "",
-			parameters: functionDeclaration.parameters || {},
-		},
-	};
-}
-
-/**
  * OpenAI LLM implementation using GPT models
  * Enhanced with comprehensive debug logging similar to Google LLM
  */
@@ -205,6 +24,192 @@ export class OpenAiLlm extends BaseLlm {
 	 */
 	constructor(model = "gpt-4o-mini") {
 		super(model);
+	}
+
+	/**
+	 * Convert ADK role to OpenAI role format
+	 */
+	private toOpenAiRole(role?: string): OpenAIRole {
+		if (role === "model") {
+			return "assistant";
+		}
+		if (role === "system") {
+			return "system";
+		}
+		return "user";
+	}
+
+	/**
+	 * Convert OpenAI finish reason to ADK finish reason
+	 */
+	private toAdkFinishReason(
+		openaiFinishReason?: string,
+	): "STOP" | "MAX_TOKENS" | "FINISH_REASON_UNSPECIFIED" {
+		switch (openaiFinishReason) {
+			case "stop":
+			case "tool_calls":
+				return "STOP";
+			case "length":
+				return "MAX_TOKENS";
+			default:
+				return "FINISH_REASON_UNSPECIFIED";
+		}
+	}
+
+	/**
+	 * Convert ADK Part to OpenAI message content
+	 */
+	private partToOpenAiContent(part: any): OpenAI.ChatCompletionContentPart {
+		if (part.text) {
+			return {
+				type: "text",
+				text: part.text,
+			};
+		}
+
+		if (part.inline_data?.mime_type && part.inline_data?.data) {
+			return {
+				type: "image_url",
+				image_url: {
+					url: `data:${part.inline_data.mime_type};base64,${part.inline_data.data}`,
+				},
+			};
+		}
+
+		throw new Error("Unsupported part type for OpenAI conversion");
+	}
+
+	/**
+	 * Convert ADK Content to OpenAI ChatCompletionMessage
+	 */
+	private contentToOpenAiMessage(
+		content: any,
+	): OpenAI.ChatCompletionMessageParam {
+		const role = this.toOpenAiRole(content.role);
+
+		if (role === "system") {
+			return {
+				role: "system",
+				content: content.parts?.[0]?.text || "",
+			};
+		}
+
+		// Handle function calls
+		if (content.parts?.some((part: any) => part.functionCall)) {
+			const functionCallPart = content.parts.find(
+				(part: any) => part.functionCall,
+			);
+			return {
+				role: "assistant",
+				tool_calls: [
+					{
+						id: functionCallPart.functionCall.id || "",
+						type: "function",
+						function: {
+							name: functionCallPart.functionCall.name,
+							arguments: JSON.stringify(
+								functionCallPart.functionCall.args || {},
+							),
+						},
+					},
+				],
+			};
+		}
+
+		// Handle function responses
+		if (content.parts?.some((part: any) => part.functionResponse)) {
+			const functionResponsePart = content.parts.find(
+				(part: any) => part.functionResponse,
+			);
+			return {
+				role: "tool",
+				tool_call_id: functionResponsePart.functionResponse.id || "",
+				content: JSON.stringify(
+					functionResponsePart.functionResponse.response || {},
+				),
+			};
+		}
+
+		// Handle regular content
+		if (content.parts?.length === 1 && content.parts[0].text) {
+			return {
+				role,
+				content: content.parts[0].text,
+			};
+		}
+
+		// Handle multi-part content
+		return {
+			role,
+			content: (content.parts || []).map(this.partToOpenAiContent),
+		};
+	}
+
+	/**
+	 * Convert OpenAI message to ADK LlmResponse
+	 */
+	private openAiMessageToLlmResponse(
+		choice: OpenAI.ChatCompletion.Choice,
+		usage?: OpenAI.CompletionUsage,
+	): LlmResponse {
+		const message = choice.message;
+		logger.debug(
+			"OpenAI response:",
+			JSON.stringify({ message, usage }, null, 2),
+		);
+
+		const parts: any[] = [];
+
+		// Handle text content
+		if (message.content) {
+			parts.push({ text: message.content });
+		}
+
+		// Handle tool calls
+		if (message.tool_calls) {
+			for (const toolCall of message.tool_calls) {
+				if (toolCall.type === "function") {
+					parts.push({
+						functionCall: {
+							id: toolCall.id,
+							name: toolCall.function.name,
+							args: JSON.parse(toolCall.function.arguments || "{}"),
+						},
+					});
+				}
+			}
+		}
+
+		return new LlmResponse({
+			content: {
+				role: "model",
+				parts,
+			},
+			usageMetadata: usage
+				? {
+						promptTokenCount: usage.prompt_tokens,
+						candidatesTokenCount: usage.completion_tokens,
+						totalTokenCount: usage.total_tokens,
+					}
+				: undefined,
+			finishReason: this.toAdkFinishReason(choice.finish_reason),
+		});
+	}
+
+	/**
+	 * Convert ADK function declaration to OpenAI tool
+	 */
+	private functionDeclarationToOpenAiTool(
+		functionDeclaration: any,
+	): OpenAI.ChatCompletionTool {
+		return {
+			type: "function",
+			function: {
+				name: functionDeclaration.name,
+				description: functionDeclaration.description || "",
+				parameters: functionDeclaration.parameters || {},
+			},
+		};
 	}
 
 	/**
@@ -227,12 +232,14 @@ export class OpenAiLlm extends BaseLlm {
 		logger.debug(this.buildRequestLog(llmRequest));
 
 		const model = llmRequest.model || this.model;
-		const messages = (llmRequest.contents || []).map(contentToOpenAiMessage);
+		const messages = (llmRequest.contents || []).map(
+			this.contentToOpenAiMessage,
+		);
 
 		let tools: OpenAI.ChatCompletionTool[] | undefined;
 		if ((llmRequest.config?.tools?.[0] as any)?.functionDeclarations) {
 			tools = (llmRequest.config.tools[0] as any).functionDeclarations.map(
-				functionDeclarationToOpenAiTool,
+				this.functionDeclarationToOpenAiTool,
 			);
 		}
 
@@ -393,7 +400,7 @@ export class OpenAiLlm extends BaseLlm {
 									totalTokenCount: usageMetadata.total_tokens,
 								}
 							: undefined,
-						finishReason: toAdkFinishReason(choice.finish_reason),
+						finishReason: this.toAdkFinishReason(choice.finish_reason),
 					});
 
 					logger.debug(this.buildResponseLog(finalResponse));
@@ -434,7 +441,10 @@ export class OpenAiLlm extends BaseLlm {
 
 			const choice = response.choices[0];
 			if (choice) {
-				const llmResponse = openAiMessageToLlmResponse(choice, response.usage);
+				const llmResponse = this.openAiMessageToLlmResponse(
+					choice,
+					response.usage,
+				);
 				logger.debug(this.buildResponseLog(llmResponse));
 				yield llmResponse;
 			}
