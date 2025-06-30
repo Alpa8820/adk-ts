@@ -5,7 +5,6 @@ import { AgentBuilder } from "@iqai/adk";
  * Simple Agent Example
  *
  * The simplest way to create and use an AI agent with AgentBuilder.
- * No need for agent names, sessions, or instructions - just model and question!
  */
 async function main() {
 	console.log("🤖 Simple Agent Example");
