@@ -104,34 +104,39 @@ export class LlmRequest {
 	}
 
 	/**
-	 * Extracts the system instruction as plain text from Content.
-	 * System instructions are always Content type (not PartUnion for files/media).
+	 * Extracts the system instruction as plain text from Content or string.
+	 * System instructions can be either string or Content type.
 	 * @returns The system instruction as a string, or undefined if not set.
 	 */
 	getSystemInstructionText(): string | undefined {
 		if (!this.config?.systemInstruction) {
 			return undefined;
 		}
-		try {
-			// System instruction is always Content type
-			const content = this.config.systemInstruction as Content;
 
-			// Extract text from all parts
+		const systemInstruction = this.config.systemInstruction;
+
+		// If it's already a string, return it
+		if (typeof systemInstruction === "string") {
+			return systemInstruction;
+		}
+
+		// Handle Content type with parts
+		if (
+			systemInstruction &&
+			typeof systemInstruction === "object" &&
+			"parts" in systemInstruction
+		) {
+			const content = systemInstruction as Content;
 			if (content.parts) {
 				return content.parts
 					.map((part) => part.text || "")
 					.filter(Boolean)
 					.join("");
 			}
-		} catch {
-			// If the system instruction is not a Content type.
-			// TODO: Handle this case later
-			logger.warn(
-				"System instruction is not a Content type. This is not supported yet.",
-			);
 		}
 
-		return "";
+		// Fallback to string conversion for any other type
+		return String(systemInstruction || "");
 	}
 
 	/**

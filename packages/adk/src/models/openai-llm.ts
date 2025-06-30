@@ -49,14 +49,14 @@ export class OpenAiLlm extends BaseLlm {
 		logger.debug(this.buildRequestLog(llmRequest));
 
 		const model = llmRequest.model || this.model;
-		const messages = (llmRequest.contents || []).map(
-			this.contentToOpenAiMessage,
+		const messages = (llmRequest.contents || []).map((content) =>
+			this.contentToOpenAiMessage(content),
 		);
 
 		let tools: OpenAI.ChatCompletionTool[] | undefined;
 		if ((llmRequest.config?.tools?.[0] as any)?.functionDeclarations) {
 			tools = (llmRequest.config.tools[0] as any).functionDeclarations.map(
-				this.functionDeclarationToOpenAiTool,
+				(funcDecl) => this.functionDeclarationToOpenAiTool(funcDecl),
 			);
 		}
 
@@ -440,7 +440,9 @@ export class OpenAiLlm extends BaseLlm {
 		// Handle multi-part content
 		return {
 			role,
-			content: (content.parts || []).map(this.partToOpenAiContent),
+			content: (content.parts || []).map((part) =>
+				this.partToOpenAiContent(part),
+			),
 		};
 	}
 
