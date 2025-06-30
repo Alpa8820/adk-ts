@@ -1,225 +1,334 @@
-/**
- * AgentBuilder Example - API Demonstration
- *
- * This example demonstrates the new AgentBuilder pattern that simplifies
- * agent creation and management with a fluent interface.
- *
- * The AgentBuilder provides:
- * 1. Simple agent creation with minimal boilerplate
- * 2. Automatic session and runner management
- * 3. Quick execution with the ask() method
- * 4. Support for all agent types (LLM, Sequential, Parallel, Loop, LangGraph)
- * 5. Fluent interface for configuration
- *
- * Note: This example shows the API design. Once the package is built,
- * AgentBuilder will be available as a direct import from @iqai/adk.
- */
-function main() {
-	console.log("🚀 AgentBuilder API Demonstration");
-
-	demonstrateSimpleAgentApi();
-	demonstrateAgentWithToolsApi();
-	demonstrateSpecializedAgentsApi();
-	demonstrateTraditionalVsBuilder();
-
-	console.log("\n🎉 AgentBuilder API demonstration completed!");
-}
-
-/**
- * Demonstrates the simplest possible agent creation and usage
- */
-function demonstrateSimpleAgentApi(): void {
-	console.log("\n🤖 Simple Agent Creation API");
-	console.log(
-		"The following code creates an agent with minimal configuration:",
-	);
-
-	const codeExample = `
-// Simple one-liner execution
-const response = await AgentBuilder
-  .create("simple-helper")
-  .withModel("gemini-2.5-flash")
-  .withInstruction("You are a helpful assistant that provides clear, concise answers.")
-  .withQuickSession("agent-builder-example", "user123")
-  .ask("What are the benefits of using a builder pattern in software design?");
-
-console.log(response);
-`;
-
-	console.log(codeExample);
-	console.log(
-		"✅ This replaces ~20 lines of boilerplate with a single fluent call!",
-	);
-}
-
-/**
- * Demonstrates agent creation with tools and more complex configuration
- */
-function demonstrateAgentWithToolsApi(): void {
-	console.log("\n🔧 Agent with Tools API");
-	console.log("Creating an agent with search and file operation capabilities:");
-
-	const codeExample = `
-import { AgentBuilder, GoogleSearch, FileOperationsTool } from "@iqai/adk";
-
-// Build agent with tools and full configuration
-const { agent, runner, session } = await AgentBuilder
-  .create("research-assistant")
-  .withModel("gemini-2.5-flash")
-  .withDescription("A research assistant that can search the web and manage files")
-  .withInstruction(
-    "You are a research assistant. You can search for information online " +
-    "and help manage files. Always be thorough and cite your sources."
-  )
-  .withTools(
-    new GoogleSearch(),
-    new FileOperationsTool({ basePath: "/tmp" })
-  )
-  .withQuickSession("agent-builder-example", "user123")
-  .build();
-
-console.log(\`✅ Created agent: \${agent.name}\`);
-console.log(\`📋 Description: \${agent.description}\`);
-console.log(\`🔧 Tools available: \${agent.tools?.length || 0}\`);
-`;
-
-	console.log(codeExample);
-	console.log("✅ Clean configuration with tools, session, and runner setup!");
-}
-
-/**
- * Demonstrates different types of agents (sequential, parallel, loop)
- */
-function demonstrateSpecializedAgentsApi(): void {
-	console.log("\n🔄 Specialized Agent Types API");
-	console.log("Creating different types of orchestration agents:");
-
-	const codeExample = `
-// Create sub-agents for orchestration
-const { agent: planner } = await AgentBuilder
-  .create("planner")
-  .withModel("gemini-2.5-flash")
-  .withInstruction("You are a planning agent that breaks down complex tasks.")
-  .build();
-
-const { agent: executor } = await AgentBuilder
-  .create("executor")
-  .withModel("gemini-2.5-flash")
-  .withInstruction("You are an execution agent that carries out planned tasks.")
-  .build();
-
-// Sequential Agent - executes sub-agents in order
-const { agent: sequentialAgent } = await AgentBuilder
-  .create("sequential-workflow")
-  .withDescription("Executes agents in sequence")
-  .asSequential([planner, executor])
-  .build();
-
-// Parallel Agent - executes sub-agents simultaneously
-const { agent: parallelAgent } = await AgentBuilder
-  .create("parallel-workflow")
-  .withDescription("Executes agents in parallel")
-  .asParallel([planner, executor])
-  .build();
-
-// Loop Agent - executes sub-agents iteratively
-const { agent: loopAgent } = await AgentBuilder
-  .create("loop-workflow")
-  .withDescription("Executes agents iteratively")
-  .asLoop([planner, executor], 5)  // max 5 iterations
-  .build();
-
-// LangGraph Agent - executes agents based on graph structure
-const { agent: langGraphAgent } = await AgentBuilder
-  .create("graph-workflow")
-  .withDescription("Executes agents based on graph structure")
-  .asLangGraph([
-    { name: "start", agent: planner },
-    { name: "execute", agent: executor }
-  ], "start")
-  .build();
-`;
-
-	console.log(codeExample);
-	console.log("✅ Supports all agent orchestration patterns with simple API!");
-}
-
-/**
- * Demonstrates the difference between traditional approach and builder pattern
- */
-function demonstrateTraditionalVsBuilder(): void {
-	console.log("\n📊 Traditional vs Builder Comparison");
-
-	console.log("Traditional approach requires extensive boilerplate:");
-	const traditionalExample = `
-// Traditional approach - many imports and manual setup
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { env } from "node:process";
 import {
-  LlmAgent,
-  InMemorySessionService,
-  Runner,
-  GoogleSearch
+	AgentBuilder,
+	GoogleSearch,
+	HttpRequestTool,
+	InMemoryMemoryService,
+	createDatabaseSessionService,
 } from "@iqai/adk";
+import dedent from "dedent";
 
-const sessionService = new InMemorySessionService();
-const session = await sessionService.createSession("myApp", "user123");
+/**
+ * Application configuration constants
+ */
+const APP_NAME = "AgentBuilderDemo";
+const USER_ID = "demo-user";
 
-const agent = new LlmAgent({
-  name: "helper",
-  model: "gemini-2.5-flash",
-  instruction: "You are helpful",
-  tools: [new GoogleSearch()]
-});
+/**
+ * AgentBuilder Example
+ *
+ * This example demonstrates the various ways to use AgentBuilder for creating
+ * and managing AI agents. It showcases different patterns from simple one-off
+ * questions to complex multi-agent workflows with persistence.
+ *
+ * The example demonstrates:
+ * 1. Simple question-answer pattern
+ * 2. Agent with tools and instructions
+ * 3. Session management and persistence
+ * 4. Multi-agent workflows (sequential, parallel)
+ * 5. Memory and artifact integration
+ *
+ * Expected Output:
+ * - Various agent responses demonstrating different capabilities
+ * - Session persistence across runs
+ * - Tool usage and multi-agent coordination
+ *
+ * Prerequisites:
+ * - Node.js environment
+ * - LLM_MODEL environment variable (optional, defaults to gemini-2.5-flash)
+ * - Internet connection for web search tool
+ */
+async function main() {
+	console.log("🏗️  Starting AgentBuilder comprehensive example...\n");
 
-const runner = new Runner({
-  appName: "myApp",
-  agent,
-  sessionService
-});
+	try {
+		// 1. Simplest possible usage - direct question
+		await demonstrateSimpleUsage();
 
-// Manual event processing for responses
-let response = "";
-for await (const event of runner.runAsync({
-  userId: "user123",
-  sessionId: session.id,
-  newMessage: { parts: [{ text: "Hello!" }] }
-})) {
-  if (event.content?.parts) {
-    response += event.content.parts.map(part => part.text || "").join("");
-  }
-}
-console.log(response);
-`;
+		// 2. Agent with tools and instructions
+		await demonstrateToolsAndInstructions();
 
-	console.log(traditionalExample);
+		// 3. Session management and persistence
+		await demonstrateSessionManagement();
 
-	console.log("\nBuilder approach is clean and concise:");
-	const builderExample = `
-// Builder approach - clean and concise
-import { AgentBuilder, GoogleSearch } from "@iqai/adk";
+		// 4. Multi-agent workflows
+		await demonstrateMultiAgentWorkflows();
 
-const response = await AgentBuilder
-  .create("helper")
-  .withModel("gemini-2.5-flash")
-  .withInstruction("You are helpful")
-  .withTools(new GoogleSearch())
-  .withQuickSession("myApp", "user123")
-  .ask("Hello!");
-
-console.log(response);
-`;
-
-	console.log(builderExample);
-	console.log("✨ The builder pattern reduces boilerplate by ~80%!");
-	console.log("🎯 Key benefits:");
-	console.log("   - Fluent interface for readable code");
-	console.log("   - Automatic session and runner management");
-	console.log("   - Quick execution helpers (ask method)");
-	console.log("   - Support for all agent types");
-	console.log("   - Maintains backward compatibility");
-	console.log("   - Reduces configuration errors");
+		console.log("\n✅ AgentBuilder comprehensive example completed!");
+	} catch (error) {
+		console.error("❌ Error in AgentBuilder example:", error);
+		process.exit(1);
+	}
 }
 
 /**
- * Execute the main function
+ * Demonstrates the simplest AgentBuilder usage pattern
  */
-main();
+async function demonstrateSimpleUsage(): Promise<void> {
+	console.log("1️⃣ Simple Usage Pattern");
+	console.log("═══════════════════════");
+
+	const question = "What is the capital of France?";
+	console.log(`📝 Question: ${question}`);
+
+	const response = await AgentBuilder.withModel(
+		env.LLM_MODEL || "gemini-2.5-flash",
+	).ask(question);
+
+	console.log(`🤖 Response: ${response}\n`);
+}
+
+/**
+ * Demonstrates AgentBuilder with tools and custom instructions
+ */
+async function demonstrateToolsAndInstructions(): Promise<void> {
+	console.log("2️⃣ Agent with Tools and Instructions");
+	console.log("═══════════════════════════════════");
+
+	const query =
+		"Search for recent news about artificial intelligence and summarize the findings";
+	console.log(`📝 Query: ${query}`);
+
+	const response = await AgentBuilder.create("research_agent")
+		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+		.withDescription("A research agent specializing in information gathering")
+		.withInstruction(dedent`
+			You are a research assistant. Use available tools to gather information
+			and provide comprehensive, well-structured summaries. Always cite your
+			sources and present findings in a clear, organized manner.
+		`)
+		.withTools(new GoogleSearch(), new HttpRequestTool())
+		.ask(query);
+
+	console.log(`🤖 Research Agent: ${response}\n`);
+}
+
+/**
+ * Demonstrates session management and persistence with AgentBuilder
+ */
+async function demonstrateSessionManagement(): Promise<void> {
+	console.log("3️⃣ Session Management and Persistence");
+	console.log("════════════════════════════════════");
+
+	// Create agent with persistent session
+	const { agent, runner, session } = await AgentBuilder.create(
+		"persistent_agent",
+	)
+		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+		.withDescription("An agent that remembers our conversation")
+		.withInstruction(dedent`
+			You are a helpful assistant that maintains context across our conversation.
+			Remember important details from our discussion and reference them when relevant.
+			Be conversational and personable while staying helpful and accurate.
+		`)
+		.withSession(
+			createDatabaseSessionService(getSqliteConnectionString("agentbuilder")),
+			USER_ID,
+			APP_NAME,
+			new InMemoryMemoryService(),
+		)
+		.build();
+
+	if (!runner || !session) {
+		throw new Error("Failed to create runner and session");
+	}
+
+	// First interaction
+	console.log("💬 First interaction:");
+	await runConversation(
+		runner,
+		session.id,
+		"My name is Alice. Remember this for our conversation.",
+	);
+
+	// Second interaction - testing memory
+	console.log("\n💬 Second interaction (testing memory):");
+	await runConversation(
+		runner,
+		session.id,
+		"What was my name that I told you earlier?",
+	);
+
+	console.log(
+		"💡 Run this example multiple times to see session persistence!\n",
+	);
+}
+
+/**
+ * Demonstrates multi-agent workflows using AgentBuilder
+ */
+async function demonstrateMultiAgentWorkflows(): Promise<void> {
+	console.log("4️⃣ Multi-Agent Workflows");
+	console.log("═══════════════════════");
+
+	// Create specialized sub-agents
+	const researchAgent = AgentBuilder.create("researcher")
+		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+		.withDescription("Specializes in research and fact-finding")
+		.withInstruction(dedent`
+			You are a research specialist. Focus on gathering accurate information
+			about the topic. Use your tools to find current, reliable sources and
+			provide factual, detailed research findings with proper attribution.
+		`)
+		.withTools(new GoogleSearch())
+		.build();
+
+	const summaryAgent = AgentBuilder.create("summarizer")
+		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+		.withDescription("Specializes in creating concise summaries")
+		.withInstruction(dedent`
+			You are a summary specialist. Take research findings and create clear,
+			concise, well-structured summaries. Focus on key points and insights,
+			organizing information in a logical flow with proper headings and bullet points.
+		`)
+		.build();
+
+	// Create and execute sequential workflow
+	console.log("📋 Sequential Workflow (Research → Summarize):");
+	console.log("   Creating and executing sequential workflow...");
+
+	const { runner: sequentialRunner, session: sequentialSession } =
+		await AgentBuilder.create("sequential_workflow")
+			.withDescription("A workflow that researches and then summarizes")
+			.asSequential([(await researchAgent).agent, (await summaryAgent).agent])
+			.withQuickSession(APP_NAME, USER_ID)
+			.build();
+
+	if (!sequentialRunner || !sequentialSession) {
+		throw new Error("Failed to create sequential workflow runner and session");
+	}
+
+	// Execute the actual sequential workflow
+	console.log("🔬 Executing: Research → Summarize workflow");
+	await runConversation(
+		sequentialRunner,
+		sequentialSession.id,
+		"Research the latest developments in TypeScript 5.0 and provide a summary of the key features",
+	);
+
+	// Demonstrate parallel workflow execution
+	console.log("\n🔀 Parallel Workflow Execution:");
+	console.log("   Executing parallel analysis with specialized agents...");
+
+	// Execute parallel analysis with concurrent async calls
+	console.log("⚡ Executing parallel analysis...");
+	const topic = "artificial intelligence in healthcare";
+
+	const [technicalResult, businessResult] = await Promise.all([
+		AgentBuilder.create("tech_runner")
+			.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+			.withInstruction(dedent`
+				Analyze the technical aspects of artificial intelligence in healthcare.
+				Focus on algorithms, implementation challenges, technical innovations,
+				and engineering considerations. Include details about:
+				- Machine learning models and architectures
+				- Data processing and integration challenges
+				- Performance and scalability requirements
+				- Technical implementation barriers
+			`)
+			.ask(`Provide a technical analysis of ${topic}`),
+
+		AgentBuilder.create("business_runner")
+			.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+			.withInstruction(dedent`
+				Analyze the business aspects of artificial intelligence in healthcare.
+				Focus on market impact, adoption rates, and business opportunities.
+				Cover these key areas:
+				- Market size and growth projections
+				- Adoption barriers and drivers
+				- ROI and cost-benefit analysis
+				- Regulatory and compliance considerations
+				- Competitive landscape and opportunities
+			`)
+			.ask(`Provide a business analysis of ${topic}`),
+	]);
+
+	console.log("🔧 Technical Analysis:");
+	console.log(technicalResult);
+	console.log("\n💼 Business Analysis:");
+	console.log(businessResult);
+
+	// Create final synthesis
+	console.log("\n🎯 Synthesis Agent - Combining Insights:");
+	const synthesisResult = await AgentBuilder.create("synthesis_agent")
+		.withModel(env.LLM_MODEL || "gemini-2.5-flash")
+		.withInstruction(dedent`
+			You are a synthesis specialist. Combine technical and business insights
+			into a comprehensive overview. Create a unified analysis that:
+			- Identifies key connections between technical and business factors
+			- Highlights potential synergies and conflicts
+			- Provides strategic recommendations
+			- Presents a balanced, holistic perspective
+		`)
+		.ask(dedent`
+			Combine these analyses into a comprehensive overview:
+
+			Technical Analysis:
+			${technicalResult}
+
+			Business Analysis:
+			${businessResult}
+
+			Provide a unified perspective on ${topic}.
+		`);
+
+	console.log("🎯 Synthesized Overview:");
+	console.log(synthesisResult);
+	console.log("\n✅ Multi-agent workflow execution completed!\n");
+}
+
+/**
+ * Helper function to run a conversation and display results
+ */
+async function runConversation(
+	runner: any,
+	sessionId: string,
+	message: string,
+): Promise<void> {
+	console.log(`👤 User: ${message}`);
+
+	let response = "";
+	for await (const event of runner.runAsync({
+		userId: USER_ID,
+		sessionId,
+		newMessage: {
+			parts: [{ text: message }],
+		},
+	})) {
+		if (event.content?.parts && !event.partial) {
+			const content = event.content.parts.map((p) => p.text).join("");
+			if (content) {
+				response += content;
+			}
+		}
+	}
+
+	console.log(`🤖 Agent: ${response}`);
+}
+
+/**
+ * Execute the main function and handle any errors
+ */
+main().catch((error) => {
+	console.error("💥 Fatal error:", error);
+	process.exit(1);
+});
+
+/**
+ * Get SQLite connection string for the given database name
+ * Creates the directory if it doesn't exist
+ * @param dbName Name of the database file (without extension)
+ * @returns SQLite connection string
+ */
+function getSqliteConnectionString(dbName: string): string {
+	const dbPath = path.join(__dirname, "data", `${dbName}.db`);
+
+	// Ensure the directory exists
+	if (!fs.existsSync(path.dirname(dbPath))) {
+		fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+	}
+
+	return `sqlite://${dbPath}`;
+}
