@@ -83,6 +83,12 @@ The ADK framework is built on several core components that work together to prov
 
 ### 1. Agents Layer
 
+The agent layer forms the foundation of ADK's architecture, providing the core abstraction for AI agents. **BaseAgent** serves as the abstract foundation, defining the essential lifecycle methods, sub-agent hierarchy management, and callback system that all agents must implement. This design enables complex multi-agent scenarios where agents can delegate work to specialized sub-agents.
+
+**LlmAgent** is the primary implementation that most developers will use. It extends BaseAgent with LLM-specific capabilities, integrating directly with language models while supporting tool calling, memory services, and session management. The agent handles the complete conversation lifecycle - from processing user input through LLM flows to generating responses and managing state changes.
+
+The hierarchical design allows for sophisticated agent architectures where a root agent can coordinate multiple specialized sub-agents, each with their own tools and capabilities, while maintaining conversation context and enabling seamless agent transfers.
+
 ```
 ┌─────────────────────────────────────┐
 │           BaseAgent                 │
@@ -105,6 +111,14 @@ The ADK framework is built on several core components that work together to prov
 - `packages/adk/src/agents/llm-agent.ts` - Default LLM-powered agent implementation
 
 ### 2. LLM Flows & Processors
+
+The flow system is the heart of ADK's request processing pipeline, orchestrating the complex dance between user input, LLM providers, and agent responses. **BaseLlmFlow** defines the core lifecycle with distinct preprocessing, LLM call, and postprocessing phases, enabling a modular and extensible architecture.
+
+**SingleFlow** handles scenarios where only the current agent needs to respond, while **AutoFlow** manages complex multi-agent interactions including agent transfers and sub-agent coordination. The flow system automatically determines which approach to use based on the agent configuration and conversation context.
+
+The **processor system** provides fine-grained control over request and response handling. Request processors run sequentially to build up the LLM request - injecting system instructions, conversation history, tool declarations, and planning prompts. Response processors handle the LLM output, managing tool calls, agent transfers, and specialized response formatting.
+
+This modular design allows contributors to easily extend ADK's capabilities by adding new processors for specific use cases without modifying core flow logic.
 
 ```
 ┌─────────────────────────────────────┐
@@ -150,6 +164,16 @@ The ADK framework is built on several core components that work together to prov
 - `packages/adk/src/flows/llm-flows/agent-transfer.ts` - Agent transfer logic
 
 ### 3. Models & Context
+
+The models and context system provides the fundamental data structures that flow through ADK's processing pipeline. These models serve as the universal language between different components, ensuring type safety and consistent data handling across the entire framework.
+
+**LlmRequest** and **LlmResponse** define the standardized interface between agents and LLM providers, abstracting away provider-specific formats. **InvocationContext** carries essential metadata about the current conversation, including session information, state changes, and agent hierarchy context.
+
+**Event** serves as the primary communication mechanism for streaming responses, carrying content, metadata, and actions that need to be executed. The **EventActions** system enables events to trigger side effects like state updates, memory operations, or agent transfers.
+
+**Session** and **State** work together to provide persistent conversation management. The state system uses a delta-based approach for efficiency, tracking only changes rather than complete state snapshots. **FunctionDeclaration** provides the schema system for tool definitions, enabling dynamic tool registration and validation.
+
+This model-driven architecture ensures that data flows consistently through the system while maintaining flexibility for different use cases and extensions.
 
 ```
 ┌─────────────────────────────────────┐
@@ -221,6 +245,14 @@ The ADK framework is built on several core components that work together to prov
 
 ### 4. LLM Providers
 
+The LLM provider system abstracts away the complexities of different language model APIs, enabling agents to work seamlessly with any supported provider. **BaseLlm** defines a unified interface that all providers must implement, handling request transformation, response parsing, streaming, and telemetry collection.
+
+Each provider implementation (like **OpenAiLlm** and **GoogleLlm**) translates between ADK's standardized `LlmRequest`/`LlmResponse` format and the provider's specific API requirements. This includes handling different parameter names, response structures, function calling formats, and streaming protocols.
+
+The **LLMRegistry** system enables dynamic model resolution using pattern matching. Agents can specify models using simple strings like `"gpt-4"` or `"gemini-pro"`, and the registry automatically instantiates the appropriate provider with the correct configuration. This makes it easy to switch models without changing agent code.
+
+The provider system also handles advanced features like token counting, cost tracking, rate limiting, and retry logic, ensuring robust production deployment across different LLM services.
+
 ```
 ┌─────────────────────────────────────┐
 │           BaseLlm                   │
@@ -253,6 +285,14 @@ The ADK framework is built on several core components that work together to prov
 
 ### 5. Runtime & Services
 
+The runtime and services layer provides the execution environment and infrastructure services that agents need to operate effectively. The **Runner** system orchestrates agent execution, managing the complete lifecycle from initial invocation through session persistence and cleanup.
+
+**BaseSessionService** and its implementations handle conversation persistence, ensuring that chat history, state changes, and metadata are properly stored and retrieved across agent invocations. The service layer supports multiple storage backends - from simple in-memory storage for development to database-backed solutions for production environments.
+
+The runtime system handles complex scenarios like session management across agent transfers, state synchronization between multiple agents, and proper cleanup of resources after conversations complete. It provides the foundation that allows agents to focus on their core logic while the runtime handles infrastructure concerns.
+
+This separation of concerns enables ADK to scale from simple single-conversation scenarios to complex multi-user, multi-agent systems with persistent state and conversation history.
+
 ```
 ┌─────────────────────────────────────┐
 │           Runner                    │
@@ -279,6 +319,16 @@ The ADK framework is built on several core components that work together to prov
 - `packages/adk/src/sessions/in-memory-session-service.ts` - In-memory implementation
 
 ### 6. Extensions
+
+The extension system is where ADK's true power emerges, enabling agents to interact with external systems, maintain long-term knowledge, and employ sophisticated reasoning patterns. These extensions transform basic LLM interactions into capable AI agents that can perform real-world tasks.
+
+**BaseTool** provides the foundation for agent capabilities, defining how functions and external integrations are exposed to LLMs. Tools handle everything from simple calculations to complex API interactions, file operations, and system integrations. The tool system includes automatic schema generation, validation, error handling, and seamless integration with LLM function calling capabilities.
+
+**BaseMemoryService** enables agents to maintain persistent knowledge beyond individual conversations. This includes storing and retrieving contextual information, learning from past interactions, and building up domain expertise over time. Memory services can integrate with vector databases, knowledge graphs, or traditional databases depending on the use case.
+
+**BasePlanner** implements sophisticated reasoning patterns that enhance agent decision-making. Planners can inject planning prompts, process structured responses, and implement patterns like chain-of-thought or step-by-step reasoning. This enables agents to handle complex multi-step tasks with better reliability and transparency.
+
+The extension system's modular design allows contributors to easily add new capabilities while maintaining compatibility with existing agent configurations.
 
 ```
 ┌─────────────────────────────────────┐
@@ -310,6 +360,16 @@ The ADK framework is built on several core components that work together to prov
 
 ### 7. Context Hierarchy
 
+The context hierarchy provides a progressive permission model that controls what operations different parts of the system can perform. This design ensures security, maintains data integrity, and provides clear separation of concerns across different execution phases.
+
+**ReadonlyContext** forms the base layer, providing read-only access to session data, agent configuration, memory services, and conversation history. This context is used in scenarios where components need information but shouldn't modify system state, such as instruction generation or memory retrieval.
+
+**CallbackContext** extends readonly access with mutation capabilities, allowing state updates, artifact management, and event action execution. This context is used during active agent execution when the system needs to modify session state, update artifacts, or trigger side effects.
+
+**ToolContext** represents the most specialized context level, designed specifically for tool execution. It includes function call tracking, tool-specific operations, and enhanced memory search capabilities. This context ensures tools have access to everything needed for their operation while maintaining appropriate boundaries.
+
+This hierarchical design prevents accidental state mutations, enables fine-grained access control, and makes the system more predictable and debuggable.
+
 ```
 ┌─────────────────────────────────────┐
 │      ReadonlyContext                │
@@ -340,6 +400,16 @@ The ADK framework is built on several core components that work together to prov
 - `packages/adk/src/tools/tool-context.ts` - Tool execution context
 
 ### 8. Artifact Management
+
+The artifact management system provides a robust solution for handling files, documents, and other binary content that agents need to create, modify, or share during conversations. This system abstracts away storage complexities while providing version control and metadata management.
+
+**BaseArtifactService** defines the core interface for artifact operations including creation, retrieval, updating, and deletion. The service handles metadata tracking, version management, and content type detection automatically. This enables agents to work with files without worrying about underlying storage implementation.
+
+The system supports multiple storage backends through different implementations. **InMemoryArtifactService** provides fast temporary storage for development and testing, while **GcsArtifactService** integrates with Google Cloud Storage for production environments requiring persistent, scalable file storage.
+
+Artifacts are automatically linked to sessions and can be shared between agents, making it possible to build workflows where agents collaborate on documents, code files, or other content. The versioning system ensures that changes are tracked and can be rolled back if needed.
+
+This flexible design enables use cases from simple file generation to complex multi-agent document collaboration scenarios.
 
 ```
 ┌─────────────────────────────────────┐
