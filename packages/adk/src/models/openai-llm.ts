@@ -1,9 +1,9 @@
 import { Logger } from "@adk/helpers/logger";
-import OpenAI from "openai";
 import dedent from "dedent";
+import OpenAI from "openai";
 import { BaseLlm } from "./base-llm";
 import type { BaseLLMConnection } from "./base-llm-connection";
-import { LlmRequest } from "./llm-request";
+import type { LlmRequest } from "./llm-request";
 import { LlmResponse } from "./llm-response";
 
 const logger = new Logger({ name: "OpenAiLlm" });
@@ -405,10 +405,7 @@ export class OpenAiLlm extends BaseLlm {
 			}
 
 			// Final yield condition - equivalent to Google's final check
-			if (
-				(text || thoughtText) &&
-				usageMetadata
-			) {
+			if ((text || thoughtText) && usageMetadata) {
 				const parts: any[] = [];
 				if (thoughtText) {
 					parts.push({ text: thoughtText, thought: true });
@@ -479,10 +476,13 @@ export class OpenAiLlm extends BaseLlm {
 		}
 
 		return new LlmResponse({
-			content: parts.length > 0 ? {
-				role: "model",
-				parts,
-			} : undefined,
+			content:
+				parts.length > 0
+					? {
+							role: "model",
+							parts,
+						}
+					: undefined,
 			usageMetadata: usage
 				? {
 						promptTokenCount: usage.prompt_tokens,
@@ -671,6 +671,4 @@ export class OpenAiLlm extends BaseLlm {
 	override connect(_llmRequest: LlmRequest): BaseLLMConnection {
 		throw new Error(`Live connection is not supported for ${this.model}.`);
 	}
-
-
 }
