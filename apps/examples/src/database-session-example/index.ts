@@ -46,7 +46,7 @@ async function main() {
 		 * Create runner with SQLite persistence
 		 * The database session service provides persistent storage for conversations
 		 */
-		const runner = await createRunnerWithPersistence();
+		const runner = createRunnerWithPersistence();
 
 		/**
 		 * Find existing session or create new one
