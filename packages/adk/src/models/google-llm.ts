@@ -56,6 +56,9 @@ export class GoogleLlm extends BaseLlm {
 		];
 	}
 
+	/**
+	 * Main content generation method - handles both streaming and non-streaming
+	 */
 	protected async *generateContentAsyncImpl(
 		llmRequest: LlmRequest,
 		stream = false,
@@ -160,11 +163,158 @@ export class GoogleLlm extends BaseLlm {
 	}
 
 	/**
+	 * Connects to the Gemini model and returns an llm connection.
+	 */
+	override connect(_llmRequest: LlmRequest): BaseLLMConnection {
+		// This would need to be implemented with proper connection handling
+		// For now, throw an error as in the base class
+		throw new Error(`Live connection is not supported for ${this.model}.`);
+	}
+
+	/**
 	 * Check if response has inline data
 	 */
 	private hasInlineData(response: GenerateContentResponse): boolean {
 		const parts = response.candidates?.[0]?.content?.parts;
 		return parts?.some((part) => (part as any)?.inlineData) || false;
+	}
+
+	/**
+	 * Convert LlmRequest contents to GoogleGenAI format
+	 */
+	private convertContents(contents: any[]): Content[] {
+		// Convert from LlmRequest format to GoogleGenAI format
+		return contents.map((content) => ({
+			role: content.role === "assistant" ? "model" : content.role,
+			parts: content.parts || [{ text: content.content || "" }],
+		}));
+	}
+
+	/**
+	 * Convert LlmRequest config to GoogleGenAI format
+	 */
+	private convertConfig(config: any): any {
+		if (!config) return {};
+
+		return {
+			temperature: config.temperature,
+			topP: config.top_p,
+			maxOutputTokens: config.max_tokens,
+			tools: config.tools,
+			systemInstruction: config.system_instruction,
+		};
+	}
+
+	/**
+	 * Preprocesses the request based on the API backend.
+	 */
+	private preprocessRequest(llmRequest: LlmRequest): void {
+		if (this.apiBackend === GoogleLLMVariant.GEMINI_API) {
+			// Using API key from Google AI Studio doesn't support labels
+			if (llmRequest.config) {
+				(llmRequest.config as any).labels = undefined;
+			}
+			if (llmRequest.contents) {
+				for (const content of llmRequest.contents) {
+					if (!content.parts) continue;
+					for (const part of content.parts) {
+						this.removeDisplayNameIfPresent((part as any).inlineData);
+						this.removeDisplayNameIfPresent((part as any).fileData);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Sets display_name to null for the Gemini API (non-Vertex) backend.
+	 */
+	private removeDisplayNameIfPresent(dataObj: any): void {
+		if (dataObj?.displayName) {
+			dataObj.displayName = null;
+		}
+	}
+
+	/**
+	 * Builds function declaration log string.
+	 */
+	private buildFunctionDeclarationLog(funcDecl: FunctionDeclaration): string {
+		let paramStr = "{}";
+		if (funcDecl.parameters?.properties) {
+			paramStr = JSON.stringify(funcDecl.parameters.properties);
+		}
+
+		return `${funcDecl.name}: ${paramStr}`;
+	}
+
+	/**
+	 * Builds request log string.
+	 */
+	private buildRequestLog(req: LlmRequest): string {
+		const functionDecls: FunctionDeclaration[] =
+			(req.config?.tools?.[0] as any)?.functionDeclarations || [];
+
+		const functionLogs =
+			functionDecls.length > 0
+				? functionDecls.map((funcDecl) =>
+						this.buildFunctionDeclarationLog(funcDecl),
+					)
+				: [];
+
+		const contentsLogs =
+			req.contents?.map((content) =>
+				JSON.stringify(content, (key, value) => {
+					// Exclude large data fields
+					if (
+						key === "data" &&
+						typeof value === "string" &&
+						value.length > 100
+					) {
+						return "[EXCLUDED]";
+					}
+					return value;
+				}),
+			) || [];
+
+		return dedent`
+		LLM Request:
+		-----------------------------------------------------------
+		System Instruction:
+		${(req.config as any)?.systemInstruction || ""}
+		-----------------------------------------------------------
+		Contents:
+		${contentsLogs.join(NEW_LINE)}
+		-----------------------------------------------------------
+		Functions:
+		${functionLogs.join(NEW_LINE)}
+		-----------------------------------------------------------`;
+	}
+
+	/**
+	 * Builds response log string.
+	 */
+	private buildResponseLog(resp: GenerateContentResponse): string {
+		const functionCallsText: string[] = [];
+		if (resp.functionCalls) {
+			for (const funcCall of resp.functionCalls) {
+				functionCallsText.push(
+					`name: ${funcCall.name}, args: ${JSON.stringify(funcCall.args)}`,
+				);
+			}
+		}
+
+		return dedent`
+		LLM Response:
+		-----------------------------------------------------------
+		Text:
+		${resp.text || ""}
+		-----------------------------------------------------------
+		Function calls:
+		${functionCallsText.join(NEW_LINE)}
+		-----------------------------------------------------------
+		Raw response:
+		${JSON.stringify(resp, null, 2)}
+		-----------------------------------------------------------`;
 	}
 
 	/**
@@ -268,152 +418,5 @@ export class GoogleLlm extends BaseLlm {
 			}
 		}
 		return this._liveApiClient;
-	}
-
-	/**
-	 * Connects to the Gemini model and returns an llm connection.
-	 */
-	override connect(_llmRequest: LlmRequest): BaseLLMConnection {
-		// This would need to be implemented with proper connection handling
-		// For now, throw an error as in the base class
-		throw new Error(`Live connection is not supported for ${this.model}.`);
-	}
-
-	/**
-	 * Convert LlmRequest contents to GoogleGenAI format
-	 */
-	private convertContents(contents: any[]): Content[] {
-		// Convert from LlmRequest format to GoogleGenAI format
-		return contents.map((content) => ({
-			role: content.role === "assistant" ? "model" : content.role,
-			parts: content.parts || [{ text: content.content || "" }],
-		}));
-	}
-
-	/**
-	 * Convert LlmRequest config to GoogleGenAI format
-	 */
-	private convertConfig(config: any): any {
-		if (!config) return {};
-
-		return {
-			temperature: config.temperature,
-			topP: config.top_p,
-			maxOutputTokens: config.max_tokens,
-			tools: config.tools,
-			systemInstruction: config.system_instruction,
-		};
-	}
-
-	/**
-	 * Preprocesses the request based on the API backend.
-	 */
-	private preprocessRequest(llmRequest: LlmRequest): void {
-		if (this.apiBackend === GoogleLLMVariant.GEMINI_API) {
-			// Using API key from Google AI Studio doesn't support labels
-			if (llmRequest.config) {
-				(llmRequest.config as any).labels = undefined;
-			}
-			if (llmRequest.contents) {
-				for (const content of llmRequest.contents) {
-					if (!content.parts) continue;
-					for (const part of content.parts) {
-						this.removeDisplayNameIfPresent((part as any).inlineData);
-						this.removeDisplayNameIfPresent((part as any).fileData);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Builds function declaration log string.
-	 */
-	private buildFunctionDeclarationLog(funcDecl: FunctionDeclaration): string {
-		let paramStr = "{}";
-		if (funcDecl.parameters?.properties) {
-			paramStr = JSON.stringify(funcDecl.parameters.properties);
-		}
-
-		return `${funcDecl.name}: ${paramStr}`;
-	}
-
-	/**
-	 * Builds request log string.
-	 */
-	private buildRequestLog(req: LlmRequest): string {
-		const functionDecls: FunctionDeclaration[] =
-			(req.config?.tools?.[0] as any)?.functionDeclarations || [];
-
-		const functionLogs =
-			functionDecls.length > 0
-				? functionDecls.map((funcDecl) =>
-						this.buildFunctionDeclarationLog(funcDecl),
-					)
-				: [];
-
-		const contentsLogs =
-			req.contents?.map((content) =>
-				JSON.stringify(content, (key, value) => {
-					// Exclude large data fields
-					if (
-						key === "data" &&
-						typeof value === "string" &&
-						value.length > 100
-					) {
-						return "[EXCLUDED]";
-					}
-					return value;
-				}),
-			) || [];
-
-		return dedent`
-		LLM Request:
-		-----------------------------------------------------------
-		System Instruction:
-		${(req.config as any)?.systemInstruction || ""}
-		-----------------------------------------------------------
-		Contents:
-		${contentsLogs.join(NEW_LINE)}
-		-----------------------------------------------------------
-		Functions:
-		${functionLogs.join(NEW_LINE)}
-		-----------------------------------------------------------`;
-	}
-
-	/**
-	 * Builds response log string.
-	 */
-	private buildResponseLog(resp: GenerateContentResponse): string {
-		const functionCallsText: string[] = [];
-		if (resp.functionCalls) {
-			for (const funcCall of resp.functionCalls) {
-				functionCallsText.push(
-					`name: ${funcCall.name}, args: ${JSON.stringify(funcCall.args)}`,
-				);
-			}
-		}
-
-		return dedent`
-		LLM Response:
-		-----------------------------------------------------------
-		Text:
-		${resp.text || ""}
-		-----------------------------------------------------------
-		Function calls:
-		${functionCallsText.join(NEW_LINE)}
-		-----------------------------------------------------------
-		Raw response:
-		${JSON.stringify(resp, null, 2)}
-		-----------------------------------------------------------`;
-	}
-
-	/**
-	 * Sets display_name to null for the Gemini API (non-Vertex) backend.
-	 */
-	private removeDisplayNameIfPresent(dataObj: any): void {
-		if (dataObj?.displayName) {
-			dataObj.displayName = null;
-		}
 	}
 }
