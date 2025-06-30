@@ -12,170 +12,6 @@ type AnthropicRole = "user" | "assistant";
 const MAX_TOKENS = 1024;
 
 /**
- * Convert ADK role to Anthropic role format
- */
-function toAnthropicRole(role?: string): AnthropicRole {
-	if (role === "model" || role === "assistant") {
-		return "assistant";
-	}
-	return "user";
-}
-
-/**
- * Convert Anthropic stop reason to ADK finish reason
- */
-function toAdkFinishReason(
-	anthropicStopReason?: string,
-): "STOP" | "MAX_TOKENS" | "FINISH_REASON_UNSPECIFIED" {
-	if (
-		["end_turn", "stop_sequence", "tool_use"].includes(
-			anthropicStopReason || "",
-		)
-	) {
-		return "STOP";
-	}
-	if (anthropicStopReason === "max_tokens") {
-		return "MAX_TOKENS";
-	}
-	return "FINISH_REASON_UNSPECIFIED";
-}
-
-/**
- * Convert ADK Part to Anthropic content block
- */
-function partToAnthropicBlock(part: any): Anthropic.MessageParam["content"][0] {
-	if (part.text) {
-		return {
-			type: "text",
-			text: part.text,
-		};
-	}
-
-	if (part.function_call) {
-		return {
-			type: "tool_use",
-			id: part.function_call.id || "",
-			name: part.function_call.name,
-			input: part.function_call.args || {},
-		};
-	}
-
-	if (part.function_response) {
-		let content = "";
-		if (part.function_response.response?.result) {
-			content = String(part.function_response.response.result);
-		}
-		return {
-			type: "tool_result",
-			tool_use_id: part.function_response.id || "",
-			content,
-			is_error: false,
-		};
-	}
-
-	throw new Error("Unsupported part type for Anthropic conversion");
-}
-
-/**
- * Convert ADK Content to Anthropic MessageParam
- */
-function contentToAnthropicMessage(content: any): Anthropic.MessageParam {
-	return {
-		role: toAnthropicRole(content.role),
-		content: (content.parts || []).map(partToAnthropicBlock),
-	};
-}
-
-/**
- * Convert Anthropic content block to ADK Part
- */
-function anthropicBlockToPart(block: any): any {
-	if (block.type === "text") {
-		return { text: block.text };
-	}
-
-	if (block.type === "tool_use") {
-		return {
-			function_call: {
-				id: block.id,
-				name: block.name,
-				args: block.input,
-			},
-		};
-	}
-
-	throw new Error("Unsupported Anthropic content block type");
-}
-
-/**
- * Convert Anthropic Message to ADK LlmResponse
- */
-function anthropicMessageToLlmResponse(
-	message: Anthropic.Message,
-): LlmResponse {
-	logger.debug("Anthropic response:", JSON.stringify(message, null, 2));
-
-	return new LlmResponse({
-		content: {
-			role: "model",
-			parts: message.content.map(anthropicBlockToPart),
-		},
-		usageMetadata: {
-			promptTokenCount: message.usage.input_tokens,
-			candidatesTokenCount: message.usage.output_tokens,
-			totalTokenCount: message.usage.input_tokens + message.usage.output_tokens,
-		},
-		finishReason: toAdkFinishReason(message.stop_reason),
-	});
-}
-
-/**
- * Update type strings in schema to lowercase for Anthropic compatibility
- */
-function updateTypeString(valueDict: Record<string, any>): void {
-	if ("type" in valueDict) {
-		valueDict.type = valueDict.type.toLowerCase();
-	}
-
-	if ("items" in valueDict) {
-		updateTypeString(valueDict.items);
-		if ("properties" in valueDict.items) {
-			for (const value of Object.values(valueDict.items.properties)) {
-				updateTypeString(value as Record<string, any>);
-			}
-		}
-	}
-}
-
-/**
- * Convert ADK function declaration to Anthropic tool param
- */
-function functionDeclarationToAnthropicTool(
-	functionDeclaration: any,
-): Anthropic.Tool {
-	const properties: Record<string, any> = {};
-
-	if (functionDeclaration.parameters?.properties) {
-		for (const [key, value] of Object.entries(
-			functionDeclaration.parameters.properties,
-		)) {
-			const valueDict = { ...(value as any) };
-			updateTypeString(valueDict);
-			properties[key] = valueDict;
-		}
-	}
-
-	return {
-		name: functionDeclaration.name,
-		description: functionDeclaration.description || "",
-		input_schema: {
-			type: "object",
-			properties,
-		},
-	};
-}
-
-/**
  * Anthropic LLM implementation using Claude models
  */
 export class AnthropicLlm extends BaseLlm {
@@ -195,6 +31,9 @@ export class AnthropicLlm extends BaseLlm {
 		return ["claude-3-.*", "claude-.*-4.*"];
 	}
 
+	/**
+	 * Main content generation method - handles both streaming and non-streaming
+	 */
 	protected async *generateContentAsyncImpl(
 		llmRequest: LlmRequest,
 		stream = false,
@@ -204,12 +43,14 @@ export class AnthropicLlm extends BaseLlm {
 		);
 
 		const model = llmRequest.model || this.model;
-		const messages = (llmRequest.contents || []).map(contentToAnthropicMessage);
+		const messages = (llmRequest.contents || []).map((content) =>
+			this.contentToAnthropicMessage(content),
+		);
 
 		let tools: Anthropic.Tool[] | undefined;
 		if ((llmRequest.config?.tools?.[0] as any)?.functionDeclarations) {
 			tools = (llmRequest.config.tools[0] as any).functionDeclarations.map(
-				functionDeclarationToAnthropicTool,
+				(decl: any) => this.functionDeclarationToAnthropicTool(decl),
 			);
 		}
 
@@ -222,7 +63,7 @@ export class AnthropicLlm extends BaseLlm {
 
 		const anthropicMessages: Anthropic.MessageParam[] = messages.map((msg) => {
 			const content = Array.isArray(msg.content)
-				? msg.content.map(partToAnthropicBlock)
+				? msg.content.map((block) => this.partToAnthropicBlock(block))
 				: msg.content;
 
 			return {
@@ -242,7 +83,183 @@ export class AnthropicLlm extends BaseLlm {
 			top_p: llmRequest.config?.topP,
 		});
 
-		yield anthropicMessageToLlmResponse(message);
+		yield this.anthropicMessageToLlmResponse(message);
+	}
+
+	/**
+	 * Live connection is not supported for Anthropic models
+	 */
+	override connect(_llmRequest: LlmRequest): BaseLLMConnection {
+		throw new Error(`Live connection is not supported for ${this.model}.`);
+	}
+
+	/**
+	 * Convert Anthropic Message to ADK LlmResponse
+	 */
+	private anthropicMessageToLlmResponse(
+		message: Anthropic.Message,
+	): LlmResponse {
+		logger.debug("Anthropic response:", JSON.stringify(message, null, 2));
+
+		return new LlmResponse({
+			content: {
+				role: "model",
+				parts: message.content.map((block) => this.anthropicBlockToPart(block)),
+			},
+			usageMetadata: {
+				promptTokenCount: message.usage.input_tokens,
+				candidatesTokenCount: message.usage.output_tokens,
+				totalTokenCount:
+					message.usage.input_tokens + message.usage.output_tokens,
+			},
+			finishReason: this.toAdkFinishReason(message.stop_reason),
+		});
+	}
+
+	/**
+	 * Convert ADK Content to Anthropic MessageParam
+	 */
+	private contentToAnthropicMessage(content: any): Anthropic.MessageParam {
+		return {
+			role: this.toAnthropicRole(content.role),
+			content: (content.parts || []).map((part: any) =>
+				this.partToAnthropicBlock(part),
+			),
+		};
+	}
+
+	/**
+	 * Convert ADK Part to Anthropic content block
+	 */
+	private partToAnthropicBlock(
+		part: any,
+	): Anthropic.MessageParam["content"][0] {
+		if (part.text) {
+			return {
+				type: "text",
+				text: part.text,
+			};
+		}
+
+		if (part.function_call) {
+			return {
+				type: "tool_use",
+				id: part.function_call.id || "",
+				name: part.function_call.name,
+				input: part.function_call.args || {},
+			};
+		}
+
+		if (part.function_response) {
+			let content = "";
+			if (part.function_response.response?.result) {
+				content = String(part.function_response.response.result);
+			}
+			return {
+				type: "tool_result",
+				tool_use_id: part.function_response.id || "",
+				content,
+				is_error: false,
+			};
+		}
+
+		throw new Error("Unsupported part type for Anthropic conversion");
+	}
+
+	/**
+	 * Convert Anthropic content block to ADK Part
+	 */
+	private anthropicBlockToPart(block: any): any {
+		if (block.type === "text") {
+			return { text: block.text };
+		}
+
+		if (block.type === "tool_use") {
+			return {
+				function_call: {
+					id: block.id,
+					name: block.name,
+					args: block.input,
+				},
+			};
+		}
+
+		throw new Error("Unsupported Anthropic content block type");
+	}
+
+	/**
+	 * Convert ADK function declaration to Anthropic tool param
+	 */
+	private functionDeclarationToAnthropicTool(
+		functionDeclaration: any,
+	): Anthropic.Tool {
+		const properties: Record<string, any> = {};
+
+		if (functionDeclaration.parameters?.properties) {
+			for (const [key, value] of Object.entries(
+				functionDeclaration.parameters.properties,
+			)) {
+				const valueDict = { ...(value as any) };
+				this.updateTypeString(valueDict);
+				properties[key] = valueDict;
+			}
+		}
+
+		return {
+			name: functionDeclaration.name,
+			description: functionDeclaration.description || "",
+			input_schema: {
+				type: "object",
+				properties,
+			},
+		};
+	}
+
+	/**
+	 * Convert ADK role to Anthropic role format
+	 */
+	private toAnthropicRole(role?: string): AnthropicRole {
+		if (role === "model" || role === "assistant") {
+			return "assistant";
+		}
+		return "user";
+	}
+
+	/**
+	 * Convert Anthropic stop reason to ADK finish reason
+	 */
+	private toAdkFinishReason(
+		anthropicStopReason?: string,
+	): "STOP" | "MAX_TOKENS" | "FINISH_REASON_UNSPECIFIED" {
+		if (
+			["end_turn", "stop_sequence", "tool_use"].includes(
+				anthropicStopReason || "",
+			)
+		) {
+			return "STOP";
+		}
+		if (anthropicStopReason === "max_tokens") {
+			return "MAX_TOKENS";
+		}
+		return "FINISH_REASON_UNSPECIFIED";
+	}
+
+	/**
+	 * Update type strings in schema to lowercase for Anthropic compatibility
+	 */
+	private updateTypeString(valueDict: Record<string, any>): void {
+		if ("type" in valueDict) {
+			valueDict.type = valueDict.type.toLowerCase();
+		}
+
+		if ("items" in valueDict) {
+			this.updateTypeString(valueDict.items);
+			if ("properties" in valueDict.items) {
+				for (const value of Object.values(valueDict.items.properties)) {
+					this.updateTypeString(value as Record<string, any>);
+				}
+			}
+		}
 	}
 
 	/**
@@ -263,12 +280,5 @@ export class AnthropicLlm extends BaseLlm {
 			});
 		}
 		return this._client;
-	}
-
-	/**
-	 * Live connection is not supported for Anthropic models
-	 */
-	override connect(_llmRequest: LlmRequest): BaseLLMConnection {
-		throw new Error(`Live connection is not supported for ${this.model}.`);
 	}
 }
