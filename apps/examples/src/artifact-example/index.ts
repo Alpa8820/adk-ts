@@ -109,15 +109,17 @@ Always confirm operations and provide helpful feedback about what was accomplish
 				name: "saveArtifact",
 				description:
 					"Save text content to an artifact file with a specified filename",
+				isLongRunning: true,
 			}),
 			new FunctionTool(listArtifacts, {
 				name: "listArtifacts",
 				description: "List all available artifacts in the current session",
+				isLongRunning: true,
 			}),
 			new FunctionTool(deleteArtifact, {
 				name: "deleteArtifact",
-				description:
-					"Delete an artifact file by filename (not implemented yet)",
+				description: "Delete an artifact file by filename",
+				isLongRunning: true,
 			}),
 			new LoadArtifactsTool(),
 		],
@@ -247,15 +249,20 @@ async function runAgentTask(
  * @param context Tool execution context with artifact capabilities
  * @returns Success or error message
  */
-function saveArtifact(filename: string, content: string, context: any): string {
+async function saveArtifact(
+	filename: string,
+	content: string,
+	toolContext: any,
+): Promise<string> {
 	try {
 		const part = {
 			text: content,
 		};
 
 		// Save the artifact using context
-		context.saveArtifact(filename, part);
-		return `Successfully saved "${content}" to "${filename}"`;
+		const version = await toolContext.saveArtifact(filename, part);
+
+		return `Successfully saved "${content}" to "${filename}" (version ${version})`;
 	} catch (error) {
 		return `Error saving artifact: ${error instanceof Error ? error.message : String(error)}`;
 	}
@@ -266,23 +273,44 @@ function saveArtifact(filename: string, content: string, context: any): string {
  * @param context Tool execution context
  * @returns Status message
  */
-function listArtifacts(context: any): string {
+async function listArtifacts(toolContext: any): Promise<string> {
 	try {
-		// This will be handled by LoadArtifactsTool automatically
-		return "Artifacts listed via LoadArtifactsTool";
+		const artifactNames = await toolContext.listArtifacts();
+		if (artifactNames.length === 0) {
+			return "No artifacts found in the current session.";
+		}
+		return `Available artifacts: ${artifactNames.join(", ")}`;
 	} catch (error) {
 		return `Error listing artifacts: ${error instanceof Error ? error.message : String(error)}`;
 	}
 }
 
 /**
- * Custom function to delete an artifact (placeholder)
+ * Custom function to delete an artifact
  * @param filename Name of the file to delete
  * @param context Tool execution context
  * @returns Status message
  */
-function deleteArtifact(filename: string, context: any): string {
-	return `Artifact deletion not implemented yet for "${filename}"`;
+async function deleteArtifact(
+	filename: string,
+	toolContext: any,
+): Promise<string> {
+	try {
+		if (!toolContext._invocationContext.artifactService) {
+			return "Artifact service is not available.";
+		}
+
+		await toolContext._invocationContext.artifactService.deleteArtifact({
+			appName: toolContext._invocationContext.appName,
+			userId: toolContext._invocationContext.userId,
+			sessionId: toolContext._invocationContext.session.id,
+			filename,
+		});
+
+		return `Successfully deleted artifact "${filename}"`;
+	} catch (error) {
+		return `Error deleting artifact: ${error instanceof Error ? error.message : String(error)}`;
+	}
 }
 
 /**
