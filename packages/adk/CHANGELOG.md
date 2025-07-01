@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.1
+
+### Patch Changes
+
+- 8b45e2b: Adds agent builder to create agents with minimal boiler plate
+
 ## 0.1.0
 
 ### Minor Changes
