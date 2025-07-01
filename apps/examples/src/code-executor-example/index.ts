@@ -54,7 +54,6 @@ async function main() {
 	);
 
 	try {
-		// Create agent with BuiltInCodeExecutor
 		const agent = new CodeExecutorAgent();
 
 		console.log("✅ Created CodeExecutorAgent with BuiltInCodeExecutor");
@@ -62,74 +61,44 @@ async function main() {
 			"   The llm-flows CodeExecutionRequestProcessor will detect and use it",
 		);
 
-		// Create runner
 		const runner = new Runner({
 			appName: APP_NAME,
 			agent,
 			sessionService: new InMemorySessionService(),
 		});
 
-		// Create session
 		const session = await runner.sessionService.createSession(
 			APP_NAME,
 			USER_ID,
 		);
 		console.log(`📱 Created session: ${session.id}`);
 
-		// Python code that requires actual execution - random numbers and current time
-		const actualExecutionCode = `
-import random
-import time
-import hashlib
-from datetime import datetime
+		const complexProcessingCode = `
+def process_numbers(numbers):
+    # Square even numbers, cube odd numbers, and filter out numbers divisible by 5
+    processed = [
+        n**2 if n % 2 == 0 else n**3
+        for n in numbers
+        if n % 5 != 0
+    ]
+    return processed
 
-# Set a specific seed so we can verify execution vs guessing
-random.seed(12345)
-
-# Generate some random data that cannot be predicted
-random_numbers = [random.randint(1, 1000) for _ in range(5)]
-print(f"5 random numbers with seed 12345: {random_numbers}")
-
-# Get current timestamp - impossible to guess
-current_time = datetime.now()
-timestamp = current_time.timestamp()
-print(f"Current timestamp: {timestamp}")
-print(f"Formatted time: {current_time.strftime('%Y-%m-%d %H:%M:%S.%f')}")
-
-# Calculate hash of random data - deterministic but unpredictable without execution
-data_string = ''.join(map(str, random_numbers))
-hash_result = hashlib.md5(data_string.encode()).hexdigest()
-print(f"MD5 hash of random numbers: {hash_result}")
-
-# Complex calculation that's hard to do mentally
-result = sum(x ** 2.5 for x in random_numbers)
-print(f"Sum of numbers raised to power 2.5: {result}")
-
-# File system check - varies by environment
-import os
-current_dir = os.getcwd()
-file_count = len([f for f in os.listdir('.') if os.path.isfile(f)])
-print(f"Current directory: {current_dir}")
-print(f"Number of files in current directory: {file_count}")
-
-# Memory address - changes every execution
-test_list = [1, 2, 3]
-memory_address = id(test_list)
-print(f"Memory address of test_list: {hex(memory_address)}")
+# Example usage
+data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 25, 30]
+result_list = process_numbers(data)
+print(f"The processed list is: {result_list}")
 `;
 
-		// Create message with the code to execute
 		const message: Content = {
 			parts: [
 				{
-					text: `Please execute this Python code that generates random data, timestamps, and system information:\n\n\`\`\`python${actualExecutionCode}\`\`\``,
+					text: `Please execute this Python code that processes a list with specific rules:\n\n\`\`\`python${complexProcessingCode}\`\`\``,
 				},
 			],
 		};
 
-		console.log("📝 Requesting execution of code with random/system data...");
+		console.log("📝 Requesting execution of complex list processing code...");
 
-		// Execute and display results
 		for await (const event of runner.runAsync({
 			userId: USER_ID,
 			sessionId: session.id,
@@ -137,7 +106,6 @@ print(f"Memory address of test_list: {hex(memory_address)}")
 		})) {
 			if (event.content?.parts && event.author === "code_executor") {
 				for (const part of event.content.parts) {
-					// Display text responses
 					if (part.text && !event.partial) {
 						console.log(`🤖 ${part.text}`);
 					}
@@ -149,7 +117,6 @@ print(f"Memory address of test_list: {hex(memory_address)}")
 						console.log("---");
 					}
 
-					// Display execution results
 					if (part.codeExecutionResult) {
 						const success = part.codeExecutionResult.outcome === "OUTCOME_OK";
 						const output = part.codeExecutionResult.output || "";
@@ -163,27 +130,9 @@ print(f"Memory address of test_list: {hex(memory_address)}")
 				}
 			}
 		}
-
-		console.log("\n✅ Code execution completed successfully!");
-		console.log("\n🔍 How BuiltInCodeExecutor integration works:");
-		console.log(
-			"   1. CodeExecutorAgent extends LlmAgent and adds codeExecutor property",
-		);
-		console.log("   2. BuiltInCodeExecutor instance is attached to the agent");
-		console.log(
-			"   3. CodeExecutionRequestProcessor in llm-flows detects the codeExecutor",
-		);
-		console.log(
-			"   4. Processor calls codeExecutor.processLlmRequest() automatically",
-		);
-		console.log("   5. Gemini 2.0+ executes the Python code natively");
-		console.log(
-			"\n💡 This is the proper ADK integration pattern for code executors!",
-		);
 	} catch (error) {
 		console.error("❌ Error:", error);
 
-		// Check if it's a model compatibility error
 		if (error instanceof Error && error.message.includes("gemini-2")) {
 			console.error(
 				"\n💡 Make sure you're using a Gemini 2.0+ model for code execution",
