@@ -72,70 +72,76 @@ GOOGLE_API_KEY=your_google_api_key
 ```
 
 ### 4. Your First Agent Implementation
-Below is a basic example demonstrating how to create and run a simple agent:
 
+ADK provides **AgentBuilder**, a fluent interface that simplifies agent creation and eliminates boilerplate code. Here's the simplest way to get started:
+
+#### Simple One-Line Agent
 ```typescript
-import { LlmAgent, Runner, InMemorySessionService } from '@iqai/adk';
+import { AgentBuilder } from '@iqai/adk';
 import dotenv from 'dotenv';
 
 // Load environment variables from .env
 dotenv.config();
 
-// Create the agent
-const agent = new LlmAgent({
-  name: "introductory_assistant",
-  model: "gemini-2.5-flash", // Supports gpt-4, claude-3-5-sonnet, gemini-pro, etc.
-  description: "A foundational assistant agent",
-  instruction: "You are an AI assistant. Please provide concise and accurate responses."
-});
+async function main() {
+  // Simplest possible usage - one line to create and run an agent
+  const response = await AgentBuilder
+    .withModel("gemini-2.5-flash") // Supports gpt-4, claude-3-5-sonnet, gemini-pro, etc.
+    .ask("What is the primary function of an AI agent?");
+  
+  console.log(`Agent Response: ${response}`);
+}
 
-// Set up session service for conversation persistence
-const sessionService = new InMemorySessionService();
+main().catch(console.error);
+```
 
-// Create runner to orchestrate agent execution
-const runner = new Runner({
-  appName: "my-first-app",
-  agent,
-  sessionService
-});
+#### Agent with Instructions and Session Management
+```typescript
+import { AgentBuilder, InMemorySessionService } from '@iqai/adk';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 async function main() {
-  try {
-    // Create a session
-    const session = await sessionService.createSession("my-first-app", "user-123");
-    
-    const userQuery = "What is the primary function of an AI agent?";
-    console.log(`User Input: ${userQuery}`);
+  // Create an agent with custom instructions and session persistence
+  const { agent, runner, session } = await AgentBuilder
+    .create("my_assistant")
+    .withModel("gemini-2.5-flash")
+    .withDescription("A helpful AI assistant")
+    .withInstruction("You are an AI assistant. Provide concise and accurate responses.")
+    .withSession(new InMemorySessionService(), "user-123", "my-first-app")
+    .build();
 
-    // Run the agent
-    for await (const event of runner.runAsync({
-      userId: "user-123",
-      sessionId: session.id,
-      newMessage: {
-        parts: [{ text: userQuery }]
-      }
-    })) {
-      if (event.isFinalResponse()) {
-        console.log(`Agent Output: ${event.content?.parts?.[0]?.text}`);
-      }
+  if (!runner || !session) {
+    throw new Error("Failed to create runner and session");
+  }
+
+  // Run conversation with the agent
+  for await (const event of runner.runAsync({
+    userId: "user-123",
+    sessionId: session.id,
+    newMessage: {
+      parts: [{ text: "What is the primary function of an AI agent?" }]
     }
-  } catch (error) {
-    console.error("An error occurred during agent execution:", error);
+  })) {
+    if (event.content?.parts?.[0]?.text && !event.partial) {
+      console.log(`Agent: ${event.content.parts[0].text}`);
+    }
   }
 }
 
-main();
+main().catch(console.error);
 ```
 
 ## 🛠️ Advanced Usage Examples
 
-ADK supports the development of complex agents with specialized functionalities.
+AgentBuilder makes it easy to create sophisticated agents with tools, memory, and multi-agent workflows.
 
 ### Agent with Custom Tools
 Enable agents to perform specific actions or interact with external services using custom-defined tools.
 
 ```typescript
-import { LlmAgent, Runner, InMemorySessionService, BaseTool } from '@iqai/adk';
+import { AgentBuilder, BaseTool, GoogleSearch, HttpRequestTool } from '@iqai/adk';
 import type { ToolContext } from '@iqai/adk';
 import dotenv from 'dotenv';
 
@@ -177,7 +183,6 @@ class CurrencyConverterTool extends BaseTool {
     context: ToolContext
   ) {
     // Placeholder for actual conversion logic (e.g., API call to a finance service)
-    // This example uses a mock conversion rate
     if (args.fromCurrency === 'USD' && args.toCurrency === 'EUR') {
       const converted = args.amount * 0.92;
       return `${args.amount} ${args.fromCurrency} = ${converted.toFixed(2)} ${args.toCurrency}`;
@@ -187,102 +192,124 @@ class CurrencyConverterTool extends BaseTool {
 }
 
 async function main() {
-  // Create agent with custom tool
-  const financialAgent = new LlmAgent({
-    name: "currency_conversion_assistant",
-    model: "gpt-4", // A model proficient in tool usage is recommended
-    description: "A financial assistant that can convert currencies",
-    instruction: "You are a financial assistant. Use the currency_converter tool for currency conversions.",
-    tools: [new CurrencyConverterTool()]
-  });
+  // Simple agent with tools using AgentBuilder
+  const response = await AgentBuilder
+    .create("financial_assistant")
+    .withModel("gpt-4")
+    .withDescription("A financial assistant that can convert currencies and search for information")
+    .withInstruction("You are a financial assistant. Use your tools to help with currency conversions and research.")
+    .withTools(
+      new CurrencyConverterTool(),
+      new GoogleSearch(),
+      new HttpRequestTool()
+    )
+    .ask("Convert 100 USD to EUR and find the latest EUR exchange rates");
 
-  // Set up session and runner
-  const sessionService = new InMemorySessionService();
-  const session = await sessionService.createSession("financial-app", "user-123");
-  
-  const runner = new Runner({
-    appName: "financial-app",
-    agent: financialAgent,
-    sessionService
-  });
-
-  // Execute with tool usage
-  for await (const event of runner.runAsync({
-    userId: "user-123",
-    sessionId: session.id,
-    newMessage: {
-      parts: [{ text: "Convert 100 USD to EUR" }]
-    }
-  })) {
-    if (event.content?.parts?.[0]?.text) {
-      console.log(event.content.parts[0].text);
-    }
-  }
+  console.log(`Financial Agent: ${response}`);
 }
 
 main().catch(console.error);
 ```
 
 ### Multi-Agent System
-Create specialized agents that can work together and transfer conversations between each other.
+Create specialized agents that can work together in sequential or parallel workflows.
 
 ```typescript
-import { LlmAgent, Runner, InMemorySessionService } from '@iqai/adk';
+import { AgentBuilder } from '@iqai/adk';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 async function main() {
-  // Create specialized agents
-  const salesAgent = new LlmAgent({
-    name: "sales_agent",
-    model: "gpt-4",
-    description: "Sales specialist for product inquiries",
-    instruction: "You are a sales agent. Help with product information and pricing. If technical support is needed, transfer to the support agent."
-  });
+  // Create specialized agents using AgentBuilder
+  const researchAgent = await AgentBuilder
+    .create("researcher")
+    .withModel("gpt-4")
+    .withDescription("Specializes in research and fact-finding")
+    .withInstruction("You are a research specialist. Gather accurate, detailed information about topics.")
+    .build();
 
-  const supportAgent = new LlmAgent({
-    name: "support_agent", 
-    model: "gemini-2.5-flash",
-    description: "Technical support specialist",
-    instruction: "You are a technical support agent. Help with technical issues and troubleshooting. If sales questions arise, transfer to the sales agent."
-  });
+  const summaryAgent = await AgentBuilder
+    .create("summarizer")
+    .withModel("gemini-2.5-flash")
+    .withDescription("Specializes in creating concise summaries")
+    .withInstruction("You are a summary specialist. Create clear, well-structured summaries from research findings.")
+    .build();
 
-  // Create main coordinator agent with sub-agents
-  const mainAgent = new LlmAgent({
-    name: "customer_service",
-    model: "gpt-4",
-    description: "Main customer service coordinator",
-    instruction: "You coordinate customer service. Route users to the appropriate specialist agent based on their needs.",
-    subAgents: [salesAgent, supportAgent]
-  });
+  // Sequential workflow: Research → Summarize
+  const { runner, session } = await AgentBuilder
+    .create("research_workflow")
+    .withDescription("A workflow that researches and then summarizes")
+    .asSequential([researchAgent.agent, summaryAgent.agent])
+    .withQuickSession("research-app", "user-123")
+    .build();
 
-  // Set up session and runner
-  const sessionService = new InMemorySessionService();
-  const session = await sessionService.createSession("customer-service", "user-123");
-  
-  const runner = new Runner({
-    appName: "customer-service",
-    agent: mainAgent,
-    sessionService
-  });
+  if (!runner || !session) {
+    throw new Error("Failed to create workflow");
+  }
 
-  // Execute multi-agent conversation
+  // Execute sequential workflow
   for await (const event of runner.runAsync({
-    userId: "user-123", 
+    userId: "user-123",
     sessionId: session.id,
     newMessage: {
-      parts: [{ text: "I'm having trouble setting up your product and also want to know about pricing" }]
+      parts: [{ text: "Research the latest developments in TypeScript 5.0 and provide a summary" }]
     }
   })) {
-    if (event.content?.parts?.[0]?.text) {
+    if (event.content?.parts?.[0]?.text && !event.partial) {
       console.log(`[${event.author}]: ${event.content.parts[0].text}`);
     }
   }
+
+  // Parallel execution example
+  console.log("\n--- Parallel Analysis ---");
+  
+  const [technicalAnalysis, businessAnalysis] = await Promise.all([
+    AgentBuilder
+      .create("tech_analyst")
+      .withModel("gpt-4")
+      .withInstruction("Analyze technical aspects: algorithms, implementation, performance.")
+      .ask("Analyze the technical aspects of AI in healthcare"),
+    
+    AgentBuilder
+      .create("business_analyst")
+      .withModel("gemini-2.5-flash")
+      .withInstruction("Analyze business aspects: market impact, ROI, adoption barriers.")
+      .ask("Analyze the business aspects of AI in healthcare")
+  ]);
+
+  console.log("Technical Analysis:", technicalAnalysis);
+  console.log("Business Analysis:", businessAnalysis);
 }
 
 main().catch(console.error);
 ```
+
+### Traditional Agent Creation (Advanced)
+For users who need fine-grained control over agent configuration, ADK also supports traditional agent creation:
+
+```typescript
+import { LlmAgent, Runner, InMemorySessionService } from '@iqai/adk';
+
+// Traditional approach with explicit configuration
+const agent = new LlmAgent({
+  name: "custom_agent",
+  model: "gpt-4",
+  description: "A custom agent",
+  instruction: "You are a helpful assistant."
+});
+
+const sessionService = new InMemorySessionService();
+const runner = new Runner({
+  appName: "my-app",
+  agent,
+  sessionService
+});
+
+// Use with explicit session management...
+```
+
+This approach provides maximum flexibility for complex use cases but requires more boilerplate code.
 
 ## 🧪 Running Example Applications
 
@@ -290,6 +317,7 @@ The `apps/examples` directory contains comprehensive examples demonstrating ADK'
 
 ### Available Examples
 
+- **Agent Builder** - Comprehensive AgentBuilder usage patterns (recommended starting point)
 - **Simple Agent** - Basic agent setup and conversation
 - **Tool Usage** - Custom tools with calculator and weather APIs
 - **Memory Usage** - Persistent memory across conversations  
@@ -299,6 +327,7 @@ The `apps/examples` directory contains comprehensive examples demonstrating ADK'
 - **Flow Examples** - Custom flow processors and pipeline extensions
 - **Artifact Management** - File creation and management
 - **Function Tools** - Converting regular functions to agent tools
+- **Telemetry Agent** - Observability and monitoring integration
 
 ### Running Examples
 
@@ -325,6 +354,7 @@ The `apps/examples` directory contains comprehensive examples demonstrating ADK'
    pnpm dev
    
    # Or run specific examples directly
+   pnpm dev agent-builder-example    # AgentBuilder patterns (recommended first)
    pnpm dev simple-agent
    pnpm dev tool-usage
    pnpm dev memory-usage
