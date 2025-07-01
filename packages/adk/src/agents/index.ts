@@ -4,6 +4,7 @@ export * from "./sequential-agent";
 export * from "./parallel-agent";
 export * from "./loop-agent";
 export * from "./lang-graph-agent";
+export * from "./agent-builder";
 export * from "./run-config";
 export * from "./invocation-context";
 export * from "./readonly-context";
