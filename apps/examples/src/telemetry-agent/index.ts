@@ -99,7 +99,7 @@ function initializeTelemetryService(): TelemetryService {
 	telemetryService.initialize({
 		appName: APP_NAME,
 		appVersion: "1.0.0",
-		otlpEndpoint: `${env.LANGFUSE_HOST}/api/public/v1/traces`,
+		otlpEndpoint: `${env.LANGFUSE_HOST}/api/public/otel/v1/traces`,
 		otlpHeaders: {
 			Authorization: `Basic ${authString}`,
 		},
