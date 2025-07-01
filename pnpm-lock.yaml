@@ -29,6 +29,9 @@ importers:
       '@clack/prompts':
         specifier: ^0.11.0
         version: 0.11.0
+      '@google/genai':
+        specifier: ^1.6.0
+        version: 1.6.0(@modelcontextprotocol/sdk@1.11.3)
       '@iqai/adk':
         specifier: workspace:*
         version: link:../../packages/adk
