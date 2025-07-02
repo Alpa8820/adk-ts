@@ -1,149 +1,110 @@
 import { env } from "node:process";
-import {
-	InMemorySessionService,
-	LlmAgent,
-	Runner,
-	type Content,
-	BuiltInCodeExecutor,
-} from "@iqai/adk";
+import { InMemorySessionService, LlmAgent, Runner } from "@iqai/adk";
+import { BuiltInCodeExecutor } from "@iqai/adk";
 import { v4 as uuidv4 } from "uuid";
 
 /**
  * Application configuration constants
  */
-const APP_NAME = "SimpleCodeExecutor";
+const APP_NAME = "code-executor-example";
 const USER_ID = uuidv4();
 
 /**
- * Code Executor Agent with proper BuiltInCodeExecutor integration
- *
- * This extends LlmAgent to add the codeExecutor property that the
- * CodeExecutionRequestProcessor looks for in the llm-flows.
+ * Creates and configures the LLM agent with code execution capability
+ * @returns Configured LlmAgent with BuiltInCodeExecutor
  */
-class CodeExecutorAgent extends LlmAgent {
-	/**
-	 * The code executor instance - this is what the flow processors check for
-	 */
-	public readonly codeExecutor: BuiltInCodeExecutor;
-
-	constructor() {
-		super({
-			name: "code_executor",
-			model: env.LLM_MODEL || "gemini-2.0-flash-exp",
-			description: "Execute Python code using BuiltInCodeExecutor",
-			instruction:
-				"You are a Python code executor. When given code, execute it and show the results clearly.",
-		});
-
-		// Create the BuiltInCodeExecutor instance
-		// The CodeExecutionRequestProcessor will detect this and use it
-		this.codeExecutor = new BuiltInCodeExecutor();
-	}
+function createCodeAgent(): LlmAgent {
+	return new LlmAgent({
+		name: "calculator_agent",
+		model: env.LLM_MODEL || "gemini-2.0-flash",
+		description: "A calculator agent that can execute Python code",
+		instruction: `You are a calculator agent. When given a mathematical expression or problem, 
+write and execute Python code to solve it. Always show your work with code.`,
+		codeExecutor: new BuiltInCodeExecutor(),
+		disallowTransferToParent: true,
+		disallowTransferToPeers: true,
+	});
 }
 
 /**
- * Simple Code Executor Example with proper BuiltInCodeExecutor integration
- *
- * This example shows how to properly integrate BuiltInCodeExecutor with the
- * ADK's flow system. The CodeExecutionRequestProcessor in llm-flows will
- * detect the codeExecutor property and use it to process requests.
+ * Demonstrates basic code execution
+ * @param runner The Runner instance for executing agent tasks
+ * @param sessionId The current session identifier
  */
+async function demonstrateCodeExecution(
+	runner: Runner,
+	sessionId: string,
+): Promise<void> {
+	console.log("🧮 Demonstrating Code Execution");
+	console.log("-----------------------------------");
+
+	const mathRequest = {
+		parts: [
+			{
+				text: `tool_code
+# Data analysis example
+import pandas as pd
+import numpy as np
+
+# Create sample data
+data = {'name': ['Alice', 'Bob', 'Charlie'], 
+        'age': [25, 30, 35], 
+        'score': [85, 92, 78]}
+df = pd.DataFrame(data)
+
+print("Sample Data:")
+print(df)
+print(f"\nAverage age: {df['age'].mean()}")
+print(f"Average score: {df['score'].mean()}")
+`,
+			},
+		],
+	};
+
+	for await (const event of runner.runAsync({
+		userId: USER_ID,
+		sessionId,
+		newMessage: mathRequest,
+	})) {
+		if (event.author === "calculator_agent" && event.content?.parts) {
+			const content = event.content.parts
+				.map((part) => part.text || "")
+				.join("");
+			if (content) {
+				console.log(content);
+			}
+		}
+	}
+}
+
 async function main() {
-	console.log(
-		"🤖 Starting Code Executor with proper BuiltInCodeExecutor integration...",
-	);
+	console.log("🚀 Starting Code Executor example...");
 
 	try {
-		const agent = new CodeExecutorAgent();
+		const sessionService = new InMemorySessionService();
+		const session = await sessionService.createSession(APP_NAME, USER_ID);
 
-		console.log("✅ Created CodeExecutorAgent with BuiltInCodeExecutor");
-		console.log(
-			"   The llm-flows CodeExecutionRequestProcessor will detect and use it",
-		);
+		const agent = createCodeAgent();
 
 		const runner = new Runner({
 			appName: APP_NAME,
 			agent,
-			sessionService: new InMemorySessionService(),
+			sessionService,
 		});
 
-		const session = await runner.sessionService.createSession(
-			APP_NAME,
-			USER_ID,
-		);
-		console.log(`📱 Created session: ${session.id}`);
+		await demonstrateCodeExecution(runner, session.id);
 
-		const complexProcessingCode = `
-def process_numbers(numbers):
-    # Square even numbers, cube odd numbers, and filter out numbers divisible by 5
-    processed = [
-        n**2 if n % 2 == 0 else n**3
-        for n in numbers
-        if n % 5 != 0
-    ]
-    return processed
-
-# Example usage
-data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 20, 25, 30]
-result_list = process_numbers(data)
-print(f"The processed list is: {result_list}")
-`;
-
-		const message: Content = {
-			parts: [
-				{
-					text: `Please execute this Python code that processes a list with specific rules:\n\n\`\`\`python${complexProcessingCode}\`\`\``,
-				},
-			],
-		};
-
-		console.log("📝 Requesting execution of complex list processing code...");
-
-		for await (const event of runner.runAsync({
-			userId: USER_ID,
-			sessionId: session.id,
-			newMessage: message,
-		})) {
-			if (event.content?.parts && event.author === "code_executor") {
-				for (const part of event.content.parts) {
-					if (part.text && !event.partial) {
-						console.log(`🤖 ${part.text}`);
-					}
-
-					// Display code being executed
-					if (part.executableCode) {
-						console.log(`💻 Executing ${part.executableCode.language} code:`);
-						console.log(part.executableCode.code);
-						console.log("---");
-					}
-
-					if (part.codeExecutionResult) {
-						const success = part.codeExecutionResult.outcome === "OUTCOME_OK";
-						const output = part.codeExecutionResult.output || "";
-
-						if (success) {
-							console.log(`✅ Execution Result:\n${output}`);
-						} else {
-							console.log(`❌ Execution Error:\n${output}`);
-						}
-					}
-				}
-			}
-		}
+		console.log("\n✅ Code Executor example completed!");
 	} catch (error) {
-		console.error("❌ Error:", error);
-
-		if (error instanceof Error && error.message.includes("gemini-2")) {
-			console.error(
-				"\n💡 Make sure you're using a Gemini 2.0+ model for code execution",
-			);
-			console.error(
-				"   Set LLM_MODEL environment variable to 'gemini-2.0-flash-exp' or similar",
-			);
-		}
-
+		console.error("❌ Error in code executor example:", error);
 		process.exit(1);
 	}
 }
 
-main().catch(console.error);
+/**
+ * Execute the main function and handle any errors
+ */
+main().catch((error) => {
+	console.error("💥 Fatal error:", error);
+	process.exit(1);
+});
