@@ -40,7 +40,6 @@ async function main() {
 			command: "npx",
 			args: ["tsx", "apps/examples/src/mcp-sampling/server.ts"],
 		},
-		debug: true, // Enable debug to see sampling handler registration
 	});
 
 	const tools = await toolset.getTools();
