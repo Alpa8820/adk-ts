@@ -125,13 +125,13 @@ importers:
         version: 0.28.2
       openai:
         specifier: ^4.93.0
-        version: 4.104.0(ws@8.18.3)(zod@3.24.4)
+        version: 4.104.0(ws@8.18.3)(zod@3.25.67)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
       zod:
-        specifier: ^3.24.4
-        version: 3.24.4
+        specifier: ^3.25.67
+        version: 3.25.67
     devDependencies:
       '@iqai/tsconfig':
         specifier: workspace:*
@@ -3549,9 +3549,6 @@ packages:
     peerDependencies:
       zod: ^3.24.1
 
-  zod@3.24.4:
-    resolution: {integrity: sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg==}
-
   zod@3.25.67:
     resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
 
@@ -6155,7 +6152,7 @@ snapshots:
     dependencies:
       mimic-function: 5.0.1
 
-  openai@4.104.0(ws@8.18.3)(zod@3.24.4):
+  openai@4.104.0(ws@8.18.3)(zod@3.25.67):
     dependencies:
       '@types/node': 18.19.100
       '@types/node-fetch': 2.6.12
@@ -6166,7 +6163,7 @@ snapshots:
       node-fetch: 2.7.0
     optionalDependencies:
       ws: 8.18.3
-      zod: 3.24.4
+      zod: 3.25.67
     transitivePeerDependencies:
       - encoding
 
@@ -7066,7 +7063,5 @@ snapshots:
   zod-to-json-schema@3.24.6(zod@3.25.67):
     dependencies:
       zod: 3.25.67
-
-  zod@3.24.4: {}
 
   zod@3.25.67: {}
