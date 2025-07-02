@@ -35,6 +35,9 @@ importers:
       '@iqai/adk':
         specifier: workspace:*
         version: link:../../packages/adk
+      dedent:
+        specifier: ^1.6.0
+        version: 1.6.0
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0

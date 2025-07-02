@@ -41,6 +41,8 @@ const USER_ID = uuidv4();
  * - LANGFUSE_HOST environment variable (optional)
  * - LLM_MODEL environment variable (optional, defaults to gemini-2.5-flash)
  */
+
+const langfuseHost = env.LANGFUSE_HOST || "https://cloud.langfuse.com";
 async function main() {
 	let telemetryService: TelemetryService | null = null;
 
@@ -74,9 +76,7 @@ async function main() {
 		console.log(
 			"\n✅ Example completed! Check your Langfuse dashboard for traces.",
 		);
-		console.log(
-			`🔗 Dashboard URL: ${env.LANGFUSE_HOST || "https://cloud.langfuse.com"}`,
-		);
+		console.log(`🔗 Dashboard URL: ${langfuseHost}`);
 	} catch (error) {
 		console.error("❌ Error in telemetry agent example:", error);
 		process.exit(1);
@@ -99,7 +99,7 @@ function initializeTelemetryService(): TelemetryService {
 	telemetryService.initialize({
 		appName: APP_NAME,
 		appVersion: "1.0.0",
-		otlpEndpoint: `${env.LANGFUSE_HOST}/api/public/v1/traces`,
+		otlpEndpoint: `${langfuseHost}/api/public/otel/v1/traces`,
 		otlpHeaders: {
 			Authorization: `Basic ${authString}`,
 		},
