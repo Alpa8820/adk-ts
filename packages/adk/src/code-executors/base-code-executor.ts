@@ -50,12 +50,12 @@ export abstract class BaseCodeExecutor {
 			stateful: config.stateful ?? false,
 			errorRetryAttempts: config.errorRetryAttempts ?? 2,
 			codeBlockDelimiters: config.codeBlockDelimiters ?? [
-				["```tool_code\n", "\n```"],
-				["```python\n", "\n```"],
+				["`tool_code\n", "\n`"],
+				["`python\n", "\n`"],
 			],
 			executionResultDelimiters: config.executionResultDelimiters ?? [
-				"```tool_output\n",
-				"\n```",
+				"`tool_output\n",
+				"\n`",
 			],
 		};
 	}
