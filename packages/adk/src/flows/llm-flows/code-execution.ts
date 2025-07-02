@@ -18,6 +18,7 @@ import { BuiltInCodeExecutor } from "../../code-executors/built-in-code-executor
 import { EventActions } from "../../events/event-actions";
 import { Event } from "../../events/event";
 import { Logger } from "@adk/helpers/logger";
+import { LlmAgent } from "@adk/agents";
 
 const logger = new Logger({ name: "CodeExecutionProcessor" });
 
@@ -104,15 +105,15 @@ class CodeExecutionRequestProcessor extends BaseLlmRequestProcessor {
 		llmRequest: LlmRequest,
 	): AsyncGenerator<Event> {
 		// Use type assertion to access codeExecutor
-		const agent = invocationContext.agent as any;
+		const agent = invocationContext.agent;
 
 		// Check if agent has code executor capability
 		if (!hasCodeExecutor(agent)) {
 			return;
 		}
 
-		// Now we know agent has codeExecutor property
-		if (!agent.codeExecutor) {
+		// Use instanceof for type-safe check
+		if (!(agent instanceof LlmAgent) || !agent.codeExecutor) {
 			return;
 		}
 

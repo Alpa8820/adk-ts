@@ -15,10 +15,10 @@ const USER_ID = uuidv4();
  */
 function createCodeAgent(): LlmAgent {
 	return new LlmAgent({
-		name: "calculator_agent",
+		name: "code_agent",
 		model: env.LLM_MODEL || "gemini-2.0-flash",
-		description: "A calculator agent that can execute Python code",
-		instruction: `You are a calculator agent. When given a mathematical expression or problem, 
+		description: "A coder agent that can execute Python code",
+		instruction: `You are a coder agent. When given a mathematical expression or problem, 
 write and execute Python code to solve it. Always show your work with code.`,
 		codeExecutor: new BuiltInCodeExecutor(),
 		disallowTransferToParent: true,
@@ -66,7 +66,7 @@ print(f"Average score: {df['score'].mean()}")
 		sessionId,
 		newMessage: mathRequest,
 	})) {
-		if (event.author === "calculator_agent" && event.content?.parts) {
+		if (event.author === "code_agent" && event.content?.parts) {
 			const content = event.content.parts
 				.map((part) => part.text || "")
 				.join("");
