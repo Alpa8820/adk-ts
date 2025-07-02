@@ -1,7 +1,12 @@
 #!/usr/bin/env tsx
 
 import { env } from "node:process";
-import { AgentBuilder, McpToolset, createSamplingHandler } from "@iqai/adk";
+import {
+	AgentBuilder,
+	LlmResponse,
+	McpToolset,
+	createSamplingHandler,
+} from "@iqai/adk";
 
 /**
  * MCP Sampling Example
@@ -17,12 +22,12 @@ import { AgentBuilder, McpToolset, createSamplingHandler } from "@iqai/adk";
 async function main() {
 	// Create simple sampling handler that responds to name requests
 	const samplingHandler = createSamplingHandler(async () => {
-		return {
+		return new LlmResponse({
 			content: {
 				role: "model",
 				parts: [{ text: "Alice" }],
 			},
-		};
+		});
 	});
 
 	// Initialize MCP toolset with SSE transport for better session support
@@ -54,6 +59,8 @@ async function main() {
 		.ask("Use the greet_user tool to greet me now.");
 
 	console.log("🤖 Agent:", response);
+
+	await toolset.close();
 }
 
 main().catch((error) => {

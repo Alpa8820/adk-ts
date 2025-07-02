@@ -32,6 +32,9 @@ importers:
       '@iqai/adk':
         specifier: workspace:*
         version: link:../../packages/adk
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.11.1
+        version: 1.13.3
       dedent:
         specifier: ^1.6.0
         version: 1.6.0

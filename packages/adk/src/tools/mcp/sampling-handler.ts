@@ -82,9 +82,12 @@ export class McpSamplingHandler {
 				mcpParams.systemPrompt,
 			);
 
+			// Extract model from request if available, otherwise use default
+			const requestModel = (mcpParams.model as string) || "gemini-2.0-flash";
+
 			// Prepare ADK request - create a proper LlmRequest instance
 			const adkRequest = new LlmRequest({
-				model: "", // TODO: Implement model passing from context
+				model: requestModel,
 				contents: adkContents,
 				config: {
 					temperature: mcpParams.temperature,
@@ -99,8 +102,11 @@ export class McpSamplingHandler {
 
 			this.logger.debug("Converting ADK response to MCP format");
 
-			// Convert ADK response to MCP format
-			const mcpResponse = this.convertADKResponseToMcp(adkResponse);
+			// Convert ADK response to MCP format - pass model information
+			const mcpResponse = this.convertADKResponseToMcp(
+				adkResponse,
+				requestModel,
+			);
 
 			// Validate the response using MCP schema
 			const responseValidation =
@@ -233,6 +239,7 @@ export class McpSamplingHandler {
 	 */
 	private convertADKResponseToMcp(
 		adkResponse: LlmResponse,
+		model: string,
 	): McpSamplingResponse {
 		// Extract text content from the response
 		let responseText = "";
@@ -252,8 +259,9 @@ export class McpSamplingHandler {
 			}
 		}
 
-		// Create MCP response
+		// Create MCP response - include required model field
 		const mcpResponse: McpSamplingResponse = {
+			model: model, // Use the model from the request
 			role: "assistant", // ADK responses are always from assistant
 			content: {
 				type: "text",
