@@ -8,7 +8,7 @@ import { Footer } from './_components/footer';
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen w-screen">
       <Hero />
       <Features />
       <CodeExample />
