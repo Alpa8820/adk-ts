@@ -1,0 +1,9 @@
+{
+  "icon": "FileText",
+  "pages": [
+    "index",
+    "service-implementations",
+    "context-integration",
+    "best-practices"
+  ]
+}

@@ -1,0 +1,334 @@
+---
+title: Authentication
+description: Secure access to external APIs and services with comprehensive authentication support
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Tool authentication enables secure access to protected resources and APIs. ADK TypeScript provides comprehensive authentication support, handling various authentication schemes and credential management patterns.
+
+## Core Authentication Concepts
+
+Authentication in ADK TypeScript involves two primary components that work together to secure API access.
+
+### Key Components
+
+<Cards>
+  <Card
+    title="🔐 AuthScheme"
+    description="Defines how an API expects authentication credentials"
+  />
+
+  <Card
+    title="🎫 AuthCredential"
+    description="Contains the initial information needed to start authentication"
+  />
+</Cards>
+
+### Authentication Flow
+
+1. **Configuration**: Define AuthScheme and AuthCredential for tools
+2. **Exchange**: ADK automatically exchanges initial credentials for usable tokens
+3. **Usage**: Tools use obtained credentials for API calls
+4. **Refresh**: Automatic token refresh when supported
+5. **Storage**: Secure credential storage and management
+
+<Callout type="info" title="Automatic Management">
+ADK handles the complexity of authentication flows, token exchange, and refresh automatically, allowing you to focus on building agent capabilities.
+</Callout>
+
+## Supported Authentication Types
+
+### API Key Authentication
+
+Simple key-based authentication for services that use API keys.
+
+**Characteristics:**
+- **Direct Usage**: Keys are used directly without exchange
+- **Multiple Locations**: Header, query parameter, or cookie placement
+- **Simple Setup**: Minimal configuration required
+- **Wide Support**: Supported by many APIs and services
+
+**Use Cases:**
+- Weather APIs, news services, and data providers
+- Internal APIs with simple security requirements
+- Development and testing environments
+- Services with straightforward access patterns
+
+### OAuth 2.0 Authentication
+
+Industry-standard authorization framework for secure API access.
+
+**Flow Types:**
+- **Authorization Code**: Interactive user consent flow
+- **Client Credentials**: Server-to-server authentication
+- **Resource Owner Password**: Direct credential authentication
+- **Implicit**: Browser-based applications (deprecated)
+
+**Features:**
+- **Scope Management**: Fine-grained permission control
+- **Token Refresh**: Automatic token renewal
+- **User Consent**: Interactive authorization flows
+- **Secure Exchange**: Credential exchange without exposing secrets
+
+**Use Cases:**
+- Social media platforms and user data access
+- Cloud services and SaaS applications
+- Enterprise APIs with user authorization
+- Multi-tenant applications
+
+### OpenID Connect
+
+Authentication layer built on top of OAuth 2.0 for identity verification.
+
+**Additional Features:**
+- **Identity Tokens**: JWT tokens with user information
+- **UserInfo Endpoint**: Access to user profile data
+- **Discovery**: Automatic endpoint discovery
+- **Standardization**: Consistent identity management
+
+**Use Cases:**
+- Single sign-on (SSO) applications
+- Identity federation across services
+- User profile and identity management
+- Enterprise authentication systems
+
+### Service Account Authentication
+
+Google Cloud service account credentials for server-to-server authentication.
+
+**Types:**
+- **JSON Key Files**: Service account key credentials
+- **Application Default Credentials**: Automatic credential discovery
+- **Workload Identity**: Kubernetes-based authentication
+- **Impersonation**: Acting on behalf of other accounts
+
+**Features:**
+- **No User Interaction**: Fully automated authentication
+- **Role-Based Access**: Fine-grained IAM permissions
+- **Audit Trails**: Comprehensive access logging
+- **Enterprise Security**: Enterprise-grade security controls
+
+### HTTP Authentication
+
+Basic HTTP authentication schemes including Bearer tokens.
+
+**Schemes:**
+- **Bearer Token**: Token-based authentication
+- **Basic Auth**: Username and password (not recommended)
+- **Custom Headers**: Application-specific authentication
+
+**Use Cases:**
+- APIs with custom authentication schemes
+- Legacy systems with HTTP Basic Auth
+- Pre-obtained tokens and credentials
+- Internal services with simple auth
+
+## Tool Configuration Patterns
+
+### OpenAPI-Based Tools
+
+Configure authentication for tools generated from OpenAPI specifications:
+
+**OpenAPIToolset Configuration:**
+- Define AuthScheme based on OpenAPI security schemes
+- Provide AuthCredential with application credentials
+- Automatic application to all generated tools
+- Support for multiple authentication methods
+
+**Security Scheme Mapping:**
+- Map OpenAPI security definitions to ADK auth schemes
+- Handle complex authentication requirements
+- Support for API key, OAuth, and custom schemes
+- Automatic parameter and header configuration
+
+### Google Cloud Tools
+
+Specialized configuration for Google Cloud services:
+
+**Service Account Setup:**
+- JSON key file configuration
+- Application Default Credentials
+- Workload Identity for Kubernetes
+- IAM role and permission management
+
+**OAuth Configuration:**
+- Google Cloud Console setup
+- Client ID and secret management
+- Scope configuration for service access
+- User consent and authorization flows
+
+### Third-Party Tools
+
+Authentication configuration for external frameworks and libraries:
+
+**LangChain Integration:**
+- Credential mapping between frameworks
+- Authentication scheme translation
+- Token management and refresh
+- Error handling and recovery
+
+**CrewAI Integration:**
+- Framework-specific credential formats
+- Authentication configuration mapping
+- Service compatibility verification
+- Security best practices alignment
+
+## Interactive Authentication Flows
+
+### User Consent Process
+
+For OAuth and OpenID Connect flows requiring user interaction:
+
+1. **Authorization Request**: User redirected to authorization server
+2. **User Consent**: User grants or denies access permissions
+3. **Authorization Code**: Server returns authorization code
+4. **Token Exchange**: Exchange code for access tokens
+5. **Token Storage**: Secure storage of obtained tokens
+
+### Client Application Integration
+
+Integration patterns for different application types:
+
+**Web Applications:**
+- Browser-based OAuth flows
+- Redirect URL handling
+- Session management
+- CSRF protection
+
+**Desktop Applications:**
+- Local server callback handling
+- System browser integration
+- Secure token storage
+- User experience optimization
+
+**Mobile Applications:**
+- Deep link handling
+- Secure keychain storage
+- Biometric authentication
+- OAuth PKCE flows
+
+## Security Best Practices
+
+### Credential Storage
+
+<Callout type="warn" title="Security Warning">
+Storing sensitive credentials requires careful consideration of your storage backend and security posture.
+</Callout>
+
+**Storage Options:**
+- **In-Memory**: Suitable for development and testing
+- **Database Storage**: Requires encryption for sensitive data
+- **Secret Managers**: Recommended for production environments
+- **Secure Enclaves**: Hardware-based security modules
+
+**Encryption Requirements:**
+- **At Rest**: Encrypt stored credentials and tokens
+- **In Transit**: Use TLS for all credential exchanges
+- **Key Management**: Secure encryption key storage
+- **Access Controls**: Limit credential access to authorized components
+
+### Access Control
+
+- **Least Privilege**: Grant minimum required permissions
+- **Scope Limitation**: Use specific OAuth scopes when possible
+- **Time-Based Access**: Implement token expiration policies
+- **Audit Logging**: Track credential usage and access patterns
+
+### Token Management
+
+- **Refresh Tokens**: Secure storage and rotation
+- **Access Tokens**: Short-lived tokens with automatic refresh
+- **Token Revocation**: Ability to revoke access when needed
+- **Credential Rotation**: Regular rotation of long-lived credentials
+
+## Error Handling and Recovery
+
+### Common Error Scenarios
+
+- **Expired Tokens**: Automatic token refresh handling
+- **Invalid Credentials**: Clear error messaging and recovery options
+- **Network Failures**: Retry logic with exponential backoff
+- **Rate Limiting**: Respect API limits and implement backoff
+
+### Recovery Strategies
+
+- **Automatic Retry**: Built-in retry logic for transient failures
+- **Token Refresh**: Automatic refresh token usage
+- **Fallback Authentication**: Alternative authentication methods
+- **User Re-authentication**: Graceful re-authentication flows
+
+### Monitoring and Alerting
+
+- **Authentication Metrics**: Track success and failure rates
+- **Token Expiration**: Alerts for expiring credentials
+- **Security Events**: Monitoring for unusual access patterns
+- **Compliance Reporting**: Track authentication for audit purposes
+
+## Production Considerations
+
+### Scalability
+
+- **Connection Pooling**: Reuse authenticated connections
+- **Token Caching**: Cache valid tokens across requests
+- **Load Distribution**: Distribute authentication load
+- **Performance Monitoring**: Track authentication latency
+
+### Compliance and Governance
+
+- **Data Protection**: GDPR, CCPA, and privacy compliance
+- **Industry Standards**: SOC 2, ISO 27001 compliance
+- **Audit Requirements**: Comprehensive audit trails
+- **Regulatory Compliance**: Industry-specific requirements
+
+### Operational Excellence
+
+- **Health Monitoring**: Monitor authentication service health
+- **Disaster Recovery**: Backup authentication configurations
+- **Documentation**: Maintain security documentation
+- **Incident Response**: Procedures for security incidents
+
+## Migration and Integration
+
+### Existing System Integration
+
+- **Legacy Authentication**: Integration with existing auth systems
+- **Gradual Migration**: Phased authentication updates
+- **Backward Compatibility**: Support for existing credentials
+- **Testing Strategies**: Comprehensive authentication testing
+
+### Multi-Environment Management
+
+- **Environment Separation**: Separate credentials for dev/staging/prod
+- **Configuration Management**: Secure credential configuration
+- **Deployment Automation**: Automated credential deployment
+- **Environment Promotion**: Safe credential promotion processes
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="🔧 Function Tools"
+    description="Secure custom tool implementations"
+    href="/docs/tools/function-tools"
+  />
+
+  <Card
+    title="📊 OpenAPI Tools"
+    description="Authentication for OpenAPI-generated tools"
+    href="/docs/tools/openapi-tools"
+  />
+
+  <Card
+    title="☁️ Google Cloud Tools"
+    description="Google Cloud authentication and IAM"
+    href="/docs/tools/google-cloud-tools"
+  />
+
+  <Card
+    title="🌐 Third-Party Tools"
+    description="Authentication for external tool integrations"
+    href="/docs/tools/third-party-tools"
+  />
+</Cards>

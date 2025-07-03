@@ -1,0 +1,308 @@
+---
+title: Google Cloud Tools
+description: Enterprise cloud integrations for Google Cloud services and APIs
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Google Cloud tools provide seamless integration with Google Cloud Platform services, enabling agents to leverage enterprise-grade cloud capabilities for storage, computing, AI/ML, and data processing.
+
+## What are Google Cloud Tools?
+
+Google Cloud tools are specialized integrations that connect ADK TypeScript agents with Google Cloud Platform services, providing access to scalable cloud infrastructure and AI capabilities.
+
+### Key Benefits
+
+- **Enterprise Scale**: Leverage Google's global cloud infrastructure
+- **AI Integration**: Access Google's AI and ML services directly
+- **Data Management**: Connect to cloud databases and storage systems
+- **Security**: Enterprise-grade security and compliance features
+- **Performance**: Optimized for high-performance cloud operations
+
+<Callout type="info" title="Enterprise Ready">
+Google Cloud tools are designed for production-scale applications with enterprise security, compliance, and performance requirements.
+</Callout>
+
+## Supported Services
+
+<Cards>
+  <Card
+    title="🗄️ Cloud Storage"
+    description="Object storage for files, documents, and media"
+  />
+
+  <Card
+    title="💾 Cloud SQL"
+    description="Managed relational databases (PostgreSQL, MySQL)"
+  />
+
+  <Card
+    title="🧠 Vertex AI"
+    description="Machine learning and AI model services"
+  />
+
+  <Card
+    title="🔍 Cloud Search"
+    description="Enterprise search across cloud data"
+  />
+
+  <Card
+    title="📊 BigQuery"
+    description="Data warehouse and analytics platform"
+  />
+
+  <Card
+    title="📝 Document AI"
+    description="Intelligent document processing and extraction"
+  />
+</Cards>
+
+## Cloud Storage Integration
+
+### Capabilities
+
+Google Cloud Storage tools enable agents to:
+
+- **File Management**: Upload, download, and organize files in cloud buckets
+- **Content Processing**: Process documents, images, and media files
+- **Data Sharing**: Share files across applications and users
+- **Backup Operations**: Automated backup and archival processes
+- **CDN Integration**: Serve content through global CDN networks
+
+### Use Cases
+
+- **Document Processing**: Analyze and extract information from uploaded documents
+- **Media Management**: Store and process images, videos, and audio files
+- **Data Archive**: Long-term storage of application data and logs
+- **Content Distribution**: Serve static content and assets globally
+- **Backup Solutions**: Automated backup of critical application data
+
+### Security Features
+
+- **IAM Integration**: Fine-grained access control and permissions
+- **Encryption**: Automatic encryption at rest and in transit
+- **Audit Logging**: Comprehensive access and operation logging
+- **VPC Integration**: Private network connectivity options
+
+## Cloud SQL Integration
+
+### Database Support
+
+Connect agents to managed relational databases:
+
+- **PostgreSQL**: Full-featured PostgreSQL with automatic backups
+- **MySQL**: Managed MySQL with high availability options
+- **SQL Server**: Enterprise SQL Server in the cloud
+- **Multi-Region**: Global database deployment and replication
+
+### Operations
+
+- **Query Execution**: Run complex SQL queries and transactions
+- **Schema Management**: Create and modify database structures
+- **Data Import/Export**: Bulk data operations and migrations
+- **Performance Monitoring**: Database performance and optimization
+
+### Enterprise Features
+
+- **High Availability**: Automatic failover and replication
+- **Automatic Backups**: Point-in-time recovery capabilities
+- **Security**: Encryption, VPC, and advanced security features
+- **Scaling**: Automatic scaling based on workload demands
+
+## Vertex AI Integration
+
+### AI/ML Services
+
+Access Google's AI and machine learning platform:
+
+- **Pre-trained Models**: Use Google's pre-trained AI models
+- **Custom Models**: Deploy and manage custom ML models
+- **AutoML**: Automated machine learning model training
+- **Model Endpoints**: Real-time and batch prediction services
+
+### Capabilities
+
+- **Text Analysis**: Natural language processing and understanding
+- **Image Recognition**: Computer vision and image analysis
+- **Video Analysis**: Video content analysis and extraction
+- **Recommendation Systems**: Personalized recommendation engines
+- **Forecasting**: Time series analysis and prediction
+
+### Integration Benefits
+
+- **Scalability**: Handle large-scale AI workloads
+- **Performance**: Optimized for high-throughput operations
+- **Cost Efficiency**: Pay-per-use pricing model
+- **Enterprise Support**: Enterprise-grade SLAs and support
+
+## BigQuery Integration
+
+### Data Analytics
+
+Connect agents to Google's data warehouse platform:
+
+- **SQL Analytics**: Run complex analytical queries on large datasets
+- **Real-time Analysis**: Stream processing and real-time analytics
+- **Data Science**: Integration with ML and data science workflows
+- **Business Intelligence**: Power dashboards and reporting tools
+
+### Capabilities
+
+- **Petabyte Scale**: Handle massive datasets efficiently
+- **Standard SQL**: Use familiar SQL syntax and functions
+- **Data Streaming**: Real-time data ingestion and processing
+- **Geographic Analysis**: Built-in GIS and location analytics
+
+### Use Cases
+
+- **Data Reporting**: Generate business reports and insights
+- **Customer Analytics**: Analyze customer behavior and trends
+- **Performance Monitoring**: Track application and system metrics
+- **Research Analysis**: Support data science and research projects
+
+## Document AI Integration
+
+### Intelligent Processing
+
+Extract structured data from documents:
+
+- **Form Processing**: Extract data from forms and documents
+- **Invoice Processing**: Automated invoice data extraction
+- **Identity Verification**: Process ID documents and verification
+- **Contract Analysis**: Extract key terms and data from contracts
+
+### Capabilities
+
+- **OCR**: Optical character recognition for text extraction
+- **Layout Analysis**: Understand document structure and layout
+- **Entity Extraction**: Identify and extract specific data entities
+- **Classification**: Categorize documents automatically
+
+### Business Applications
+
+- **Automation**: Automate document-heavy business processes
+- **Compliance**: Ensure consistent document processing standards
+- **Efficiency**: Reduce manual data entry and processing time
+- **Accuracy**: Improve data quality through automated extraction
+
+## Authentication and Security
+
+### Authentication Methods
+
+<Callout type="warn" title="Security Requirements">
+Google Cloud tools require proper authentication and IAM configuration for secure access to cloud resources.
+</Callout>
+
+- **Service Accounts**: Use service account credentials for server applications
+- **User Accounts**: OAuth 2.0 for user-based authentication
+- **Application Default Credentials**: Automatic credential discovery
+- **Workload Identity**: Secure authentication for containerized workloads
+
+### Security Best Practices
+
+- **Least Privilege**: Grant minimum required permissions
+- **Credential Rotation**: Regular rotation of service account keys
+- **Network Security**: Use VPC and firewall rules for network isolation
+- **Audit Logging**: Enable comprehensive audit logging for compliance
+
+### Compliance Features
+
+- **SOC 2**: Compliance with SOC 2 Type II requirements
+- **ISO 27001**: International security management standards
+- **GDPR**: Data protection and privacy compliance
+- **HIPAA**: Healthcare data protection compliance
+
+## Performance and Scaling
+
+### Optimization Strategies
+
+- **Connection Pooling**: Reuse database and API connections
+- **Caching**: Cache frequently accessed data and results
+- **Batch Operations**: Group operations for better throughput
+- **Async Processing**: Use asynchronous operations for better performance
+
+### Monitoring and Observability
+
+- **Cloud Monitoring**: Built-in monitoring and alerting
+- **Performance Insights**: Database and application performance analytics
+- **Logging**: Centralized logging with Cloud Logging
+- **Tracing**: Distributed tracing for complex workflows
+
+### Cost Optimization
+
+- **Usage Monitoring**: Track resource usage and costs
+- **Resource Optimization**: Right-size resources for workloads
+- **Automated Scaling**: Scale resources based on demand
+- **Budget Alerts**: Set up budget alerts and controls
+
+## Integration Patterns
+
+### Multi-Service Workflows
+
+Combine multiple Google Cloud services:
+
+- **Data Pipeline**: Storage → BigQuery → Vertex AI → Storage
+- **Document Processing**: Storage → Document AI → Cloud SQL
+- **ML Workflow**: BigQuery → Vertex AI → Cloud Storage
+- **Analytics Pipeline**: Cloud SQL → BigQuery → Vertex AI
+
+### Hybrid Integration
+
+Connect cloud and on-premises systems:
+
+- **Data Synchronization**: Sync between cloud and on-premises databases
+- **Hybrid Analytics**: Combine cloud and local data sources
+- **Gradual Migration**: Incremental migration to cloud services
+- **Backup Solutions**: Cloud backup for on-premises systems
+
+## Best Practices
+
+### Development
+
+- **Environment Separation**: Separate dev, staging, and production environments
+- **Resource Naming**: Use consistent naming conventions
+- **Configuration Management**: Externalize configuration and credentials
+- **Error Handling**: Implement robust error handling and retry logic
+
+### Production Deployment
+
+- **Infrastructure as Code**: Use Terraform or Cloud Deployment Manager
+- **CI/CD Integration**: Automate deployment pipelines
+- **Health Checks**: Implement comprehensive health monitoring
+- **Disaster Recovery**: Plan for backup and disaster recovery scenarios
+
+### Cost Management
+
+- **Resource Tagging**: Tag resources for cost tracking and allocation
+- **Budget Controls**: Set up budget alerts and spending limits
+- **Usage Optimization**: Regularly review and optimize resource usage
+- **Reserved Capacity**: Use committed use discounts for predictable workloads
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="🔐 Authentication"
+    description="Secure authentication for Google Cloud services"
+    href="/docs/tools/authentication"
+  />
+
+  <Card
+    title="📊 OpenAPI Tools"
+    description="Generate tools from Google Cloud API specifications"
+    href="/docs/tools/openapi-tools"
+  />
+
+  <Card
+    title="⚡ Built-in Tools"
+    description="Explore other built-in tool capabilities"
+    href="/docs/tools/built-in-tools"
+  />
+
+  <Card
+    title="🤖 Agents"
+    description="Learn how agents coordinate cloud services"
+    href="/docs/agents"
+  />
+</Cards>

@@ -1,0 +1,808 @@
+---
+title: Context Integration
+description: Using artifacts through CallbackContext and ToolContext for file management and data processing
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Artifacts are accessed through context objects that provide convenient methods for storing and retrieving binary data. Different context types offer varying levels of functionality depending on your use case.
+
+## CallbackContext Access
+
+The `CallbackContext` provides basic artifact operations available in agent callbacks.
+
+### Available Methods
+
+```typescript
+class CallbackContext {
+  // Load an artifact by filename, optionally specifying version
+  async loadArtifact(filename: string, version?: number): Promise<Part | undefined>
+
+  // Save an artifact and record it as a delta for the session
+  async saveArtifact(filename: string, artifact: Part): Promise<number>
+}
+```
+
+### Basic Usage in Callbacks
+
+```typescript
+import { LlmAgent, CallbackContext } from '@iqai/adk';
+
+const beforeAgentCallback = async (callbackContext: CallbackContext) => {
+  try {
+    // Load user preferences
+    const prefsArtifact = await callbackContext.loadArtifact('user:preferences.json');
+
+    if (prefsArtifact) {
+      const preferences = JSON.parse(
+        Buffer.from(prefsArtifact.inlineData.data, 'base64').toString()
+      );
+
+      // Apply user preferences to session state
+      callbackContext.state.set('user_preferences', preferences);
+      callbackContext.state.set('theme', preferences.theme || 'light');
+    }
+
+    // Load conversation history if available
+    const historyArtifact = await callbackContext.loadArtifact('conversation_history.json');
+
+    if (historyArtifact) {
+      const history = JSON.parse(
+        Buffer.from(historyArtifact.inlineData.data, 'base64').toString()
+      );
+
+      callbackContext.state.set('conversation_count', history.length);
+    }
+
+  } catch (error) {
+    console.warn('Failed to load user data:', error);
+  }
+
+  return undefined;
+};
+
+const afterAgentCallback = async (callbackContext: CallbackContext) => {
+  try {
+    // Save updated conversation history
+    const currentHistory = callbackContext.state.get('conversation_history') || [];
+    const historyArtifact = {
+      inlineData: {
+        data: Buffer.from(JSON.stringify(currentHistory)).toString('base64'),
+        mimeType: 'application/json'
+      }
+    };
+
+    await callbackContext.saveArtifact('conversation_history.json', historyArtifact);
+
+    // Save session summary
+    const summary = callbackContext.state.get('session_summary');
+    if (summary) {
+      const summaryArtifact = {
+        inlineData: {
+          data: Buffer.from(JSON.stringify(summary)).toString('base64'),
+          mimeType: 'application/json'
+        }
+      };
+
+      await callbackContext.saveArtifact('session_summary.json', summaryArtifact);
+    }
+
+  } catch (error) {
+    console.error('Failed to save session data:', error);
+  }
+
+  return undefined;
+};
+```
+
+### Model Callback Integration
+
+```typescript
+const beforeModelCallback = async ({ callbackContext }: { callbackContext: CallbackContext }) => {
+  try {
+    // Load model configuration
+    const configArtifact = await callbackContext.loadArtifact('model_config.json');
+
+    if (configArtifact) {
+      const config = JSON.parse(
+        Buffer.from(configArtifact.inlineData.data, 'base64').toString()
+      );
+
+      // Apply model-specific settings
+      callbackContext.state.set('temperature', config.temperature || 0.7);
+      callbackContext.state.set('max_tokens', config.maxTokens || 1000);
+    }
+
+    // Load context files for the model
+    const contextArtifact = await callbackContext.loadArtifact('context_data.txt');
+
+    if (contextArtifact) {
+      const contextText = Buffer.from(contextArtifact.inlineData.data, 'base64').toString();
+
+      // Add context to the request (implementation depends on your setup)
+      callbackContext.state.set('additional_context', contextText);
+    }
+
+  } catch (error) {
+    console.warn('Failed to load model configuration:', error);
+  }
+
+  return undefined;
+};
+
+const afterModelCallback = async ({ callbackContext }: { callbackContext: CallbackContext }) => {
+  try {
+    // Save model response metadata
+    const responseMetadata = {
+      timestamp: new Date().toISOString(),
+      model: callbackContext.state.get('current_model'),
+      tokens_used: callbackContext.state.get('tokens_used')
+    };
+
+    const metadataArtifact = {
+      inlineData: {
+        data: Buffer.from(JSON.stringify(responseMetadata)).toString('base64'),
+        mimeType: 'application/json'
+      }
+    };
+
+    await callbackContext.saveArtifact('response_metadata.json', metadataArtifact);
+
+  } catch (error) {
+    console.error('Failed to save response metadata:', error);
+  }
+
+  return undefined;
+};
+```
+
+## ToolContext Access
+
+The `ToolContext` extends `CallbackContext` with additional artifact management capabilities.
+
+### Enhanced Methods
+
+```typescript
+class ToolContext extends CallbackContext {
+  // Inherited from CallbackContext
+  async loadArtifact(filename: string, version?: number): Promise<Part | undefined>
+  async saveArtifact(filename: string, artifact: Part): Promise<number>
+
+  // Additional tool-specific methods
+  async listArtifacts(): Promise<string[]>
+}
+```
+
+### File Processing Tools
+
+```typescript
+import { BaseTool, ToolContext, FunctionDeclaration } from '@iqai/adk';
+
+class FileAnalyzerTool extends BaseTool {
+  constructor() {
+    super({
+      name: "analyze_file",
+      description: "Analyze uploaded files and generate reports"
+    });
+  }
+
+  getDeclaration(): FunctionDeclaration {
+    return {
+      name: this.name,
+      description: this.description,
+      parameters: {
+        type: "object",
+        properties: {
+          filename: {
+            type: "string",
+            description: "Name of the file to analyze"
+          },
+          analysis_type: {
+            type: "string",
+            enum: ["basic", "detailed", "statistical"],
+            description: "Type of analysis to perform"
+          }
+        },
+        required: ["filename"]
+      }
+    };
+  }
+
+  async runAsync(
+    args: { filename: string; analysis_type?: string },
+    context: ToolContext
+  ) {
+    try {
+      // List available files
+      const availableFiles = await context.listArtifacts();
+
+      if (!availableFiles.includes(args.filename)) {
+        return {
+          error: `File '${args.filename}' not found`,
+          available_files: availableFiles
+        };
+      }
+
+      // Load the file
+      const artifact = await context.loadArtifact(args.filename);
+      if (!artifact) {
+        return { error: `Could not load file '${args.filename}'` };
+      }
+
+      // Perform analysis based on file type
+      const analysis = await this.analyzeFile(artifact, args.analysis_type || 'basic');
+
+      // Save analysis results
+      const analysisArtifact = {
+        inlineData: {
+          data: Buffer.from(JSON.stringify(analysis, null, 2)).toString('base64'),
+          mimeType: 'application/json'
+        }
+      };
+
+      const resultFilename = `analysis_${args.filename.replace(/\.[^/.]+$/, "")}.json`;
+      const version = await context.saveArtifact(resultFilename, analysisArtifact);
+
+      return {
+        analysis_summary: analysis.summary,
+        detailed_results_saved: resultFilename,
+        version,
+        file_type: analysis.type,
+        size_bytes: analysis.size
+      };
+
+    } catch (error) {
+      return { error: `Analysis failed: ${error.message}` };
+    }
+  }
+
+  private async analyzeFile(artifact: Part, analysisType: string) {
+    const data = Buffer.from(artifact.inlineData.data, 'base64');
+    const mimeType = artifact.inlineData.mimeType;
+
+    const baseAnalysis = {
+      type: mimeType,
+      size: data.length,
+      timestamp: new Date().toISOString()
+    };
+
+    if (mimeType.startsWith('text/')) {
+      const text = data.toString('utf-8');
+      return {
+        ...baseAnalysis,
+        summary: 'Text file analysis complete',
+        line_count: text.split('\n').length,
+        word_count: text.split(/\s+/).length,
+        character_count: text.length,
+        encoding: 'UTF-8'
+      };
+    }
+
+    if (mimeType.startsWith('image/')) {
+      return {
+        ...baseAnalysis,
+        summary: 'Image file detected',
+        format: mimeType.split('/')[1],
+        is_binary: true
+      };
+    }
+
+    if (mimeType === 'application/json') {
+      try {
+        const json = JSON.parse(data.toString('utf-8'));
+        return {
+          ...baseAnalysis,
+          summary: 'JSON file analysis complete',
+          is_valid_json: true,
+          key_count: Object.keys(json).length,
+          structure: typeof json
+        };
+      } catch {
+        return {
+          ...baseAnalysis,
+          summary: 'Invalid JSON file',
+          is_valid_json: false
+        };
+      }
+    }
+
+    return {
+      ...baseAnalysis,
+      summary: 'Binary file detected',
+      is_binary: true
+    };
+  }
+}
+```
+
+### Document Processing Tool
+
+```typescript
+class DocumentProcessorTool extends BaseTool {
+  constructor() {
+    super({
+      name: "process_document",
+      description: "Process documents and extract content"
+    });
+  }
+
+  getDeclaration(): FunctionDeclaration {
+    return {
+      name: this.name,
+      description: this.description,
+      parameters: {
+        type: "object",
+        properties: {
+          document_name: {
+            type: "string",
+            description: "Name of the document to process"
+          },
+          operation: {
+            type: "string",
+            enum: ["extract_text", "summarize", "convert_format"],
+            description: "Operation to perform on the document"
+          },
+          output_format: {
+            type: "string",
+            enum: ["text", "json", "markdown"],
+            description: "Format for the processed output"
+          }
+        },
+        required: ["document_name", "operation"]
+      }
+    };
+  }
+
+  async runAsync(
+    args: { document_name: string; operation: string; output_format?: string },
+    context: ToolContext
+  ) {
+    try {
+      // Check if document exists
+      const artifacts = await context.listArtifacts();
+
+      if (!artifacts.includes(args.document_name)) {
+        return {
+          error: `Document '${args.document_name}' not found`,
+          available_documents: artifacts.filter(f =>
+            f.endsWith('.pdf') ||
+            f.endsWith('.docx') ||
+            f.endsWith('.txt')
+          )
+        };
+      }
+
+      // Load the document
+      const document = await context.loadArtifact(args.document_name);
+      if (!document) {
+        return { error: `Failed to load document '${args.document_name}'` };
+      }
+
+      // Process based on operation
+      let result: any;
+
+      switch (args.operation) {
+        case 'extract_text':
+          result = await this.extractText(document);
+          break;
+        case 'summarize':
+          result = await this.summarizeDocument(document);
+          break;
+        case 'convert_format':
+          result = await this.convertFormat(document, args.output_format || 'text');
+          break;
+        default:
+          return { error: `Unsupported operation: ${args.operation}` };
+      }
+
+      // Save processed result
+      const outputFormat = args.output_format || 'json';
+      const mimeType = outputFormat === 'json' ? 'application/json' : 'text/plain';
+
+      const resultArtifact = {
+        inlineData: {
+          data: Buffer.from(JSON.stringify(result, null, 2)).toString('base64'),
+          mimeType
+        }
+      };
+
+      const outputFilename = `processed_${args.document_name.replace(/\.[^/.]+$/, "")}.${outputFormat}`;
+      const version = await context.saveArtifact(outputFilename, resultArtifact);
+
+      return {
+        operation_completed: args.operation,
+        output_saved: outputFilename,
+        version,
+        format: outputFormat,
+        summary: result.summary || 'Processing completed'
+      };
+
+    } catch (error) {
+      return { error: `Document processing failed: ${error.message}` };
+    }
+  }
+
+  private async extractText(document: Part): Promise<any> {
+    // Simplified text extraction logic
+    const mimeType = document.inlineData.mimeType;
+
+    if (mimeType === 'text/plain') {
+      const text = Buffer.from(document.inlineData.data, 'base64').toString('utf-8');
+      return {
+        extracted_text: text,
+        word_count: text.split(/\s+/).length,
+        summary: 'Text extracted successfully'
+      };
+    }
+
+    // For other formats, you would integrate with appropriate libraries
+    return {
+      summary: `Text extraction for ${mimeType} is not yet implemented`,
+      extracted_text: '',
+      word_count: 0
+    };
+  }
+
+  private async summarizeDocument(document: Part): Promise<any> {
+    // Simplified summarization logic
+    const text = Buffer.from(document.inlineData.data, 'base64').toString('utf-8');
+
+    // In a real implementation, you'd use an LLM for summarization
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const summary = sentences.slice(0, 3).join('. ') + '.';
+
+    return {
+      summary,
+      original_length: text.length,
+      summary_length: summary.length,
+      compression_ratio: (summary.length / text.length * 100).toFixed(2) + '%'
+    };
+  }
+
+  private async convertFormat(document: Part, targetFormat: string): Promise<any> {
+    // Format conversion logic
+    const sourceData = Buffer.from(document.inlineData.data, 'base64').toString('utf-8');
+
+    switch (targetFormat) {
+      case 'markdown':
+        // Simple conversion to markdown
+        const markdown = sourceData
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0)
+          .map(line => `- ${line}`)
+          .join('\n');
+
+        return {
+          converted_content: markdown,
+          target_format: 'markdown',
+          summary: 'Converted to markdown format'
+        };
+
+      default:
+        return {
+          converted_content: sourceData,
+          target_format: targetFormat,
+          summary: 'No conversion performed'
+        };
+    }
+  }
+}
+```
+
+## Report Generation
+
+<div id="report-generation"></div>
+
+Generate and store reports using artifacts:
+
+```typescript
+const generateReportCallback = async (callbackContext: CallbackContext) => {
+  try {
+    // Collect data from session state
+    const analytics = callbackContext.state.get('analytics_data') || {};
+    const userMetrics = callbackContext.state.get('user_metrics') || {};
+
+    // Generate report content
+    const report = {
+      title: 'Session Analytics Report',
+      generated_at: new Date().toISOString(),
+      session_id: callbackContext.state.get('session_id'),
+      analytics,
+      user_metrics,
+      summary: {
+        total_interactions: analytics.interactions || 0,
+        session_duration: analytics.duration || 0,
+        success_rate: (analytics.successful_operations / analytics.total_operations * 100) || 0
+      }
+    };
+
+    // Save as JSON report
+    const jsonReport = {
+      inlineData: {
+        data: Buffer.from(JSON.stringify(report, null, 2)).toString('base64'),
+        mimeType: 'application/json'
+      }
+    };
+
+    await callbackContext.saveArtifact('session_report.json', jsonReport);
+
+    // Generate CSV version for data analysis
+    const csvLines = [
+      'Metric,Value',
+      `Session ID,${report.session_id}`,
+      `Generated At,${report.generated_at}`,
+      `Total Interactions,${report.summary.total_interactions}`,
+      `Session Duration,${report.summary.session_duration}`,
+      `Success Rate,${report.summary.success_rate}%`
+    ];
+
+    const csvReport = {
+      inlineData: {
+        data: Buffer.from(csvLines.join('\n')).toString('base64'),
+        mimeType: 'text/csv'
+      }
+    };
+
+    await callbackContext.saveArtifact('session_report.csv', csvReport);
+
+    console.log('Reports generated and saved as artifacts');
+
+  } catch (error) {
+    console.error('Report generation failed:', error);
+  }
+
+  return undefined;
+};
+```
+
+## File Processing
+
+<div id="file-processing"></div>
+
+Handle file uploads and processing workflows:
+
+```typescript
+class FileUploadProcessorTool extends BaseTool {
+  constructor() {
+    super({
+      name: "process_uploaded_file",
+      description: "Process files uploaded by users"
+    });
+  }
+
+  async runAsync(
+    args: { filename: string; processing_type: string },
+    context: ToolContext
+  ) {
+    try {
+      // Validate file exists
+      const files = await context.listArtifacts();
+
+      if (!files.includes(args.filename)) {
+        return { error: `File ${args.filename} not found` };
+      }
+
+      // Load the uploaded file
+      const uploadedFile = await context.loadArtifact(args.filename);
+
+      if (!uploadedFile) {
+        return { error: `Failed to load ${args.filename}` };
+      }
+
+      // Process based on type
+      const processingResult = await this.processFile(uploadedFile, args.processing_type);
+
+      // Save processing results
+      const resultArtifact = {
+        inlineData: {
+          data: Buffer.from(JSON.stringify(processingResult)).toString('base64'),
+          mimeType: 'application/json'
+        }
+      };
+
+      const resultFilename = `processed_${args.filename.replace(/\.[^/.]+$/, '')}_${args.processing_type}.json`;
+      await context.saveArtifact(resultFilename, resultArtifact);
+
+      // Create processing log
+      const logEntry = {
+        timestamp: new Date().toISOString(),
+        original_file: args.filename,
+        processing_type: args.processing_type,
+        result_file: resultFilename,
+        status: 'completed',
+        file_size: uploadedFile.inlineData.data.length,
+        mime_type: uploadedFile.inlineData.mimeType
+      };
+
+      const logArtifact = {
+        inlineData: {
+          data: Buffer.from(JSON.stringify(logEntry)).toString('base64'),
+          mimeType: 'application/json'
+        }
+      };
+
+      await context.saveArtifact('processing_log.json', logArtifact);
+
+      return {
+        status: 'success',
+        processed_file: resultFilename,
+        processing_summary: processingResult.summary,
+        log_entry: 'processing_log.json'
+      };
+
+    } catch (error) {
+      return { error: `File processing failed: ${error.message}` };
+    }
+  }
+
+  private async processFile(file: Part, processingType: string) {
+    const data = Buffer.from(file.inlineData.data, 'base64');
+    const mimeType = file.inlineData.mimeType;
+
+    switch (processingType) {
+      case 'validate':
+        return this.validateFile(data, mimeType);
+      case 'analyze':
+        return this.analyzeFile(data, mimeType);
+      case 'transform':
+        return this.transformFile(data, mimeType);
+      default:
+        throw new Error(`Unknown processing type: ${processingType}`);
+    }
+  }
+
+  private validateFile(data: Buffer, mimeType: string) {
+    return {
+      is_valid: true,
+      size: data.length,
+      type: mimeType,
+      summary: 'File validation completed',
+      checks: {
+        size_within_limits: data.length < 10 * 1024 * 1024, // 10MB limit
+        supported_format: ['text/plain', 'application/json', 'text/csv'].includes(mimeType),
+        not_corrupted: data.length > 0
+      }
+    };
+  }
+
+  private analyzeFile(data: Buffer, mimeType: string) {
+    if (mimeType === 'text/csv') {
+      const text = data.toString('utf-8');
+      const lines = text.split('\n').filter(line => line.trim());
+      const headers = lines[0]?.split(',') || [];
+
+      return {
+        summary: 'CSV file analysis completed',
+        row_count: lines.length - 1,
+        column_count: headers.length,
+        headers,
+        estimated_data_types: this.inferColumnTypes(lines.slice(1), headers.length)
+      };
+    }
+
+    return {
+      summary: 'Basic file analysis completed',
+      size: data.length,
+      type: mimeType
+    };
+  }
+
+  private transformFile(data: Buffer, mimeType: string) {
+    if (mimeType === 'text/csv') {
+      const text = data.toString('utf-8');
+      const lines = text.split('\n').filter(line => line.trim());
+      const headers = lines[0]?.split(',') || [];
+      const rows = lines.slice(1).map(line => line.split(','));
+
+      // Transform to JSON
+      const jsonData = rows.map(row => {
+        const obj: any = {};
+        headers.forEach((header, index) => {
+          obj[header.trim()] = row[index]?.trim() || '';
+        });
+        return obj;
+      });
+
+      return {
+        summary: 'CSV transformed to JSON',
+        original_format: 'csv',
+        transformed_format: 'json',
+        record_count: jsonData.length,
+        transformed_data: jsonData
+      };
+    }
+
+    return {
+      summary: 'No transformation applied',
+      original_format: mimeType,
+      transformed_format: mimeType
+    };
+  }
+
+  private inferColumnTypes(rows: string[], columnCount: number) {
+    const types: string[] = [];
+
+    for (let col = 0; col < columnCount; col++) {
+      const values = rows.map(row => row.split(',')[col]?.trim()).filter(Boolean);
+
+      if (values.every(val => !isNaN(Number(val)))) {
+        types.push('number');
+      } else if (values.every(val => /^\d{4}-\d{2}-\d{2}/.test(val))) {
+        types.push('date');
+      } else {
+        types.push('string');
+      }
+    }
+
+    return types;
+  }
+}
+```
+
+## Media Creation
+
+<div id="media-creation"></div>
+
+Generate and store media content:
+
+```typescript
+const generateChartCallback = async (callbackContext: CallbackContext) => {
+  try {
+    // Get data from session state
+    const chartData = callbackContext.state.get('chart_data');
+
+    if (!chartData) {
+      console.log('No chart data available');
+      return undefined;
+    }
+
+    // Generate SVG chart (simplified example)
+    const svgContent = generateSVGChart(chartData);
+
+    // Save as SVG artifact
+    const svgArtifact = {
+      inlineData: {
+        data: Buffer.from(svgContent).toString('base64'),
+        mimeType: 'image/svg+xml'
+      }
+    };
+
+    await callbackContext.saveArtifact('generated_chart.svg', svgArtifact);
+
+    // Also save the raw data as JSON
+    const dataArtifact = {
+      inlineData: {
+        data: Buffer.from(JSON.stringify(chartData, null, 2)).toString('base64'),
+        mimeType: 'application/json'
+      }
+    };
+
+    await callbackContext.saveArtifact('chart_data.json', dataArtifact);
+
+    console.log('Chart generated and saved as artifacts');
+
+  } catch (error) {
+    console.error('Chart generation failed:', error);
+  }
+
+  return undefined;
+};
+
+function generateSVGChart(data: any): string {
+  // Simplified SVG chart generation
+  return `
+    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+      <rect width="400" height="300" fill="white" stroke="black"/>
+      <text x="200" y="30" text-anchor="middle" font-family="Arial" font-size="16">
+        ${data.title || 'Chart'}
+      </text>
+      <!-- Add your chart rendering logic here -->
+    </svg>
+  `.trim();
+}
+```
+
+<Callout type="info">
+Context integration provides a convenient abstraction over the artifact service, handling session scoping and error management automatically.
+</Callout>

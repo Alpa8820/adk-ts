@@ -1,0 +1,4 @@
+{
+  "pages": ["index", "agent-engine", "cloud-run", "gke"],
+  "icon": "Cloud"
+}

@@ -1,0 +1,498 @@
+---
+title: Invocation Lifecycle
+description: Complete lifecycle from user query to response completion
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+An invocation represents everything that happens in response to a single user query, from initial receipt until the agent finishes processing.
+
+## Invocation Concept
+
+### Core Characteristics
+
+- **Single User Query**: One complete request-response cycle
+- **Multiple Components**: May involve multiple agents, tools, and callbacks
+- **Unique Tracking**: Identified by a single `invocationId`
+- **State Consistency**: Maintains consistent state throughout execution
+
+<Callout type="info" title="Invocation Scope">
+An invocation encompasses all processing that occurs for one user message, including multi-step reasoning, tool calls, and sub-agent interactions.
+</Callout>
+
+### Invocation Context
+
+The `InvocationContext` provides comprehensive access to all runtime information:
+
+```typescript
+import { InvocationContext } from '@iqai/adk';
+
+// The context contains everything needed for execution
+interface InvocationContextData {
+  invocationId: string;           // Unique identifier
+  agent: BaseAgent;               // Current executing agent
+  session: Session;               // Conversation session
+  userContent: Content | null;    // Original user message
+
+  // Service access
+  sessionService: BaseSessionService;
+  artifactService?: BaseArtifactService;
+  memoryService?: BaseMemoryService;
+
+  // Execution state
+  runConfig: RunConfig;
+  branch?: string;
+  endInvocation: boolean;
+}
+```
+
+## Lifecycle Stages
+
+### 1. Initialization
+
+The Runner receives a user query and prepares for execution:
+
+```typescript
+// Runner.runAsync() entry point
+async *runAsync({
+  userId,
+  sessionId,
+  newMessage,
+  runConfig = new RunConfig()
+}) {
+  // Load or create session
+  const session = await this.sessionService.getSession(
+    this.appName,
+    userId,
+    sessionId
+  );
+
+  // Create invocation context
+  const invocationContext = this._newInvocationContext(session, {
+    newMessage,
+    runConfig
+  });
+
+  // Determine which agent should handle this query
+  invocationContext.agent = this._findAgentToRun(session, this.agent);
+}
+```
+
+**Initialization Steps:**
+- Generate unique `invocationId`
+- Load session from SessionService
+- Create comprehensive InvocationContext
+- Determine appropriate agent based on session history
+- Append user message to session
+
+### 2. Agent Selection
+
+The Runner determines which agent should process the query:
+
+```typescript
+// Agent selection logic
+private _findAgentToRun(session: Session, rootAgent: BaseAgent): BaseAgent {
+  // Check for function response continuation
+  const event = _findFunctionCallEventIfLastEventIsFunctionResponse(session);
+  if (event?.author) {
+    return rootAgent.findAgent(event.author);
+  }
+
+  // Look for most recent agent in conversation
+  const nonUserEvents = session.events
+    ?.filter(e => e.author !== "user")
+    .reverse() || [];
+
+  for (const event of nonUserEvents) {
+    const agent = rootAgent.findSubAgent?.(event.author);
+    if (agent && this._isTransferableAcrossAgentTree(agent)) {
+      return agent;
+    }
+  }
+
+  // Default to root agent
+  return rootAgent;
+}
+```
+
+### 3. Agent Execution
+
+The selected agent begins processing through its async generator:
+
+```typescript
+// Agent execution flow
+for await (const event of invocationContext.agent.runAsync(invocationContext)) {
+  // Each event represents a step in the agent's reasoning
+  if (!event.partial) {
+    await this.sessionService.appendEvent(session, event);
+  }
+  yield event;
+}
+```
+
+**Agent Processing Steps:**
+- Execute before-agent callbacks
+- Run core agent logic (`runAsyncImpl`)
+- Handle tool calls and function execution
+- Process LLM interactions
+- Execute after-agent callbacks
+
+### 4. Event Processing
+
+Each event flows through the Runtime's processing pipeline:
+
+```typescript
+// Event processing in Runner
+for await (const event of agent.runAsync(invocationContext)) {
+  // 1. Event validation
+  if (event.partial) {
+    // Stream partial events without persistence
+    yield event;
+    continue;
+  }
+
+  // 2. State management
+  if (event.actions?.stateDelta) {
+    // Apply state changes through SessionService
+    await this.sessionService.applyStateDelta(session, event.actions.stateDelta);
+  }
+
+  // 3. Artifact handling
+  if (event.actions?.artifactDelta) {
+    await this.processArtifactChanges(event.actions.artifactDelta);
+  }
+
+  // 4. Session persistence
+  await this.sessionService.appendEvent(session, event);
+
+  // 5. Forward to user interface
+  yield event;
+}
+```
+
+### 5. Tool Interactions
+
+When agents need external capabilities, they invoke tools:
+
+```typescript
+// Tool execution within agent
+protected async *runAsyncImpl(ctx: InvocationContext): AsyncGenerator<Event> {
+  // Generate function call
+  yield new Event({
+    invocationId: ctx.invocationId,
+    author: this.name,
+    content: {
+      parts: [{
+        functionCall: {
+          name: "search_web",
+          args: { query: "TypeScript best practices" }
+        }
+      }]
+    }
+  });
+
+  // Tool execution happens in framework
+  // Agent receives function response in next iteration
+
+  // Process function response
+  const functionResponse = await this.processFunctionResponse(ctx);
+
+  yield new Event({
+    invocationId: ctx.invocationId,
+    author: this.name,
+    content: { parts: [{ text: functionResponse }] }
+  });
+}
+```
+
+### 6. LLM Communications
+
+Agents interact with language models through the flow system:
+
+```typescript
+// LLM interaction flow
+async *_runOneStepAsync(invocationContext: InvocationContext): AsyncGenerator<Event> {
+  const llmRequest = new LlmRequest();
+
+  // 1. Preprocessing - add instructions, tools, context
+  for await (const event of this._preprocessAsync(invocationContext, llmRequest)) {
+    yield event;
+  }
+
+  // 2. LLM call with streaming
+  const modelResponseEvent = new Event({
+    invocationId: invocationContext.invocationId,
+    author: invocationContext.agent.name
+  });
+
+  for await (const llmResponse of this._callLlmAsync(
+    invocationContext,
+    llmRequest,
+    modelResponseEvent
+  )) {
+    // 3. Postprocessing - handle function calls, responses
+    for await (const event of this._postprocessAsync(
+      invocationContext,
+      llmRequest,
+      llmResponse,
+      modelResponseEvent
+    )) {
+      yield event;
+    }
+  }
+}
+```
+
+### 7. State Updates
+
+State changes are applied atomically per event:
+
+```typescript
+// State management example
+const stateUpdateEvent = new Event({
+  invocationId: ctx.invocationId,
+  author: this.name,
+  actions: new EventActions({
+    stateDelta: {
+      "user_preferences.theme": "dark",
+      "session_context.last_search": "TypeScript",
+      "app_analytics.query_count": 1
+    }
+  })
+});
+
+yield stateUpdateEvent;
+```
+
+### 8. Response Generation
+
+Agents generate final responses based on their processing:
+
+```typescript
+// Final response generation
+yield new Event({
+  invocationId: ctx.invocationId,
+  author: this.name,
+  content: {
+    parts: [{
+      text: "Here's what I found about TypeScript best practices..."
+    }]
+  }
+});
+```
+
+### 9. Completion
+
+The invocation completes when the agent has no more events to yield:
+
+```typescript
+// Invocation completion indicators
+event.isFinalResponse(): boolean {
+  return (
+    this.getFunctionCalls().length === 0 &&
+    this.getFunctionResponses().length === 0 &&
+    !this.partial &&
+    !this.hasTrailingCodeExecutionResult()
+  );
+}
+```
+
+## Execution Patterns
+
+### Sequential Execution
+
+Standard step-by-step processing:
+
+```typescript
+async *runAsyncImpl(ctx: InvocationContext): AsyncGenerator<Event> {
+  // Step 1: Analyze request
+  yield new Event({
+    invocationId: ctx.invocationId,
+    author: this.name,
+    content: { parts: [{ text: "Analyzing your request..." }] }
+  });
+
+  // Step 2: Gather information
+  const searchResults = await this.searchInformation(ctx);
+
+  // Step 3: Process and respond
+  yield new Event({
+    invocationId: ctx.invocationId,
+    author: this.name,
+    content: { parts: [{ text: `Based on my analysis: ${searchResults}` }] }
+  });
+}
+```
+
+### Parallel Execution
+
+Multiple operations happening concurrently:
+
+```typescript
+// Parallel agent execution
+class ParallelAgent extends BaseAgent {
+  protected async *runAsyncImpl(ctx: InvocationContext): AsyncGenerator<Event> {
+    const agentRuns = this.subAgents.map(agent =>
+      agent.runAsync(createBranchContextForSubAgent(this, agent, ctx))
+    );
+
+    // Merge results from parallel execution
+    for await (const event of mergeAgentRun(agentRuns)) {
+      yield event;
+    }
+  }
+}
+```
+
+### Multi-Agent Coordination
+
+Transferring between agents during execution:
+
+```typescript
+// Agent transfer during invocation
+if (shouldTransferToSpecialist) {
+  yield new Event({
+    invocationId: ctx.invocationId,
+    author: this.name,
+    actions: new EventActions({
+      transferToAgent: "specialist_agent"
+    })
+  });
+
+  // Framework handles the transfer
+  // Specialist agent continues the same invocation
+}
+```
+
+## Error Handling and Recovery
+
+### Graceful Degradation
+
+```typescript
+try {
+  // Attempt primary operation
+  const result = await this.primaryService.process(data);
+  yield this.createSuccessEvent(result);
+} catch (error) {
+  // Fallback to alternative approach
+  const fallbackResult = await this.fallbackService.process(data);
+  yield this.createFallbackEvent(fallbackResult);
+}
+```
+
+### State Rollback
+
+```typescript
+// Transaction-like state management
+const checkpoint = await ctx.sessionService.createCheckpoint(session);
+
+try {
+  // Apply complex state changes
+  yield stateChangeEvent1;
+  yield stateChangeEvent2;
+  yield stateChangeEvent3;
+} catch (error) {
+  // Rollback to checkpoint on failure
+  await ctx.sessionService.rollbackToCheckpoint(session, checkpoint);
+  throw error;
+}
+```
+
+### Circuit Breaker Pattern
+
+```typescript
+class ServiceWithCircuitBreaker {
+  private failureCount = 0;
+  private lastFailureTime = 0;
+  private readonly maxFailures = 5;
+  private readonly timeoutMs = 60000;
+
+  async safeServiceCall(): Promise<any> {
+    if (this.isCircuitOpen()) {
+      throw new Error("Circuit breaker is open");
+    }
+
+    try {
+      const result = await this.externalService.call();
+      this.reset();
+      return result;
+    } catch (error) {
+      this.recordFailure();
+      throw error;
+    }
+  }
+}
+```
+
+## Monitoring and Observability
+
+### Invocation Tracking
+
+```typescript
+// Telemetry integration
+const span = tracer.startSpan("invocation");
+span.setAttributes({
+  "invocation.id": invocationContext.invocationId,
+  "agent.name": invocationContext.agent.name,
+  "user.id": userId
+});
+
+try {
+  // Process invocation
+  for await (const event of this.processInvocation(ctx)) {
+    span.addEvent("event.generated", {
+      "event.id": event.id,
+      "event.author": event.author
+    });
+    yield event;
+  }
+} finally {
+  span.end();
+}
+```
+
+### Performance Metrics
+
+```typescript
+// Track invocation performance
+const startTime = Date.now();
+let eventCount = 0;
+let functionCallCount = 0;
+
+for await (const event of agent.runAsync(ctx)) {
+  eventCount++;
+  functionCallCount += event.getFunctionCalls().length;
+
+  // Emit metrics
+  metrics.counter('events.generated').inc();
+  metrics.histogram('event.size').observe(JSON.stringify(event).length);
+
+  yield event;
+}
+
+metrics.histogram('invocation.duration').observe(Date.now() - startTime);
+metrics.counter('invocation.events').inc(eventCount);
+```
+
+## Best Practices
+
+### Lifecycle Management
+
+- **Clear Boundaries**: Define clear start and end points for invocations
+- **Resource Cleanup**: Properly dispose of resources when invocations complete
+- **State Isolation**: Ensure invocations don't interfere with each other
+- **Error Propagation**: Propagate errors appropriately through the lifecycle
+
+### Performance Optimization
+
+- **Event Batching**: Group related events to reduce overhead
+- **Lazy Loading**: Load services and resources only when needed
+- **Caching**: Cache expensive computations within invocation scope
+- **Parallel Processing**: Use parallel execution where appropriate
+
+### Observability
+
+- **Unique Identification**: Use consistent invocation IDs for tracking
+- **Comprehensive Logging**: Log all significant lifecycle events
+- **Metrics Collection**: Track performance and usage metrics
+- **Error Context**: Preserve context for debugging failures

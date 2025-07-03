@@ -1,0 +1,459 @@
+---
+title: Evaluation Patterns
+description: Domain-specific evaluation strategies and best practices
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Different types of agents require specialized evaluation approaches tailored to their specific use cases and performance requirements.
+
+## Customer Support Agents
+
+Customer support agents need evaluation that focuses on issue resolution, user satisfaction, and escalation handling.
+
+### Key Evaluation Areas
+
+**Issue Resolution Effectiveness:**
+- **First Contact Resolution**: Percentage of issues resolved without escalation
+- **Resolution Accuracy**: Correctness of solutions provided
+- **Resolution Time**: Speed of problem solving
+- **Follow-up Requirements**: Need for additional assistance
+
+**Communication Quality:**
+- **Tone Appropriateness**: Professional yet empathetic communication
+- **Clarity**: Easy-to-understand explanations
+- **Completeness**: Comprehensive response coverage
+- **Personalization**: Appropriate use of user context
+
+**Knowledge Base Usage:**
+- **Search Accuracy**: Finding relevant information efficiently
+- **Information Synthesis**: Combining multiple sources effectively
+- **Source Attribution**: Proper citation of knowledge sources
+- **Gap Identification**: Recognizing when information is unavailable
+
+### Evaluation Implementation
+
+```typescript
+async function evaluateCustomerSupportAgent(
+  agent: LlmAgent,
+  supportScenarios: CustomerSupportScenario[]
+) {
+  const results = [];
+
+  for (const scenario of supportScenarios) {
+    const sessionService = new InMemorySessionService();
+    const session = await sessionService.createSession("support", "customer");
+
+    const runner = new Runner({
+      appName: "support_app",
+      agent,
+      sessionService,
+    });
+
+    // Run the support scenario
+    const events = [];
+    for await (const event of runner.runAsync({
+      userId: "customer",
+      sessionId: session.id,
+      newMessage: { parts: [{ text: scenario.userIssue }] },
+    })) {
+      events.push(event);
+    }
+
+    // Evaluate the interaction
+    const evaluation = {
+      scenario: scenario.type,
+      resolved: checkIssueResolution(events, scenario),
+      escalated: checkEscalation(events),
+      tone: analyzeTone(events),
+      accuracy: validateAccuracy(events, scenario.expectedSolution),
+      toolsUsed: extractToolUsage(events)
+    };
+
+    results.push(evaluation);
+  }
+
+  return analyzeSupportResults(results);
+}
+
+interface CustomerSupportScenario {
+  type: 'billing' | 'technical' | 'account' | 'general';
+  userIssue: string;
+  expectedSolution: string;
+  shouldEscalate: boolean;
+  requiredTools: string[];
+}
+```
+
+### Success Metrics
+
+**Resolution Metrics:**
+- **Target**: 85%+ first-contact resolution for standard issues
+- **Escalation Rate**: Less than 15% for routine inquiries
+- **Accuracy Rate**: 95%+ for factual information
+
+**User Experience Metrics:**
+- **Response Clarity**: Subjective assessment of explanation quality
+- **Tone Appropriateness**: Professional and empathetic communication
+- **Completeness**: All aspects of inquiry addressed
+
+## Task Automation Agents
+
+Task automation agents require evaluation focused on workflow completion, integration quality, and error handling.
+
+### Key Evaluation Areas
+
+**Workflow Completion:**
+- **End-to-End Success**: Complete task execution without intervention
+- **Step Accuracy**: Correct execution of individual workflow steps
+- **State Management**: Proper handling of workflow state
+- **Dependency Handling**: Managing task dependencies and prerequisites
+
+**Integration Quality:**
+- **API Usage**: Proper integration with external systems
+- **Data Transformation**: Accurate processing and formatting
+- **Error Handling**: Graceful handling of system failures
+- **Authentication**: Proper credential and access management
+
+**Efficiency Metrics:**
+- **Execution Time**: Speed of task completion
+- **Resource Usage**: Optimal use of system resources
+- **Retry Logic**: Intelligent handling of transient failures
+- **Parallel Processing**: Effective use of concurrent operations
+
+### Evaluation Implementation
+
+```typescript
+interface AutomationTask {
+  name: string;
+  steps: TaskStep[];
+  expectedDuration: number;
+  requiredTools: string[];
+  successCriteria: SuccessCriteria;
+}
+
+interface TaskStep {
+  action: string;
+  expectedTool: string;
+  expectedData: any;
+  dependencies: string[];
+}
+
+async function evaluateAutomationAgent(
+  agent: LlmAgent,
+  automationTasks: AutomationTask[]
+) {
+  const results = [];
+
+  for (const task of automationTasks) {
+    const startTime = Date.now();
+
+    try {
+      const events = await executeAutomationTask(agent, task);
+      const executionTime = Date.now() - startTime;
+
+      const evaluation = {
+        taskName: task.name,
+        completed: checkTaskCompletion(events, task),
+        accuracy: validateStepAccuracy(events, task.steps),
+        efficiency: executionTime <= task.expectedDuration,
+        toolUsage: analyzeToolUsage(events, task.requiredTools),
+        errorHandling: evaluateErrorRecovery(events),
+        executionTime
+      };
+
+      results.push(evaluation);
+    } catch (error) {
+      results.push({
+        taskName: task.name,
+        completed: false,
+        error: error.message,
+        executionTime: Date.now() - startTime
+      });
+    }
+  }
+
+  return analyzeAutomationResults(results);
+}
+```
+
+### Success Metrics
+
+**Completion Metrics:**
+- **Target**: 95%+ successful task completion
+- **Efficiency**: Within 120% of expected execution time
+- **Error Recovery**: 90%+ recovery from transient failures
+
+**Quality Metrics:**
+- **Step Accuracy**: 98%+ correct step execution
+- **Data Integrity**: 100% accurate data transformation
+- **Integration**: Zero authentication or API errors
+
+## Information Retrieval Agents
+
+Information retrieval agents need evaluation focused on search accuracy, source quality, and information synthesis.
+
+### Key Evaluation Areas
+
+**Search Effectiveness:**
+- **Query Understanding**: Interpretation of user information needs
+- **Search Strategy**: Effective use of search tools and techniques
+- **Result Relevance**: Quality of retrieved information
+- **Coverage**: Comprehensive information gathering
+
+**Source Quality:**
+- **Reliability**: Use of trustworthy information sources
+- **Currency**: Access to up-to-date information
+- **Attribution**: Proper citation and source tracking
+- **Diversity**: Multiple perspectives and sources
+
+**Information Synthesis:**
+- **Accuracy**: Correct interpretation of source material
+- **Coherence**: Logical organization of information
+- **Completeness**: Comprehensive coverage of the topic
+- **Bias Awareness**: Recognition and mitigation of source bias
+
+### Evaluation Implementation
+
+```typescript
+interface InformationQuery {
+  query: string;
+  domain: string;
+  expectedSources: string[];
+  requiredInformation: string[];
+  qualityThreshold: number;
+}
+
+async function evaluateRetrievalAgent(
+  agent: LlmAgent,
+  queries: InformationQuery[]
+) {
+  const results = [];
+
+  for (const query of queries) {
+    const events = await executeInformationQuery(agent, query.query);
+
+    const evaluation = {
+      query: query.query,
+      domain: query.domain,
+      searchAccuracy: evaluateSearchAccuracy(events, query),
+      sourceQuality: assessSourceQuality(events, query.expectedSources),
+      informationCompleteness: checkInformationCoverage(events, query.requiredInformation),
+      synthesisQuality: evaluateSynthesis(events),
+      citations: validateCitations(events)
+    };
+
+    results.push(evaluation);
+  }
+
+  return analyzeRetrievalResults(results);
+}
+
+function evaluateSearchAccuracy(events: Event[], query: InformationQuery) {
+  const searchEvents = events.filter(e =>
+    e.getFunctionCalls().some(fc => fc.name.includes('search'))
+  );
+
+  const relevantResults = searchEvents.filter(e =>
+    containsRelevantInformation(e, query.requiredInformation)
+  );
+
+  return {
+    precision: relevantResults.length / searchEvents.length,
+    recall: calculateRecall(relevantResults, query.requiredInformation),
+    f1Score: calculateF1Score(relevantResults, query)
+  };
+}
+```
+
+### Success Metrics
+
+**Accuracy Metrics:**
+- **Search Precision**: 80%+ relevant results
+- **Information Recall**: 90%+ required information found
+- **Source Reliability**: 95%+ authoritative sources
+
+**Quality Metrics:**
+- **Citation Accuracy**: 100% proper attribution
+- **Synthesis Coherence**: Subjective assessment of organization
+- **Bias Mitigation**: Recognition of perspective limitations
+
+## Multi-Agent System Evaluation
+
+Multi-agent systems require evaluation of coordination, communication, and collective performance.
+
+### Key Evaluation Areas
+
+**Agent Coordination:**
+- **Task Distribution**: Effective allocation of work across agents
+- **Communication**: Clear inter-agent information exchange
+- **Synchronization**: Proper timing of collaborative activities
+- **Conflict Resolution**: Handling of contradictory agent outputs
+
+**System Performance:**
+- **Collective Accuracy**: Combined agent performance vs individual
+- **Efficiency Gains**: Benefits of parallelization and specialization
+- **Redundancy Management**: Optimal use of multiple agents
+- **Fault Tolerance**: System resilience to individual agent failures
+
+### Evaluation Implementation
+
+```typescript
+async function evaluateMultiAgentSystem(
+  agents: BaseAgent[],
+  collaborativeScenarios: CollaborativeScenario[]
+) {
+  const results = [];
+
+  for (const scenario of collaborativeScenarios) {
+    // Create coordinating agent that manages the sub-agents
+    const coordinator = new SequentialAgent({
+      name: "coordinator",
+      description: "Coordinates multiple specialized agents",
+      subAgents: agents
+    });
+
+    const events = await executeCollaborativeTask(coordinator, scenario);
+
+    const evaluation = {
+      scenario: scenario.name,
+      overallSuccess: checkCollaborativeSuccess(events, scenario),
+      agentContributions: analyzeAgentContributions(events, agents),
+      coordination: evaluateCoordination(events),
+      efficiency: compareToBaselinePerformance(events, scenario),
+      conflictResolution: assessConflictHandling(events)
+    };
+
+    results.push(evaluation);
+  }
+
+  return analyzeMultiAgentResults(results);
+}
+```
+
+## Production Evaluation Patterns
+
+### Continuous Monitoring
+
+**Real-time Quality Assessment:**
+```typescript
+class ProductionEvaluationMonitor {
+  private qualityThresholds: QualityThresholds;
+  private alertCallbacks: ((issue: QualityIssue) => void)[];
+
+  async monitorAgentInteraction(
+    agentResponse: Event,
+    userFeedback?: UserFeedback
+  ) {
+    const quality = await this.assessResponseQuality(agentResponse);
+
+    if (quality.overall < this.qualityThresholds.overall) {
+      await this.triggerQualityAlert({
+        type: 'quality_degradation',
+        agent: agentResponse.author,
+        score: quality.overall,
+        threshold: this.qualityThresholds.overall,
+        timestamp: new Date()
+      });
+    }
+
+    if (userFeedback) {
+      await this.incorporateUserFeedback(agentResponse, userFeedback);
+    }
+  }
+
+  private async assessResponseQuality(response: Event) {
+    return {
+      relevance: await this.calculateRelevance(response),
+      accuracy: await this.validateAccuracy(response),
+      helpfulness: await this.assessHelpfulness(response),
+      overall: 0 // computed composite score
+    };
+  }
+}
+```
+
+### A/B Testing
+
+**Comparative Agent Evaluation:**
+```typescript
+async function runAgentABTest(
+  agentA: LlmAgent,
+  agentB: LlmAgent,
+  testScenarios: TestScenario[],
+  trafficSplit: number = 0.5
+) {
+  const resultsA = [];
+  const resultsB = [];
+
+  for (const scenario of testScenarios) {
+    const useAgentA = Math.random() < trafficSplit;
+    const agent = useAgentA ? agentA : agentB;
+
+    const result = await evaluateScenario(agent, scenario);
+
+    if (useAgentA) {
+      resultsA.push(result);
+    } else {
+      resultsB.push(result);
+    }
+  }
+
+  return {
+    agentA: calculateAggregateMetrics(resultsA),
+    agentB: calculateAggregateMetrics(resultsB),
+    significance: calculateStatisticalSignificance(resultsA, resultsB),
+    recommendation: determineWinningAgent(resultsA, resultsB)
+  };
+}
+```
+
+## Best Practices
+
+### Evaluation Design Principles
+
+**Domain Alignment:**
+- **Relevant Metrics**: Choose metrics that matter for your specific use case
+- **Realistic Scenarios**: Test with scenarios that reflect real usage
+- **Stakeholder Input**: Include business requirements in evaluation criteria
+- **User Perspective**: Prioritize metrics that impact user experience
+
+**Comprehensive Coverage:**
+- **Happy Path**: Test normal, expected interactions
+- **Edge Cases**: Include unusual and challenging scenarios
+- **Error Conditions**: Test resilience to failures and invalid inputs
+- **Scale Testing**: Evaluate performance under various load conditions
+
+### Implementation Guidelines
+
+**Automation Balance:**
+- **Quick Feedback**: Automated tests for rapid development iteration
+- **Human Judgment**: Manual evaluation for subjective quality aspects
+- **Hybrid Approach**: Combine automated metrics with human validation
+- **Progressive Enhancement**: Start simple, add complexity gradually
+
+**Data Management:**
+- **Test Data Quality**: Ensure test scenarios are accurate and representative
+- **Version Control**: Track evaluation data and criteria changes
+- **Reproducibility**: Maintain consistent testing environments
+- **Privacy Compliance**: Handle sensitive data appropriately in testing
+
+<Callout type="info" title="Iterative Improvement">
+Start with basic evaluation patterns for your domain, then gradually add sophistication as you learn what metrics best predict real-world performance.
+</Callout>
+
+### Integration Strategies
+
+**Development Workflow:**
+- **CI/CD Integration**: Automated evaluation in deployment pipelines
+- **Feature Development**: Evaluation-driven feature development
+- **Release Gates**: Quality thresholds for production deployment
+- **Performance Tracking**: Continuous monitoring of key metrics
+
+**Team Collaboration:**
+- **Shared Understanding**: Clear communication of evaluation criteria
+- **Regular Review**: Periodic assessment of evaluation effectiveness
+- **Knowledge Sharing**: Document lessons learned and best practices
+- **Stakeholder Engagement**: Regular updates on agent performance
+
+The key to successful agent evaluation is choosing the right combination of metrics and approaches for your specific domain while maintaining focus on real-world performance and user satisfaction.

@@ -1,0 +1,251 @@
+---
+title: Built-in Tools
+description: Ready-to-use tools for common tasks like search and code execution
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Built-in tools provide ready-to-use functionality for common agent tasks. These tools are pre-built, tested, and optimized for integration with ADK TypeScript agents, allowing you to add powerful capabilities without custom development.
+
+## How Built-in Tools Work
+
+Built-in tools follow a simple integration pattern:
+
+1. **Import** the desired tool from the ADK TypeScript library
+2. **Configure** the tool with any required parameters
+3. **Register** the tool in your agent's tools list
+4. **Use** the tool automatically based on agent instructions and user prompts
+
+<Callout type="info" title="Zero Setup">
+Most built-in tools require minimal or no configuration - just import and add to your agent's tools list.
+</Callout>
+
+## Available Built-in Tools
+
+<Cards>
+  <Card
+    title="🔍 Google Search"
+    description="Perform web searches using Google Search API"
+  />
+
+  <Card
+    title="💻 Code Execution"
+    description="Execute code for calculations and data manipulation"
+  />
+
+  <Card
+    title="🏢 Vertex AI Search"
+    description="Search private data stores and knowledge bases"
+  />
+
+  <Card
+    title="📁 File Operations"
+    description="Read, write, and manipulate files and documents"
+  />
+</Cards>
+
+## Google Search Tool
+
+Enables agents to perform web searches and retrieve real-time information from the internet.
+
+### Key Features
+
+- **Real-time Results**: Access current web information
+- **Gemini Integration**: Optimized for Gemini 2 models
+- **Automatic Parsing**: Results formatted for LLM consumption
+- **No Setup Required**: Works immediately with proper API access
+
+### Use Cases
+
+- **Current Events**: Get latest news and information
+- **Fact Checking**: Verify information against web sources
+- **Research Tasks**: Gather information on specific topics
+- **Market Data**: Access current pricing and market information
+
+### Configuration
+
+- **Zero Configuration**: Add directly to agent tools
+- **Authentication**: Uses Google AI credentials
+- **Rate Limiting**: Respects Google Search API limits
+
+## Code Execution Tool
+
+Allows agents to execute code for calculations, data processing, and problem-solving tasks.
+
+### Key Features
+
+- **Multi-Language Support**: Execute various programming languages
+- **Safe Execution**: Sandboxed environment for security
+- **Result Integration**: Code outputs integrated into agent responses
+- **Gemini Optimized**: Designed for Gemini 2 model capabilities
+
+### Use Cases
+
+- **Mathematical Calculations**: Complex computations and formulas
+- **Data Analysis**: Process and analyze datasets
+- **Algorithm Implementation**: Solve algorithmic problems
+- **Visualization**: Generate charts and graphs
+
+### Capabilities
+
+- **Numeric Computation**: Mathematical operations and statistics
+- **Data Manipulation**: Transform and process data structures
+- **Logic Implementation**: Complex conditional and iterative logic
+- **Result Formatting**: Present results in readable formats
+
+## Vertex AI Search Tool
+
+Provides access to Google Cloud's Vertex AI Search for querying private data stores and knowledge bases.
+
+### Key Features
+
+- **Private Data Access**: Search internal documents and knowledge bases
+- **Enterprise Security**: Secure access to sensitive information
+- **Structured Results**: Formatted results with relevance scoring
+- **Multi-Modal Search**: Support for text, images, and documents
+
+### Use Cases
+
+- **Internal Knowledge**: Search company policies and procedures
+- **Document Retrieval**: Find specific documents or information
+- **Customer Support**: Access support knowledge bases
+- **Compliance**: Search regulatory and compliance documents
+
+### Configuration
+
+- **Data Store ID**: Requires configured Vertex AI Search data store
+- **Authentication**: Google Cloud credentials required
+- **Permissions**: Proper IAM roles for data access
+
+## File Operations Tool
+
+Enables agents to interact with files and documents for reading, writing, and manipulation tasks.
+
+### Key Features
+
+- **File I/O**: Read and write various file formats
+- **Format Support**: Text, JSON, CSV, and other common formats
+- **Safe Operations**: Controlled file system access
+- **Error Handling**: Graceful handling of file operation failures
+
+### Use Cases
+
+- **Document Processing**: Read and analyze document contents
+- **Data Import/Export**: Load data from files or save results
+- **Configuration Management**: Read settings and configuration files
+- **Report Generation**: Create output files and reports
+
+### Security Considerations
+
+- **Sandboxed Access**: Limited to authorized directories
+- **File Validation**: Input validation and sanitization
+- **Permission Checks**: Proper file system permissions
+- **Error Recovery**: Graceful handling of access failures
+
+## Tool Integration Patterns
+
+### Single Tool Usage
+
+Use individual tools for specific capabilities:
+
+- **Search Only**: Agents focused on information retrieval
+- **Code Only**: Computational and analytical agents
+- **Files Only**: Document processing specialists
+
+### Multi-Tool Combinations
+
+Combine tools for complex workflows:
+
+- **Search + Code**: Research with analysis and calculation
+- **Files + Code**: Data processing and report generation
+- **Search + Files**: Research with document storage
+- **All Tools**: Comprehensive capability agents
+
+### Conditional Tool Selection
+
+Agents choose tools based on task requirements:
+
+- **Task Analysis**: LLM determines required capabilities
+- **Dynamic Selection**: Different tools for different queries
+- **Fallback Strategies**: Alternative approaches when tools fail
+
+## Performance and Limitations
+
+### Rate Limiting
+
+<Callout type="warn" title="API Limits">
+Built-in tools are subject to external API rate limits. Design your agents to handle rate limiting gracefully.
+</Callout>
+
+- **Google Search**: Subject to Google API quotas
+- **Code Execution**: Processing time and resource limits
+- **Vertex AI Search**: Query rate and data access limits
+- **File Operations**: File system and storage limits
+
+### Error Handling
+
+Built-in tools include robust error handling:
+
+- **Network Failures**: Graceful handling of connectivity issues
+- **Authentication Errors**: Clear messaging for credential problems
+- **Rate Limit Responses**: Appropriate backoff and retry logic
+- **Result Validation**: Verification of tool outputs
+
+### Performance Optimization
+
+- **Caching**: Some tools cache results for efficiency
+- **Async Operations**: Non-blocking execution where possible
+- **Resource Management**: Efficient use of system resources
+- **Result Streaming**: Progressive result delivery for large operations
+
+## Best Practices
+
+### Tool Selection
+
+- **Match Capabilities**: Choose tools that match your use case requirements
+- **Consider Limits**: Account for rate limits and quotas in your design
+- **Plan Fallbacks**: Design alternative approaches for tool failures
+- **Monitor Usage**: Track tool usage patterns and performance
+
+### Agent Instructions
+
+- **Clear Guidance**: Provide specific instructions for when to use each tool
+- **Error Handling**: Define how agents should handle tool failures
+- **Result Processing**: Guide agents on interpreting tool outputs
+- **User Communication**: Instruct agents on communicating tool usage to users
+
+### Security and Privacy
+
+- **Data Sensitivity**: Consider data sensitivity when using external tools
+- **Access Controls**: Implement appropriate access restrictions
+- **Audit Trails**: Log tool usage for security and compliance
+- **Error Information**: Avoid exposing sensitive data in error messages
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="🔧 Function Tools"
+    description="Create custom tools for specialized needs"
+    href="/docs/tools/function-tools"
+  />
+
+  <Card
+    title="🔐 Authentication"
+    description="Secure access to external services and APIs"
+    href="/docs/tools/authentication"
+  />
+
+  <Card
+    title="🤖 Agents"
+    description="Learn how agents coordinate and use tools"
+    href="/docs/agents"
+  />
+
+  <Card
+    title="📊 Examples"
+    description="See working examples of built-in tool usage"
+    href="/docs/examples"
+  />
+</Cards>

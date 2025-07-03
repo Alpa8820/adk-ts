@@ -1,0 +1,357 @@
+---
+title: Memory Systems
+description: Long-term knowledge storage and retrieval for intelligent agent conversations
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Memory systems provide agents with long-term knowledge storage and retrieval capabilities, extending beyond single conversation sessions. While sessions manage immediate conversation context, memory services create searchable archives of past interactions and external knowledge.
+
+## Memory vs Session Context
+
+Understanding the distinction between session context and long-term memory is crucial for building intelligent agents.
+
+### Session Context: Short-Term Memory
+
+- **Scope**: Current conversation thread only
+- **Duration**: Temporary, conversation-specific
+- **Content**: Recent interactions, current state, immediate context
+- **Use Cases**: Maintaining conversation flow, tracking current tasks
+
+### Long-Term Memory: Knowledge Archive
+
+- **Scope**: Cross-session, historical information
+- **Duration**: Persistent, long-term storage
+- **Content**: Past conversations, learned information, external knowledge
+- **Use Cases**: Recalling previous discussions, building on past interactions
+
+<Callout type="info" title="Memory Analogy">
+Think of session context as your working memory during a meeting, while long-term memory is like your searchable archive of all past meetings and knowledge.
+</Callout>
+
+## MemoryService Architecture
+
+The MemoryService provides a unified interface for managing long-term knowledge storage and retrieval across different storage backends.
+
+### Core Responsibilities
+
+<Cards>
+  <Card
+    title="📥 Information Ingestion"
+    description="Store session content and external data in knowledge base"
+  />
+
+  <Card
+    title="🔍 Knowledge Search"
+    description="Query stored information with semantic or keyword search"
+  />
+
+  <Card
+    title="🗄️ Key-Value Storage"
+    description="Store arbitrary data associated with applications and users"
+  />
+
+  <Card
+    title="🧹 Memory Management"
+    description="Organize, maintain, and clean up stored knowledge"
+  />
+</Cards>
+
+### Service Interface
+
+All MemoryService implementations provide consistent methods:
+
+- **`addSessionToMemory()`**: Store completed session information
+- **`searchMemory()`**: Query knowledge base for relevant information
+- **`store()`/`retrieve()`/`delete()`**: Key-value storage operations
+- **`clearMemory()`**: Remove stored information when needed
+
+## Memory Workflow
+
+### Typical Memory Lifecycle
+
+1. **Session Interaction**: User interacts with agent through sessions
+2. **Information Capture**: Session events and outcomes recorded
+3. **Memory Ingestion**: Completed sessions added to long-term storage
+4. **Knowledge Query**: Future sessions search memory for relevant context
+5. **Context Retrieval**: Relevant past information retrieved and used
+6. **Enhanced Responses**: Agents use retrieved knowledge for better answers
+
+### Integration Patterns
+
+**Automatic Ingestion:**
+- Sessions automatically archived when completed
+- Configurable rules for what information to store
+- Background processing to avoid blocking interactions
+
+**On-Demand Search:**
+- Agents use memory tools to search when needed
+- Query optimization for relevant information retrieval
+- Context-aware search to improve relevance
+
+**Hybrid Approaches:**
+- Combination of automatic and manual memory management
+- Selective ingestion based on conversation importance
+- Intelligent caching and pre-loading strategies
+
+## Implementation Options
+
+### In-Memory Memory Service
+
+Fast, simple memory for development and testing:
+
+**Characteristics:**
+- **Storage**: Application memory with basic keyword search
+- **Persistence**: None - knowledge lost on restart
+- **Search**: Simple keyword matching and text search
+- **Use Cases**: Prototyping, testing, temporary knowledge needs
+
+**Best For:**
+- Development and experimentation
+- Simple keyword-based recall
+- Scenarios where persistence isn't required
+- Quick prototyping of memory-enabled agents
+
+### Cloud RAG Memory Service
+
+Advanced semantic search with cloud-scale storage:
+
+**Characteristics:**
+- **Storage**: Google Cloud Vertex AI RAG infrastructure
+- **Persistence**: Enterprise-grade cloud storage
+- **Search**: Semantic search with vector embeddings
+- **Integration**: Native cloud service integration
+
+**Features:**
+- **Semantic Understanding**: Find conceptually similar information
+- **Vector Search**: Advanced similarity matching algorithms
+- **Scalable Storage**: Handle massive knowledge bases
+- **Managed Infrastructure**: No maintenance overhead
+
+**Benefits:**
+- **Intelligence**: Understand meaning, not just keywords
+- **Performance**: Optimized for large-scale search operations
+- **Reliability**: Enterprise-grade availability and backup
+- **Integration**: Seamless cloud ecosystem integration
+
+<Callout type="warn" title="Implementation Choice">
+Choose memory implementation based on your search sophistication, scale requirements, and persistence needs.
+</Callout>
+
+## Search Capabilities
+
+### Keyword Search
+
+Traditional text-based search functionality:
+
+- **Exact Matches**: Find specific terms and phrases
+- **Boolean Operations**: Combine search terms with AND/OR logic
+- **Simple Filtering**: Basic metadata-based filtering
+- **Fast Performance**: Quick results for simple queries
+
+### Semantic Search
+
+Advanced meaning-based search capabilities:
+
+- **Conceptual Understanding**: Find related concepts and ideas
+- **Context Awareness**: Consider conversation context in search
+- **Similarity Matching**: Identify semantically similar content
+- **Multi-Modal**: Search across text, metadata, and structured data
+
+### Search Optimization
+
+- **Relevance Ranking**: Results ordered by relevance and recency
+- **Result Filtering**: Configurable thresholds and limits
+- **Context Integration**: Search results enhanced with session context
+- **Performance Tuning**: Optimized for query speed and accuracy
+
+## Memory Storage Patterns
+
+### Session Archival
+
+Systematic storage of completed conversations:
+
+**Content Selection:**
+- **Full Conversations**: Complete session history and context
+- **Key Insights**: Important decisions, outcomes, and learnings
+- **User Preferences**: Discovered preferences and patterns
+- **Problem Solutions**: Successful problem-solving approaches
+
+**Metadata Enhancement:**
+- **Timestamps**: When conversations occurred
+- **Participants**: Who was involved in conversations
+- **Topics**: What was discussed
+- **Outcomes**: Results and decisions made
+
+### External Knowledge Integration
+
+Incorporating external information sources:
+
+**Data Sources:**
+- **Documentation**: Product manuals, FAQ databases
+- **Knowledge Bases**: Company wikis, knowledge repositories
+- **External APIs**: Real-time information feeds
+- **File Systems**: Document collections and archives
+
+**Integration Methods:**
+- **Batch Import**: Periodic ingestion of external data
+- **Real-Time Sync**: Live updates from external sources
+- **On-Demand Fetch**: Retrieve information when needed
+- **Hybrid Storage**: Combination of cached and live data
+
+### Knowledge Organization
+
+Structuring stored information for efficient retrieval:
+
+- **Categorization**: Organize by topic, type, or domain
+- **Tagging**: Add metadata tags for better searchability
+- **Hierarchical Structure**: Nested organization for complex knowledge
+- **Cross-References**: Link related information and concepts
+
+## Memory Tools Integration
+
+### Built-in Memory Tools
+
+ADK TypeScript provides tools for memory interaction:
+
+**Load Memory Tool:**
+- Search memory based on user queries
+- Retrieve relevant past conversations
+- Filter results by relevance and recency
+- Present results in agent-friendly format
+
+**Memory Management Tools:**
+- Add specific information to memory
+- Update existing memory entries
+- Remove outdated or irrelevant information
+- Organize and categorize stored knowledge
+
+### Custom Memory Tools
+
+Building specialized memory interactions:
+
+- **Domain-Specific Search**: Tailored for specific knowledge domains
+- **Advanced Filtering**: Complex query and filtering capabilities
+- **Batch Operations**: Efficient bulk memory operations
+- **Analytics Tools**: Memory usage and effectiveness analysis
+
+## Performance and Scalability
+
+### Storage Efficiency
+
+- **Compression**: Minimize storage requirements for large knowledge bases
+- **Deduplication**: Avoid storing duplicate information
+- **Archival Strategies**: Move old information to cold storage
+- **Cleanup Policies**: Automatically remove obsolete data
+
+### Search Performance
+
+- **Indexing**: Create efficient search indexes for fast queries
+- **Caching**: Cache frequently accessed information
+- **Query Optimization**: Optimize search algorithms and patterns
+- **Result Streaming**: Handle large result sets efficiently
+
+### Monitoring and Analytics
+
+- **Usage Metrics**: Track memory storage and search patterns
+- **Performance Monitoring**: Monitor search latency and throughput
+- **Quality Metrics**: Measure search relevance and accuracy
+- **Storage Analytics**: Analyze storage growth and usage patterns
+
+## Privacy and Security
+
+### Data Protection
+
+- **Encryption**: Encrypt stored knowledge at rest and in transit
+- **Access Control**: Restrict memory access to authorized components
+- **Audit Logging**: Track memory access and modifications
+- **Data Classification**: Identify and protect sensitive information
+
+### Privacy Compliance
+
+- **Data Retention**: Implement appropriate retention policies
+- **User Rights**: Provide mechanisms for data access and deletion
+- **Consent Management**: Obtain proper consent for memory storage
+- **Cross-Border Compliance**: Handle international data requirements
+
+### Security Best Practices
+
+- **Sensitive Information**: Careful handling of personal and confidential data
+- **Regular Audits**: Review stored information for compliance
+- **Secure Defaults**: Use secure configurations by default
+- **Incident Response**: Procedures for handling security incidents
+
+## Best Practices
+
+### Memory Design
+
+- **Relevance**: Store only useful, relevant information
+- **Quality**: Maintain high-quality, accurate knowledge
+- **Organization**: Structure information for efficient retrieval
+- **Maintenance**: Regular cleanup and quality assurance
+
+### Implementation Guidelines
+
+- **Service Selection**: Choose appropriate memory implementation for your needs
+- **Search Strategy**: Design effective search and retrieval patterns
+- **Error Handling**: Implement robust error handling for memory operations
+- **Testing**: Test memory functionality across realistic scenarios
+
+### Production Considerations
+
+- **Backup Strategy**: Implement comprehensive backup and recovery
+- **Migration Planning**: Plan for service upgrades and data migration
+- **Monitoring**: Monitor memory service health and performance
+- **Disaster Recovery**: Prepare for memory service failure scenarios
+
+## Common Use Cases
+
+### Customer Support
+
+- **Case History**: Previous support interactions and resolutions
+- **Knowledge Base**: Product documentation and troubleshooting guides
+- **User Profiles**: Customer preferences and historical issues
+- **Solution Patterns**: Successful problem-solving approaches
+
+### Personal Assistants
+
+- **User Preferences**: Personal preferences and settings
+- **Interaction History**: Past conversations and decisions
+- **Task Patterns**: Common workflows and procedures
+- **Learning**: Adaptation based on user behavior
+
+### Knowledge Management
+
+- **Document Archives**: Searchable document collections
+- **Expertise Capture**: Subject matter expert knowledge
+- **Process Documentation**: Organizational procedures and policies
+- **Decision History**: Past decisions and their rationales
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="💬 Session Management"
+    description="Learn how sessions coordinate with memory systems"
+    href="/docs/sessions/session"
+  />
+
+  <Card
+    title="🗂️ State Management"
+    description="Understand session state vs long-term memory"
+    href="/docs/sessions/state"
+  />
+
+  <Card
+    title="🔧 Tools"
+    description="Memory tools for knowledge retrieval and management"
+    href="/docs/tools"
+  />
+
+  <Card
+    title="📊 Evaluation"
+    description="Evaluate memory effectiveness and agent performance"
+    href="/docs/evaluation"
+  />
+</Cards>

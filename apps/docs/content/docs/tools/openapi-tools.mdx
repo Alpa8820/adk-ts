@@ -1,0 +1,258 @@
+---
+title: OpenAPI Tools
+description: Generate tools from OpenAPI specifications for REST API integration
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+OpenAPI tools enable automatic generation of agent tools from REST API specifications. Instead of manually creating function tools for each API endpoint, ADK TypeScript can parse OpenAPI specifications and generate corresponding tools automatically.
+
+## What are OpenAPI Tools?
+
+OpenAPI tools transform REST API specifications into callable agent tools, enabling seamless integration with external web services and internal APIs.
+
+### Key Benefits
+
+- **Automatic Generation**: Create tools directly from existing API documentation
+- **Specification Compliance**: Ensure tools match actual API behavior
+- **Reduced Development Time**: Eliminate manual tool creation for REST APIs
+- **Consistent Integration**: Standardized approach to API integration
+
+<Callout type="info" title="Core Benefit">
+Use OpenAPIToolset to instantly create agent tools from your existing API documentation, enabling agents to seamlessly call your web services.
+</Callout>
+
+## Key Components
+
+<Cards>
+  <Card
+    title="🛠️ OpenAPIToolset"
+    description="Primary class for parsing specs and generating tools"
+  />
+
+  <Card
+    title="🌐 RestApiTool"
+    description="Individual tools representing specific API operations"
+  />
+
+  <Card
+    title="🔐 Authentication"
+    description="Built-in support for API authentication schemes"
+  />
+</Cards>
+
+## How OpenAPI Tools Work
+
+### Process Overview
+
+1. **Specification Parsing**: Parse OpenAPI v3.x specifications (JSON/YAML)
+2. **Operation Discovery**: Identify all API operations from the paths object
+3. **Tool Generation**: Create RestApiTool instances for each operation
+4. **Schema Creation**: Generate function schemas for LLM interaction
+5. **Request Handling**: Execute HTTP requests with proper parameters
+6. **Response Processing**: Return API responses to agent workflow
+
+### Tool Generation Details
+
+For each API operation, the system automatically:
+
+- **Derives Tool Names**: Uses `operationId` or generates from method and path
+- **Creates Descriptions**: Uses operation `summary` or `description` for LLM guidance
+- **Maps Parameters**: Converts path, query, header, and cookie parameters
+- **Handles Request Bodies**: Processes JSON/form data payloads
+- **Manages Authentication**: Applies configured auth schemes automatically
+
+## Specification Support
+
+### OpenAPI Features
+
+Supported OpenAPI 3.x features:
+
+- **Multiple HTTP Methods**: GET, POST, PUT, DELETE, PATCH
+- **Parameter Types**: Path, query, header, cookie parameters
+- **Request Bodies**: JSON, form data, and other content types
+- **Response Handling**: JSON responses and status code handling
+- **Server Configuration**: Multiple server definitions and base URLs
+- **Authentication**: API keys, OAuth, HTTP authentication
+
+### Specification Formats
+
+- **JSON Format**: Direct JavaScript objects or JSON strings
+- **YAML Format**: YAML strings and file contents
+- **Reference Resolution**: Automatic `$ref` resolution for complex specs
+- **Validation**: Schema validation and error reporting
+
+## Integration Workflow
+
+### Step-by-Step Process
+
+1. **Obtain Specification**: Load from files, URLs, or embedded objects
+2. **Create Toolset**: Initialize OpenAPIToolset with spec and auth config
+3. **Generate Tools**: Extract RestApiTool instances from the toolset
+4. **Configure Agent**: Add generated tools to agent's tools list
+5. **Provide Instructions**: Guide agent on when and how to use API tools
+6. **Execute Operations**: Let agent make API calls based on user requests
+
+### Configuration Options
+
+- **Specification Source**: File paths, URLs, or direct objects
+- **Authentication**: API keys, OAuth tokens, HTTP auth
+- **Server Selection**: Choose specific servers from spec
+- **Operation Filtering**: Include/exclude specific operations
+- **Custom Headers**: Add global headers for all requests
+
+## Authentication Integration
+
+### Supported Auth Schemes
+
+OpenAPI tools support various authentication methods:
+
+- **API Key Authentication**: Header, query, or cookie-based keys
+- **HTTP Authentication**: Basic and Bearer token authentication
+- **OAuth 2.0**: Authorization code and client credentials flows
+- **Custom Schemes**: Extensible authentication patterns
+
+### Security Configuration
+
+- **Global Authentication**: Apply auth to all generated tools
+- **Per-Operation Auth**: Different auth for specific endpoints
+- **Credential Management**: Secure storage and rotation
+- **Token Refresh**: Automatic token renewal for OAuth
+
+<Callout type="warn" title="Security Best Practices">
+Always use secure credential management and follow API security guidelines when integrating external services.
+</Callout>
+
+## Tool Naming and Discovery
+
+### Automatic Naming
+
+Tool names are generated using these rules:
+
+1. **OperationId Priority**: Use `operationId` from specification (converted to camelCase)
+2. **Method-Path Fallback**: Generate from HTTP method and path when operationId missing
+3. **Conflict Resolution**: Handle duplicate names with suffixes
+4. **Case Conversion**: Ensure consistent camelCase naming
+
+### Tool Discovery
+
+Agents can discover and use tools through:
+
+- **Tool Descriptions**: Generated from OpenAPI operation descriptions
+- **Parameter Schemas**: Automatically created function schemas
+- **Usage Examples**: Documentation integration for complex operations
+- **Error Handling**: Clear error messages for invalid requests
+
+## Error Handling and Validation
+
+### Request Validation
+
+- **Parameter Validation**: Check required parameters and types
+- **Schema Validation**: Validate request bodies against OpenAPI schemas
+- **Format Checking**: Ensure proper data formats (dates, emails, etc.)
+- **Constraint Enforcement**: Apply min/max values and pattern restrictions
+
+### Response Handling
+
+- **Status Code Processing**: Handle different HTTP status codes appropriately
+- **Error Response Parsing**: Extract error messages from API responses
+- **Timeout Management**: Configure appropriate request timeouts
+- **Retry Logic**: Implement retry strategies for transient failures
+
+### Debugging Support
+
+- **Request Logging**: Track API calls and parameters
+- **Response Inspection**: Log response data and status codes
+- **Error Details**: Provide detailed error information for troubleshooting
+- **Performance Monitoring**: Track request latency and success rates
+
+## Performance and Optimization
+
+### Efficiency Strategies
+
+- **Connection Reuse**: HTTP connection pooling for better performance
+- **Request Caching**: Cache responses for idempotent operations
+- **Batch Operations**: Group multiple requests when supported
+- **Async Processing**: Non-blocking request execution
+
+### Scaling Considerations
+
+- **Rate Limiting**: Respect API rate limits and quotas
+- **Circuit Breakers**: Prevent cascading failures
+- **Load Balancing**: Distribute requests across multiple endpoints
+- **Monitoring**: Track usage patterns and performance metrics
+
+## Advanced Features
+
+### Dynamic Configuration
+
+- **Runtime Spec Updates**: Reload specifications without restart
+- **Conditional Tools**: Enable/disable tools based on context
+- **Environment Adaptation**: Different configurations for dev/staging/prod
+- **Feature Flags**: Toggle tool availability dynamically
+
+### Integration Patterns
+
+- **Multi-API Coordination**: Combine multiple OpenAPI specs
+- **Workflow Chaining**: Chain API calls for complex operations
+- **Data Transformation**: Process API responses for agent consumption
+- **Error Recovery**: Implement fallback strategies for API failures
+
+### Extensibility
+
+- **Custom Processors**: Add custom request/response processing
+- **Middleware Integration**: Plugin architecture for extensions
+- **Tool Composition**: Combine multiple tools for complex operations
+- **Event Hooks**: Integration with agent lifecycle events
+
+## Best Practices
+
+### Specification Design
+
+- **Clear OperationIds**: Use descriptive operation identifiers
+- **Comprehensive Descriptions**: Provide detailed operation documentation
+- **Proper Parameter Typing**: Use appropriate OpenAPI types and formats
+- **Error Response Documentation**: Document all possible error responses
+
+### Agent Integration
+
+- **Instruction Clarity**: Clearly explain when to use each API tool
+- **Error Handling**: Define how agents should handle API failures
+- **Response Processing**: Guide agents on interpreting API responses
+- **User Communication**: Instruct agents on communicating API actions to users
+
+### Production Deployment
+
+- **Health Monitoring**: Monitor API availability and performance
+- **Security Audits**: Regular security reviews of API integrations
+- **Documentation Maintenance**: Keep API documentation up to date
+- **Version Management**: Handle API versioning and compatibility
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="🔐 Authentication"
+    description="Secure API access and credential management"
+    href="/docs/tools/authentication"
+  />
+
+  <Card
+    title="🔧 Function Tools"
+    description="Create custom tools for specialized API needs"
+    href="/docs/tools/function-tools"
+  />
+
+  <Card
+    title="☁️ Google Cloud Tools"
+    description="Integration with Google Cloud services"
+    href="/docs/tools/google-cloud-tools"
+  />
+
+  <Card
+    title="🤖 Agents"
+    description="Learn how agents coordinate API tools"
+    href="/docs/agents"
+  />
+</Cards>
