@@ -14,7 +14,7 @@ export function CodeExample() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 items-start">
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-xl font-semibold text-foreground">Simple yet Powerful</h3>
@@ -43,34 +43,36 @@ export function CodeExample() {
             </div>
           </div>
 
-          <div>
-            <DynamicCodeBlock
-              lang="typescript"
-              code={dedent`
-                import { AgentBuilder } from '@iqai/adk';
+          <div className="min-w-0 overflow-hidden">
+            <div className="w-full overflow-x-auto">
+              <DynamicCodeBlock
+                lang="typescript"
+                code={dedent`
+                  import { AgentBuilder } from '@iqai/adk';
 
-                // One-line agent creation
-                const response = await AgentBuilder
-                  .withModel("gemini-2.5-flash")
-                  .ask("What is the primary function of an AI agent?");
+                  // One-line agent creation
+                  const response = await AgentBuilder
+                    .withModel("gemini-2.5-flash")
+                    .ask("What is the primary function of an AI agent?");
 
-                // Agent with session and tools
-                const { agent, runner, session } = await AgentBuilder
-                  .create("my_assistant")
-                  .withModel("gpt-4")
-                  .withDescription("A helpful AI assistant")
-                  .withInstruction("Provide concise responses.")
-                  .withTools(new GoogleSearch(), new HttpRequestTool())
-                  .withQuickSession("my-app", "user-123")
-                  .build();
+                  // Agent with session and tools
+                  const { agent, runner, session } = await AgentBuilder
+                    .create("my_assistant")
+                    .withModel("gpt-4")
+                    .withDescription("A helpful AI assistant")
+                    .withInstruction("Provide concise responses.")
+                    .withTools(new GoogleSearch(), new HttpRequestTool())
+                    .withQuickSession("my-app", "user-123")
+                    .build();
 
-                // Multi-agent workflow
-                const workflow = await AgentBuilder
-                  .create("research_workflow")
-                  .asSequential([researchAgent, summaryAgent])
-                  .build();
-              `}
-            />
+                  // Multi-agent workflow
+                  const workflow = await AgentBuilder
+                    .create("research_workflow")
+                    .asSequential([researchAgent, summaryAgent])
+                    .build();
+                `}
+              />
+            </div>
           </div>
         </div>
       </div>
