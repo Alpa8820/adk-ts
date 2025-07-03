@@ -1,0 +1,4 @@
+{
+  "pages": ["index", "readonly-context", "callback-context", "tool-context", "invocation-context", "context-patterns"],
+  "icon": "Brain"
+}

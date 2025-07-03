@@ -1,0 +1,299 @@
+---
+title: Session Management
+description: Track and manage individual conversation threads with comprehensive session lifecycle
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Sessions track individual conversation threads, providing the foundation for maintaining context across multi-turn interactions. Like conversation threads in messaging apps, sessions ensure agents have access to the complete history and context of each interaction.
+
+## The Session Object
+
+A Session acts as a container for everything related to one specific conversation thread between a user and your agent.
+
+### Core Properties
+
+- **Identification**: Unique identifiers (`id`, `appName`, `userId`) for conversation tracking
+- **History**: Chronological sequence of all interactions (`Event` objects)
+- **Session State**: Temporary data relevant only to this specific conversation
+- **Activity Tracking**: Timestamps for session lifecycle management
+
+### Session Structure
+
+```typescript
+interface Session {
+  id: string;           // Unique conversation identifier
+  appName: string;      // Agent application identifier
+  userId: string;       // User identifier
+  state: Record<string, any>;  // Session-specific data
+  events: Event[];      // Chronological interaction history
+}
+```
+
+<Callout type="info" title="Conversation Container">
+Think of a Session as a complete record of one conversation thread - everything the agent needs to understand the context and continue the interaction.
+</Callout>
+
+## Session Lifecycle
+
+### Lifecycle Stages
+
+1. **Creation**: New session initialized when user starts interaction
+2. **Active Use**: Events added as conversation progresses
+3. **State Updates**: Session data modified based on interactions
+4. **Persistence**: Changes saved to storage backend
+5. **Completion**: Session archived or deleted when conversation ends
+
+### Event-Driven Updates
+
+Sessions evolve through events:
+
+- **User Messages**: Input from users
+- **Agent Responses**: Generated responses and actions
+- **Tool Executions**: Function calls and results
+- **State Changes**: Updates to session data
+- **System Events**: Metadata and lifecycle events
+
+## SessionService Architecture
+
+The SessionService manages the complete lifecycle of conversation sessions, providing a unified interface across different storage backends.
+
+### Core Responsibilities
+
+<Cards>
+  <Card
+    title="🆕 Session Creation"
+    description="Initialize new conversation threads"
+  />
+
+  <Card
+    title="📖 Session Retrieval"
+    description="Access existing conversation history and state"
+  />
+
+  <Card
+    title="💾 Event Management"
+    description="Append new interactions and update session state"
+  />
+
+  <Card
+    title="🗂️ Session Listing"
+    description="Find and manage multiple user sessions"
+  />
+
+  <Card
+    title="🧹 Cleanup"
+    description="Delete completed or expired sessions"
+  />
+</Cards>
+
+### Service Interface
+
+All SessionService implementations provide consistent methods:
+
+- **`createSession()`**: Start new conversation threads
+- **`getSession()`**: Retrieve existing sessions by ID
+- **`appendEvent()`**: Add new events and update state
+- **`listSessions()`**: Find sessions for users and applications
+- **`deleteSession()`**: Remove sessions and associated data
+
+## Implementation Options
+
+### In-Memory Sessions
+
+Fast, simple sessions for development and testing:
+
+**Characteristics:**
+- **Storage**: Application memory only
+- **Persistence**: None - data lost on restart
+- **Performance**: Fastest access and updates
+- **Use Cases**: Development, testing, temporary interactions
+
+**Best For:**
+- Quick prototyping and development
+- Testing and experimentation
+- Short-lived interactions
+- Scenarios where persistence isn't required
+
+### Database Sessions
+
+Persistent session storage using relational databases:
+
+**Characteristics:**
+- **Storage**: SQLite, PostgreSQL, MySQL, or other databases
+- **Persistence**: Survives application restarts
+- **Scalability**: Depends on database configuration
+- **Control**: Full control over data storage and backup
+
+**Features:**
+- **ACID Transactions**: Reliable data consistency
+- **Query Capabilities**: Complex session queries and analytics
+- **Backup/Restore**: Standard database backup procedures
+- **Migration**: Schema evolution and data migration support
+
+### Cloud Sessions
+
+Scalable cloud-managed session storage:
+
+**Characteristics:**
+- **Storage**: Google Cloud Vertex AI infrastructure
+- **Persistence**: Managed by cloud provider
+- **Scalability**: Automatic scaling and high availability
+- **Integration**: Native integration with other cloud services
+
+**Benefits:**
+- **Managed Infrastructure**: No database maintenance
+- **Global Scale**: Handle massive session volumes
+- **Integration**: Seamless cloud service integration
+- **Reliability**: Enterprise-grade availability and backup
+
+<Callout type="warn" title="Implementation Choice">
+Choose your SessionService implementation based on your scalability, persistence, and operational requirements.
+</Callout>
+
+## Session Operations
+
+### Creating Sessions
+
+New sessions are created when users start interactions:
+
+- **Automatic Creation**: Runners can create sessions automatically
+- **Manual Creation**: Explicit session creation for custom workflows
+- **Initialization**: Set initial state and metadata
+- **Identity Management**: Associate sessions with users and applications
+
+### Retrieving Sessions
+
+Access existing sessions for continued conversations:
+
+- **Session Lookup**: Find sessions by ID, user, or application
+- **Context Loading**: Load complete conversation history
+- **State Access**: Retrieve current session state
+- **Error Handling**: Handle missing or invalid sessions
+
+### Updating Sessions
+
+Sessions evolve through event appending:
+
+- **Event Addition**: Add new user messages, agent responses, and tool actions
+- **State Updates**: Modify session state based on event content
+- **Atomic Operations**: Ensure consistency across concurrent updates
+- **Event Ordering**: Maintain chronological order of interactions
+
+### Session Cleanup
+
+Manage session lifecycle and storage:
+
+- **Completion Detection**: Identify when conversations are complete
+- **Archival**: Move completed sessions to long-term storage
+- **Deletion**: Remove unnecessary or expired sessions
+- **Bulk Operations**: Efficiently manage multiple sessions
+
+## State Management Integration
+
+Sessions and state work together for comprehensive context management:
+
+### State Scoping
+
+- **Session-Specific**: Data relevant only to the current conversation
+- **User-Specific**: Information shared across user's sessions
+- **Application-Wide**: Global data accessible to all sessions
+- **Temporary**: Short-lived data that doesn't persist
+
+### State Persistence
+
+- **Automatic Updates**: State changes tracked through events
+- **Delta Storage**: Only changes stored for efficiency
+- **Conflict Resolution**: Handle concurrent state modifications
+- **Consistency**: Ensure state consistency across session operations
+
+## Performance Considerations
+
+### Optimization Strategies
+
+- **Event Pagination**: Load recent events first for large sessions
+- **State Caching**: Cache frequently accessed session state
+- **Connection Pooling**: Reuse database connections for efficiency
+- **Lazy Loading**: Load session data on demand
+
+### Monitoring and Metrics
+
+- **Session Metrics**: Track session creation, duration, and completion rates
+- **Performance Monitoring**: Monitor operation latency and throughput
+- **Storage Usage**: Track session storage consumption
+- **Error Rates**: Monitor session operation failure rates
+
+### Scaling Considerations
+
+- **Concurrent Access**: Handle multiple simultaneous session operations
+- **Storage Growth**: Plan for session data growth over time
+- **Geographic Distribution**: Consider multi-region session storage
+- **Load Balancing**: Distribute session operations across instances
+
+## Security and Privacy
+
+### Data Protection
+
+- **Encryption**: Encrypt session data at rest and in transit
+- **Access Control**: Restrict session access to authorized users and applications
+- **Audit Logging**: Track session access and modifications
+- **Data Retention**: Implement appropriate data retention policies
+
+### Privacy Compliance
+
+- **User Consent**: Obtain proper consent for session data storage
+- **Data Minimization**: Store only necessary session information
+- **Right to Deletion**: Provide mechanisms for user data deletion
+- **Cross-Border**: Handle cross-border data transfer requirements
+
+## Best Practices
+
+### Session Design
+
+- **Clear Boundaries**: Define when sessions should start and end
+- **Appropriate Scope**: Keep sessions focused on specific tasks or conversations
+- **State Organization**: Use consistent patterns for session state structure
+- **Error Recovery**: Implement robust error handling for session operations
+
+### Production Deployment
+
+- **Backup Strategy**: Implement regular session data backups
+- **Migration Planning**: Plan for service upgrades and data migration
+- **Monitoring**: Comprehensive monitoring of session service health
+- **Disaster Recovery**: Prepare for session service failure scenarios
+
+### Development Workflow
+
+- **Testing Strategy**: Test session operations across different scenarios
+- **Development Environment**: Use appropriate SessionService for development
+- **Data Migration**: Plan migration paths between different implementations
+- **Performance Testing**: Test session performance under realistic loads
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="🗂️ State Management"
+    description="Working with session state and data persistence"
+    href="/docs/sessions/state"
+  />
+
+  <Card
+    title="🧠 Memory Systems"
+    description="Long-term memory and knowledge management"
+    href="/docs/sessions/memory"
+  />
+
+  <Card
+    title="🤖 Agents"
+    description="How agents use sessions for context management"
+    href="/docs/agents"
+  />
+
+  <Card
+    title="📊 Evaluation"
+    description="Evaluate agent performance across sessions"
+    href="/docs/evaluation"
+  />
+</Cards>

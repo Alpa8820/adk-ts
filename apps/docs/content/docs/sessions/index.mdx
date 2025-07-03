@@ -1,0 +1,252 @@
+---
+title: Sessions & Memory
+description: Manage conversational context, state, and long-term memory for intelligent agents
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Meaningful multi-turn conversations require agents to understand and maintain context. Like humans, agents need to recall what's been said and done to maintain continuity and avoid repetition. ADK TypeScript provides structured ways to manage conversational context through Sessions, State, and Memory.
+
+## Why Context Matters
+
+Context is fundamental to intelligent conversation:
+
+- **Continuity**: Maintain conversation flow across multiple turns
+- **Personalization**: Remember user preferences and past interactions
+- **Efficiency**: Avoid repeating information or re-asking questions
+- **Intelligence**: Build upon previous knowledge and decisions
+
+<Callout type="info" title="Conversation Threads">
+Think of agent interactions as having distinct conversation threads, potentially drawing upon long-term knowledge across sessions.
+</Callout>
+
+## Core Concepts
+
+<Cards>
+  <Card
+    title="💬 Session"
+    description="Current conversation thread with chronological message history"
+  />
+
+  <Card
+    title="🗂️ State"
+    description="Temporary data relevant only to the current conversation"
+  />
+
+  <Card
+    title="🧠 Memory"
+    description="Searchable, cross-session information and knowledge base"
+  />
+</Cards>
+
+## Session: Current Conversation Thread
+
+Sessions represent single, ongoing interactions between users and your agent system.
+
+### Key Characteristics
+
+- **Conversation Scope**: Contains the complete history of one interaction
+- **Event Sequence**: Chronological sequence of messages and actions
+- **Temporary Context**: Holds data relevant only to this conversation
+- **Lifecycle Management**: Created, updated, and eventually completed or archived
+
+### Use Cases
+
+- **Chat Applications**: Each user conversation as a separate session
+- **Task Completion**: Multi-step processes that span several interactions
+- **User Support**: Individual support tickets or help interactions
+- **Collaborative Work**: Shared sessions for team-based agent interactions
+
+## State: Conversation-Specific Data
+
+State manages information relevant only to the current active conversation thread.
+
+### State Scopes
+
+Different levels of state management:
+
+- **Session State**: Data specific to the current conversation
+- **User State**: Data shared across all sessions for a specific user
+- **App State**: Global application data shared across all users
+- **Temporary State**: Short-lived data that doesn't persist
+
+### Data Management
+
+- **Key-Value Storage**: Simple key-value pairs for session data
+- **Automatic Persistence**: State changes tracked and saved automatically
+- **Prefix-Based Organization**: Organized by scope prefixes (session, user, app, temp)
+- **Delta Tracking**: Only changes are stored for efficiency
+
+### Common Use Cases
+
+- **Shopping Cart**: Items added during the current conversation
+- **Form Data**: Multi-step form completion across messages
+- **User Preferences**: Choices made during the current session
+- **Workflow Progress**: Current step in multi-stage processes
+
+## Memory: Long-Term Knowledge Store
+
+Memory represents searchable information that spans multiple sessions and external data sources.
+
+### Memory Types
+
+- **Conversation Archives**: Historical conversations and their outcomes
+- **Knowledge Base**: Structured information and documentation
+- **User Profiles**: Long-term user preferences and behavior patterns
+- **External Data**: Integration with external knowledge sources
+
+### Search Capabilities
+
+- **Semantic Search**: Find relevant information based on meaning
+- **Keyword Search**: Traditional text-based search functionality
+- **Contextual Retrieval**: Context-aware information retrieval
+- **Similarity Matching**: Find similar past conversations or solutions
+
+### Integration Patterns
+
+- **RAG (Retrieval-Augmented Generation)**: Enhance responses with retrieved information
+- **Session Summaries**: Automatically summarize and store completed sessions
+- **Learning**: Build knowledge from successful interactions
+- **Personalization**: Customize responses based on historical preferences
+
+## Service Architecture
+
+ADK TypeScript provides services to manage these concepts effectively.
+
+### SessionService: Conversation Management
+
+Handles the complete lifecycle of conversation threads:
+
+- **Creation**: Start new sessions with proper initialization
+- **Retrieval**: Access session history and current state
+- **Updates**: Append events and modify session state
+- **Completion**: Properly close and archive completed sessions
+
+### MemoryService: Knowledge Management
+
+Manages long-term information storage and retrieval:
+
+- **Ingestion**: Store information from completed sessions
+- **Search**: Query stored knowledge with various search methods
+- **Organization**: Structure information for efficient retrieval
+- **Maintenance**: Manage memory size and relevance over time
+
+## Implementation Options
+
+<Cards>
+  <Card
+    title="💾 In-Memory"
+    description="Quick setup for development and testing"
+  />
+
+  <Card
+    title="🗄️ Database"
+    description="Persistent storage with SQLite or other databases"
+  />
+
+  <Card
+    title="☁️ Cloud Services"
+    description="Scalable cloud-based storage and RAG capabilities"
+  />
+</Cards>
+
+### Development vs Production
+
+**Development Options:**
+- **InMemorySessionService**: Fast iteration and testing
+- **InMemoryMemoryService**: Simple setup without persistence
+- **Local Database**: SQLite for development with persistence
+
+**Production Options:**
+- **DatabaseSessionService**: Robust database backends for scale
+- **VertexAiSessionService**: Google Cloud managed session storage
+- **VertexAiRagMemoryService**: Advanced RAG capabilities with vector search
+
+<Callout type="warn" title="Data Persistence">
+In-memory implementations lose all data when your application restarts. Use persistent implementations for production environments.
+</Callout>
+
+## Context Management Patterns
+
+### Hierarchical Context
+
+Organize context in layers:
+
+1. **Immediate Context**: Current message and recent history
+2. **Session Context**: Full conversation history and state
+3. **User Context**: Cross-session user information
+4. **Domain Context**: Relevant knowledge base information
+
+### Context Optimization
+
+- **Relevance Filtering**: Include only relevant historical information
+- **Summarization**: Compress long conversations into key points
+- **Prioritization**: Weight recent information higher than old
+- **Size Management**: Keep context within model limits
+
+### Privacy and Security
+
+- **Data Encryption**: Encrypt sensitive session and memory data
+- **Access Control**: Limit access to user-specific information
+- **Retention Policies**: Automatically remove old or sensitive data
+- **Compliance**: Meet regulatory requirements for data handling
+
+## Best Practices
+
+### Session Design
+
+- **Clear Boundaries**: Define when sessions start and end
+- **Appropriate Scope**: Keep sessions focused on specific tasks or conversations
+- **State Organization**: Use consistent naming and organization for state data
+- **Cleanup**: Properly close and archive completed sessions
+
+### Memory Management
+
+- **Relevant Storage**: Store only useful information in long-term memory
+- **Efficient Retrieval**: Design search strategies for quick relevant results
+- **Quality Control**: Maintain high-quality, accurate information
+- **Performance**: Optimize for fast search and retrieval
+
+### Integration Strategy
+
+- **Service Selection**: Choose appropriate implementations for your scale
+- **Error Handling**: Implement robust error handling for storage failures
+- **Monitoring**: Track session and memory performance metrics
+- **Testing**: Test context management with realistic conversation flows
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="🤖 Agents"
+    description="Learn how agents use sessions and memory"
+    href="/docs/agents"
+  />
+
+  <Card
+    title="🔧 Tools"
+    description="How tools interact with session state and memory"
+    href="/docs/tools"
+  />
+
+  <Card
+    title="📋 Callbacks"
+    description="Handle session and memory events with callbacks"
+    href="/docs/callbacks"
+  />
+
+  <Card
+    title="📊 Evaluation"
+    description="Evaluate agent performance across sessions"
+    href="/docs/evaluation"
+  />
+</Cards>
+
+## Deep Dive Topics
+
+Ready to explore specific aspects of session and memory management:
+
+1. **[Session Management](/docs/sessions/session)** - Detailed session lifecycle and management
+2. **[State Management](/docs/sessions/state)** - Working with session state and data persistence
+3. **[Memory Systems](/docs/sessions/memory)** - Long-term memory and knowledge management

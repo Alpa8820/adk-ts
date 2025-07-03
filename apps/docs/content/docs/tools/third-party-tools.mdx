@@ -1,0 +1,256 @@
+---
+title: Third-Party Tools
+description: Integrate tools from popular external libraries and frameworks
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+ADK TypeScript is designed for extensibility, allowing seamless integration with tools from other AI agent frameworks. This interoperability accelerates development and enables reuse of existing tools from popular ecosystems.
+
+## Why Third-Party Integration?
+
+Third-party tool integration provides several key benefits:
+
+- **Faster Development**: Leverage existing tools instead of building from scratch
+- **Ecosystem Access**: Tap into established tool libraries and communities
+- **Best Practices**: Use proven tools with established patterns
+- **Interoperability**: Connect different AI frameworks and platforms
+
+<Callout type="info" title="Framework Agnostic">
+ADK TypeScript supports tools from major AI frameworks, making it easy to migrate existing tools or combine different ecosystems.
+</Callout>
+
+## Supported Frameworks
+
+<Cards>
+  <Card
+    title="🦜 LangChain Tools"
+    description="Integrate tools from the LangChain ecosystem"
+  />
+
+  <Card
+    title="⚙️ CrewAI Tools"
+    description="Use tools from the CrewAI framework"
+  />
+
+  <Card
+    title="🔧 Custom Wrappers"
+    description="Create wrappers for other frameworks and libraries"
+  />
+</Cards>
+
+## LangChain Integration
+
+Connect to the extensive LangChain tool ecosystem using the `LangchainTool` wrapper.
+
+### Key Features
+
+- **Automatic Wrapping**: Convert LangChain tools to ADK-compatible format
+- **Type Safety**: Maintain TypeScript type safety across frameworks
+- **Native Integration**: Tools work seamlessly with ADK agents
+- **Ecosystem Access**: Access hundreds of pre-built LangChain tools
+
+### Popular LangChain Tools
+
+Common LangChain tools you can integrate:
+
+- **Search Tools**: Tavily, DuckDuckGo, Google Search
+- **API Tools**: Various web service integrations
+- **Database Tools**: SQL and NoSQL database connectors
+- **File Tools**: Document processing and file manipulation
+- **Web Tools**: Web scraping and browser automation
+
+### Integration Process
+
+1. **Install Dependencies**: Add required LangChain packages
+2. **Create Tool Instance**: Instantiate the LangChain tool
+3. **Wrap with ADK**: Use `LangchainTool` wrapper
+4. **Add to Agent**: Include in agent's tools list
+5. **Configure Access**: Set up API keys and credentials
+
+### Configuration Requirements
+
+- **API Credentials**: Many tools require API keys or tokens
+- **Environment Variables**: Secure credential management
+- **Package Dependencies**: Install specific LangChain packages
+- **Tool Parameters**: Configure tool-specific settings
+
+## CrewAI Integration
+
+Leverage CrewAI tools using the `CrewaiTool` wrapper for specialized agent capabilities.
+
+### Key Features
+
+- **AgenticAI Tools**: Access tools designed for autonomous agents
+- **Workflow Integration**: Tools optimized for multi-agent workflows
+- **Specialized Capabilities**: Industry-specific and domain-focused tools
+- **Easy Migration**: Smooth transition from CrewAI to ADK
+
+### Popular CrewAI Tools
+
+Common CrewAI tools for integration:
+
+- **Serper Search**: Real-time Google search results
+- **Web Scraping**: Advanced web content extraction
+- **Code Tools**: Code analysis and generation capabilities
+- **Data Tools**: Data processing and analysis utilities
+- **Communication Tools**: Email, messaging, and notification systems
+
+### Wrapper Requirements
+
+CrewAI tool integration requires explicit configuration:
+
+- **Name Definition**: Provide clear tool names for LLM selection
+- **Description Writing**: Detailed descriptions for proper tool usage
+- **Parameter Mapping**: Map CrewAI parameters to ADK format
+- **Error Handling**: Adapt error responses for ADK agents
+
+### Best Practices
+
+- **Clear Naming**: Use descriptive names that indicate tool purpose
+- **Comprehensive Descriptions**: Help LLM understand when to use tools
+- **Proper Configuration**: Set up all required parameters and credentials
+- **Error Management**: Handle framework-specific errors gracefully
+
+## Custom Wrapper Development
+
+Create wrappers for frameworks and libraries not directly supported.
+
+### Wrapper Architecture
+
+Essential components for custom wrappers:
+
+- **Interface Adaptation**: Convert external tool interfaces to ADK format
+- **Type Conversion**: Map between different type systems
+- **Error Translation**: Adapt error handling patterns
+- **Documentation Bridge**: Translate tool descriptions for LLM use
+
+### Implementation Pattern
+
+1. **Analyze Tool Interface**: Understand the external tool's API
+2. **Design Adapter**: Create interface between tool and ADK
+3. **Handle Types**: Convert parameters and return types
+4. **Error Management**: Implement error handling and recovery
+5. **Documentation**: Provide clear descriptions and examples
+
+### Common Integration Challenges
+
+- **Type System Differences**: Mapping between type systems
+- **Async Patterns**: Handling different asynchronous patterns
+- **Error Formats**: Converting error types and messages
+- **Documentation**: Translating tool descriptions for LLM consumption
+
+## Authentication and Security
+
+### Credential Management
+
+Third-party tools often require authentication:
+
+- **Environment Variables**: Secure storage of API keys
+- **Credential Rotation**: Regular updates of access tokens
+- **Scope Limitation**: Minimum required permissions
+- **Audit Trails**: Track credential usage and access
+
+### Security Considerations
+
+- **Data Privacy**: Ensure data protection in transit and storage
+- **Access Controls**: Implement proper permission checks
+- **Rate Limiting**: Respect external service limits
+- **Monitoring**: Track usage patterns and potential abuse
+
+### Best Practices
+
+<Callout type="warn" title="Security First">
+Always use secure credential management and follow security best practices when integrating third-party tools.
+</Callout>
+
+- **Secure Storage**: Never hardcode credentials in source code
+- **Minimal Permissions**: Use least-privilege access principles
+- **Regular Rotation**: Update credentials regularly
+- **Monitor Usage**: Track and audit tool access patterns
+
+## Performance and Reliability
+
+### Network Considerations
+
+- **Latency**: Account for network delays in tool execution
+- **Timeouts**: Implement appropriate timeout values
+- **Retry Logic**: Handle temporary failures gracefully
+- **Circuit Breakers**: Prevent cascading failures
+
+### Error Handling
+
+- **Graceful Degradation**: Continue operation when tools fail
+- **Fallback Strategies**: Alternative approaches for critical functions
+- **Error Reporting**: Clear error messages for debugging
+- **Recovery Mechanisms**: Automatic recovery from transient failures
+
+### Optimization Strategies
+
+- **Caching**: Cache results from expensive operations
+- **Connection Pooling**: Reuse connections where possible
+- **Batch Operations**: Group multiple calls when supported
+- **Async Execution**: Use non-blocking operations
+
+## Testing and Validation
+
+### Integration Testing
+
+- **Tool Functionality**: Verify tools work as expected
+- **Error Scenarios**: Test failure modes and edge cases
+- **Performance Testing**: Validate latency and throughput
+- **Security Testing**: Verify credential handling and access controls
+
+### Validation Strategies
+
+- **Schema Validation**: Verify parameter and return type compatibility
+- **Functionality Tests**: Ensure tools perform expected operations
+- **Integration Tests**: Test within complete agent workflows
+- **Load Testing**: Validate performance under expected usage
+
+## Migration Patterns
+
+### From Other Frameworks
+
+Common migration scenarios:
+
+- **LangChain to ADK**: Migrate existing LangChain applications
+- **CrewAI to ADK**: Transition CrewAI projects to ADK
+- **Custom to ADK**: Migrate proprietary tool implementations
+- **Hybrid Approaches**: Gradual migration strategies
+
+### Migration Strategies
+
+- **Tool Inventory**: Catalog existing tools and dependencies
+- **Compatibility Assessment**: Identify integration requirements
+- **Phased Migration**: Gradual transition approach
+- **Testing Validation**: Ensure functionality preservation
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="🔧 Function Tools"
+    description="Create custom tools for specialized needs"
+    href="/docs/tools/function-tools"
+  />
+
+  <Card
+    title="⚡ Built-in Tools"
+    description="Explore ADK's native tool capabilities"
+    href="/docs/tools/built-in-tools"
+  />
+
+  <Card
+    title="🔐 Authentication"
+    description="Secure tool integrations and API access"
+    href="/docs/tools/authentication"
+  />
+
+  <Card
+    title="🤖 Agents"
+    description="Learn how agents coordinate tools from different frameworks"
+    href="/docs/agents"
+  />
+</Cards>

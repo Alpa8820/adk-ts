@@ -1,0 +1,9 @@
+{
+  "icon": "GitBranch",
+  "pages": [
+    "index",
+    "types",
+    "design-patterns",
+    "context-patterns"
+  ]
+}

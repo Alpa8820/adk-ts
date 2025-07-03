@@ -1,0 +1,113 @@
+---
+title: Home
+description: Build, deploy, and manage AI agents with TypeScript and Google's Gemini models
+icon: House
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<Callout type="warn" title="Work in Progress">
+This is a TypeScript port of the original Python ADK. Features and stability may vary as development continues.
+</Callout>
+
+## What is ADK TypeScript?
+
+Agent Development Kit (ADK) **for** TypeScript is a flexible and modular framework for **developing and deploying AI agents using TypeScript**. ADK integrates seamlessly with Google's Gemini models and is designed with a focus on **tight integration with the Google ecosystem**.
+
+ADK TypeScript makes it **easy to get started with simple agents** while providing the control and structure needed for **complex agent architectures and orchestration** within the Node.js environment.
+
+## Quick Start
+
+Get started in seconds with a simple agent:
+
+```typescript title="simple-agent.ts"
+import { AgentBuilder } from "@iqai/adk";
+
+// The simplest possible usage - just model and ask!
+const response = await AgentBuilder
+  .withModel("gemini-2.5-flash")
+  .ask("What is the capital of France?");
+
+console.log(response); // "The capital of France is Paris."
+```
+
+---
+
+## Core Features
+
+<Cards>
+  <Card
+    title="🔀 Flexible Orchestration"
+    description="Define workflows using workflow agents (Sequential, Parallel, Loop) for predictable pipelines, or leverage LLM-driven dynamic routing for adaptive behavior."
+    href="/docs/agents"
+  />
+
+  <Card
+    title="🤖 Multi-Agent Architecture"
+    description="Build modular and scalable applications by composing multiple specialized agents in a hierarchy. Enable complex coordination and delegation."
+    href="/docs/agents/multi-agents"
+  />
+
+  <Card
+    title="🛠️ Rich Tool Ecosystem"
+    description="Equip agents with diverse capabilities: use pre-built tools, create custom functions, integrate 3rd-party libraries, or use other agents as tools."
+    href="/docs/tools"
+  />
+
+  <Card
+    title="🚀 Deployment Ready"
+    description="Containerize and deploy your TypeScript agents anywhere – run locally, scale with cloud services, or integrate into custom infrastructure."
+    href="/docs/deploy"
+  />
+
+  <Card
+    title="📊 Built-in Evaluation"
+    description="Systematically assess agent performance using the evaluation module by testing both final responses and execution trajectories."
+    href="/docs/evaluate"
+  />
+
+  <Card
+    title="💾 Session Management"
+    description="Persistent conversations with memory, state management, and context preservation across interactions and deployments."
+    href="/docs/sessions"
+  />
+</Cards>
+
+
+## Learn More
+
+Ready to dive deeper? Our documentation covers everything from basic concepts to advanced deployment:
+
+<Cards>
+  <Card
+    title="🏁 Get Started"
+    description="Installation, quickstart, and your first agent"
+    href="/docs/get-started"
+  />
+
+  <Card
+    title="📚 Agents Guide"
+    description="Learn about LLM agents, workflow agents, and custom agents"
+    href="/docs/agents"
+  />
+
+  <Card
+    title="🔧 Tools Reference"
+    description="Built-in tools, custom functions, and third-party integrations"
+    href="/docs/tools"
+  />
+
+  <Card
+    title="🎯 Advanced Features"
+    description="Sessions, memory, flows, and deployment strategies"
+    href="/docs/advanced"
+  />
+</Cards>
+
+<Callout type="info" title="Community & Support">
+Join our community for help, discussions, and updates:
+- **GitHub**: Report issues and contribute
+- **Documentation**: Comprehensive guides and API reference
+- **Examples**: Real-world applications and use cases
+</Callout>

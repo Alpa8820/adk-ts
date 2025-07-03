@@ -1,0 +1,356 @@
+---
+title: State Management
+description: Handle session-specific data and cross-session information with flexible state scoping
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+State management provides agents with a scratchpad for storing and updating dynamic information during conversations. While session events hold the full interaction history, state manages the key-value data needed to personalize interactions and track conversation progress.
+
+## What is Session State?
+
+Session state acts as the agent's dedicated memory for each specific conversation thread, storing information needed to make interactions effective and personalized.
+
+### Core Purposes
+
+- **Personalization**: Remember user preferences mentioned during conversation
+- **Progress Tracking**: Monitor steps in multi-turn processes and workflows
+- **Information Accumulation**: Build lists, summaries, and collected data
+- **Decision Making**: Store flags and values that influence agent responses
+
+<Callout type="info" title="Dynamic Memory">
+Think of session state as the agent's working memory - the information it needs to remember and reference throughout the current conversation.
+</Callout>
+
+## State Structure and Characteristics
+
+### Key-Value Organization
+
+State is organized as serializable key-value pairs:
+
+- **Keys**: Always strings with descriptive names
+- **Values**: Must be serializable (strings, numbers, booleans, simple arrays/objects)
+- **Mutability**: Content changes as conversations evolve
+- **Persistence**: Depends on SessionService implementation
+
+### Serialization Requirements
+
+<Callout type="warn" title="Serialization Constraints">
+Avoid storing complex objects, class instances, functions, or connections directly in state. Use simple identifiers and retrieve complex objects elsewhere.
+</Callout>
+
+**Supported Types:**
+- Primitive types (string, number, boolean)
+- Simple arrays and objects
+- JSON-serializable data structures
+- Basic nested objects with primitive values
+
+**Avoid:**
+- Custom class instances
+- Functions and closures
+- Database connections
+- Complex object references
+
+## State Scoping with Prefixes
+
+State keys use prefixes to define scope and persistence behavior, enabling different levels of data sharing.
+
+<Cards>
+  <Card
+    title="📝 Session State"
+    description="No prefix - specific to current conversation"
+  />
+
+  <Card
+    title="👤 User State"
+    description="user: prefix - shared across all user sessions"
+  />
+
+  <Card
+    title="🌐 App State"
+    description="app: prefix - global application data"
+  />
+
+  <Card
+    title="⏱️ Temporary State"
+    description="temp: prefix - transient data that never persists"
+  />
+</Cards>
+
+### Session State (No Prefix)
+
+Data specific to the current conversation thread:
+
+**Characteristics:**
+- **Scope**: Current session only
+- **Persistence**: Depends on SessionService implementation
+- **Use Cases**: Task progress, conversation flags, temporary preferences
+
+**Examples:**
+- `current_booking_step`: Track multi-step booking progress
+- `needs_clarification`: Flag requiring user clarification
+- `conversation_topic`: Current discussion topic
+
+### User State (user: prefix)
+
+Data shared across all sessions for a specific user:
+
+**Characteristics:**
+- **Scope**: All sessions for the same userId within appName
+- **Persistence**: Persistent with database/cloud implementations
+- **Use Cases**: User preferences, profile information, cross-session data
+
+**Examples:**
+- `user:preferred_language`: User's language preference
+- `user:theme_setting`: UI theme preference
+- `user:notification_preferences`: Communication preferences
+
+### App State (app: prefix)
+
+Global data shared across all users and sessions:
+
+**Characteristics:**
+- **Scope**: All users and sessions within the application
+- **Persistence**: Persistent with database/cloud implementations
+- **Use Cases**: Global settings, shared templates, system-wide configuration
+
+**Examples:**
+- `app:api_endpoint`: Global API configuration
+- `app:feature_flags`: Application feature toggles
+- `app:global_discount_code`: System-wide promotional codes
+
+### Temporary State (temp: prefix)
+
+Transient data that never persists:
+
+**Characteristics:**
+- **Scope**: Current session processing turn only
+- **Persistence**: Never persisted, always discarded
+- **Use Cases**: Intermediate calculations, temporary API responses, processing flags
+
+**Examples:**
+- `temp:api_response`: Raw API response data
+- `temp:calculation_result`: Intermediate computation results
+- `temp:validation_status`: Temporary validation flags
+
+## State Access Methods
+
+### Direct Property Access
+
+Simple dictionary-style access for basic operations:
+
+```typescript
+// Get values
+const theme = session.state['user:theme'];
+const step = session.state['current_step'];
+
+// Set values
+session.state['current_step'] = 'confirmation';
+session.state['user:preference'] = 'dark_mode';
+```
+
+### Method-Based Access
+
+More explicit methods with additional functionality:
+
+```typescript
+// Get with default values
+const theme = session.state.get('user:theme', 'light');
+
+// Set single values
+session.state.set('current_step', 'confirmation');
+
+// Check existence
+if (session.state.has('user:preferences')) {
+  // Handle existing preferences
+}
+
+// Delete keys
+session.state.delete('temp:calculation');
+
+// Bulk operations
+session.state.update({
+  'step': 'payment',
+  'user:last_action': 'checkout'
+});
+```
+
+## State Update Patterns
+
+### Event-Driven Updates (Recommended)
+
+State should be updated through the event system for proper tracking and persistence:
+
+**Benefits:**
+- **Auditability**: Changes recorded in event history
+- **Thread Safety**: Atomic updates prevent race conditions
+- **Persistence**: Guaranteed storage with persistent services
+- **Consistency**: Proper timestamp and metadata tracking
+
+### Update Process
+
+1. **Define Changes**: Specify state modifications in stateDelta
+2. **Create Event**: Include state changes in EventActions
+3. **Append Event**: Use sessionService.appendEvent() to apply changes
+4. **Automatic Persistence**: SessionService handles storage and prefixes
+
+### Direct Modification Limitations
+
+While possible, direct state modification has significant drawbacks:
+
+**Limitations:**
+- **No Event History**: Changes not recorded for audit trails
+- **Persistence Issues**: May not save with persistent services
+- **Thread Safety**: Risk of race conditions in concurrent scenarios
+- **Missing Metadata**: No timestamp or context tracking
+
+<Callout type="warn" title="Update Method">
+For persistent, traceable state changes, use EventActions.stateDelta within the appendEvent flow rather than direct modification.
+</Callout>
+
+## State Persistence Behavior
+
+### In-Memory Implementation
+
+- **Storage**: Application memory only
+- **Persistence**: None - lost on restart
+- **Performance**: Fastest access and updates
+- **Use Cases**: Development, testing, temporary sessions
+
+### Database Implementation
+
+- **Storage**: SQLite, PostgreSQL, MySQL, or other databases
+- **Persistence**: Survives application restarts
+- **Transactions**: ACID compliance for data consistency
+- **Backup**: Standard database backup and recovery
+
+### Cloud Implementation
+
+- **Storage**: Managed cloud infrastructure
+- **Persistence**: Enterprise-grade reliability
+- **Scalability**: Automatic scaling and distribution
+- **Integration**: Native cloud service integration
+
+## Performance Optimization
+
+### Access Patterns
+
+- **Batch Operations**: Group multiple state changes together
+- **Prefix Organization**: Use consistent prefix patterns for efficient queries
+- **Caching**: Cache frequently accessed state values
+- **Lazy Loading**: Load state data on demand when possible
+
+### Storage Efficiency
+
+- **Data Minimization**: Store only essential information
+- **Compression**: Use compact data representations
+- **Cleanup**: Remove obsolete temporary and session data
+- **Indexing**: Optimize database queries with proper indexing
+
+### Monitoring
+
+- **State Size**: Track total state data volume
+- **Access Frequency**: Monitor read/write patterns
+- **Performance Metrics**: Measure state operation latency
+- **Error Rates**: Track state operation failures
+
+## Security and Privacy
+
+### Data Protection
+
+- **Encryption**: Encrypt sensitive state data at rest and in transit
+- **Access Control**: Restrict state access to authorized components
+- **Audit Logging**: Track state access and modifications
+- **Data Classification**: Identify and protect sensitive information
+
+### Privacy Compliance
+
+- **Data Minimization**: Store only necessary user information
+- **Retention Policies**: Implement appropriate data retention periods
+- **User Rights**: Provide mechanisms for data access and deletion
+- **Cross-Border**: Handle international data transfer requirements
+
+### Best Practices
+
+- **Sensitive Data**: Avoid storing passwords or tokens in state
+- **User Consent**: Obtain proper consent for persistent user data
+- **Regular Cleanup**: Remove expired or unnecessary state data
+- **Secure Defaults**: Use secure configurations by default
+
+## Common Patterns and Use Cases
+
+### Shopping Cart Management
+
+- **Session Items**: `cart_items` for current session additions
+- **User Preferences**: `user:saved_items` for wishlist functionality
+- **Temporary Calculations**: `temp:cart_total` for pricing calculations
+
+### Multi-Step Workflows
+
+- **Progress Tracking**: `current_step`, `completed_steps`
+- **Form Data**: Store partial form completion across interactions
+- **Validation Status**: Track validation state for complex forms
+
+### User Personalization
+
+- **Preferences**: `user:ui_preferences`, `user:notification_settings`
+- **History**: `user:recent_searches`, `user:interaction_history`
+- **Context**: `user:current_project`, `user:active_workspace`
+
+### Task Management
+
+- **Active Tasks**: `current_task`, `task_priority`
+- **Dependencies**: `prerequisite_tasks`, `blocked_tasks`
+- **Status Tracking**: `task_progress`, `completion_percentage`
+
+## Best Practices
+
+### Design Principles
+
+- **Clarity**: Use descriptive, consistent key naming
+- **Scope Appropriateness**: Choose correct prefixes for data scope
+- **Minimalism**: Store only essential, dynamic information
+- **Type Consistency**: Maintain consistent data types for similar keys
+
+### Implementation Guidelines
+
+- **Event-Driven Updates**: Use proper event system for state changes
+- **Error Handling**: Implement robust error handling for state operations
+- **Testing**: Test state behavior across different scenarios
+- **Documentation**: Document state schema and usage patterns
+
+### Production Considerations
+
+- **Monitoring**: Implement comprehensive state monitoring
+- **Backup**: Ensure proper backup strategies for persistent state
+- **Migration**: Plan for state schema evolution and data migration
+- **Performance**: Optimize state operations for production load
+
+## Related Topics
+
+<Cards>
+  <Card
+    title="💬 Session Management"
+    description="Learn how sessions coordinate with state management"
+    href="/docs/sessions/session"
+  />
+
+  <Card
+    title="🧠 Memory Systems"
+    description="Understand long-term memory beyond session state"
+    href="/docs/sessions/memory"
+  />
+
+  <Card
+    title="🔧 Tools"
+    description="How tools interact with and modify session state"
+    href="/docs/tools"
+  />
+
+  <Card
+    title="📋 Callbacks"
+    description="Handle state changes with event callbacks"
+    href="/docs/callbacks"
+  />
+</Cards>
