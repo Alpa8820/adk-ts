@@ -1,297 +1,495 @@
 ---
 title: Google Cloud Tools
-description: Enterprise cloud integrations for Google Cloud services and APIs
+description: Google Cloud service integration and authentication patterns
 ---
 
 import { Cards, Card } from 'fumadocs-ui/components/card';
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Google Cloud tools provide seamless integration with Google Cloud Platform services, enabling agents to leverage enterprise-grade cloud capabilities for storage, computing, AI/ML, and data processing.
+Google Cloud tools provide authentication and integration patterns for Google Cloud Platform services. While comprehensive Google Cloud service integration is planned for future releases, ADK TypeScript currently focuses on authentication and foundational patterns for cloud connectivity.
 
-## What are Google Cloud Tools?
+## Current Implementation
 
-Google Cloud tools are specialized integrations that connect ADK TypeScript agents with Google Cloud Platform services, providing access to scalable cloud infrastructure and AI capabilities.
+ADK TypeScript provides foundational support for Google Cloud integration through authentication mechanisms and basic patterns for service connectivity.
 
-### Key Benefits
+### Available Features
 
-- **Enterprise Scale**: Leverage Google's global cloud infrastructure
-- **AI Integration**: Access Google's AI and ML services directly
-- **Data Management**: Connect to cloud databases and storage systems
-- **Security**: Enterprise-grade security and compliance features
-- **Performance**: Optimized for high-performance cloud operations
+- **Authentication**: Google Cloud credential management and authentication
+- **Service Patterns**: Base patterns for creating Google Cloud service tools
+- **Integration Guidelines**: Best practices for Google Cloud service integration
+- **Future Foundation**: Architecture prepared for comprehensive service integration
 
-<Callout type="info" title="Enterprise Ready">
-Google Cloud tools are designed for production-scale applications with enterprise security, compliance, and performance requirements.
+<Callout type="info" title="Development Status">
+Comprehensive Google Cloud service tools are in development. Current implementation focuses on authentication and integration patterns.
 </Callout>
 
-## Supported Services
+## Authentication Support
 
 <Cards>
   <Card
-    title="🗄️ Cloud Storage"
-    description="Object storage for files, documents, and media"
+    title="🔐 Service Accounts"
+    description="Service account credential management"
   />
 
   <Card
-    title="💾 Cloud SQL"
-    description="Managed relational databases (PostgreSQL, MySQL)"
+    title="🎯 OAuth 2.0"
+    description="User-based authentication flows"
   />
 
   <Card
-    title="🧠 Vertex AI"
-    description="Machine learning and AI model services"
-  />
-
-  <Card
-    title="🔍 Cloud Search"
-    description="Enterprise search across cloud data"
-  />
-
-  <Card
-    title="📊 BigQuery"
-    description="Data warehouse and analytics platform"
-  />
-
-  <Card
-    title="📝 Document AI"
-    description="Intelligent document processing and extraction"
+    title="🔑 Credential Discovery"
+    description="Automatic credential discovery patterns"
   />
 </Cards>
 
-## Cloud Storage Integration
+## Authentication Patterns
 
-### Capabilities
+### Service Account Authentication
 
-Google Cloud Storage tools enable agents to:
+For server-to-server authentication with Google Cloud services:
 
-- **File Management**: Upload, download, and organize files in cloud buckets
-- **Content Processing**: Process documents, images, and media files
-- **Data Sharing**: Share files across applications and users
-- **Backup Operations**: Automated backup and archival processes
-- **CDN Integration**: Serve content through global CDN networks
+```typescript
+import { GoogleAuth } from 'google-auth-library';
 
-### Use Cases
+// Service account authentication
+async function createGoogleAuthClient() {
+  const auth = new GoogleAuth({
+    keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    scopes: ['https://www.googleapis.com/auth/cloud-platform']
+  });
 
-- **Document Processing**: Analyze and extract information from uploaded documents
-- **Media Management**: Store and process images, videos, and audio files
-- **Data Archive**: Long-term storage of application data and logs
-- **Content Distribution**: Serve static content and assets globally
-- **Backup Solutions**: Automated backup of critical application data
+  return await auth.getClient();
+}
 
-### Security Features
+// Usage in custom tools
+async function callGoogleCloudAPI(endpoint: string, data: any) {
+  const authClient = await createGoogleAuthClient();
 
-- **IAM Integration**: Fine-grained access control and permissions
-- **Encryption**: Automatic encryption at rest and in transit
-- **Audit Logging**: Comprehensive access and operation logging
-- **VPC Integration**: Private network connectivity options
+  const response = await authClient.request({
+    url: endpoint,
+    method: 'POST',
+    data
+  });
 
-## Cloud SQL Integration
+  return response.data;
+}
+```
 
-### Database Support
+### OAuth 2.0 User Authentication
 
-Connect agents to managed relational databases:
+For user-based authentication flows:
 
-- **PostgreSQL**: Full-featured PostgreSQL with automatic backups
-- **MySQL**: Managed MySQL with high availability options
-- **SQL Server**: Enterprise SQL Server in the cloud
-- **Multi-Region**: Global database deployment and replication
+```typescript
+import { OAuth2Client } from 'google-auth-library';
 
-### Operations
+async function createOAuth2Client() {
+  const oauth2Client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+  );
 
-- **Query Execution**: Run complex SQL queries and transactions
-- **Schema Management**: Create and modify database structures
-- **Data Import/Export**: Bulk data operations and migrations
-- **Performance Monitoring**: Database performance and optimization
+  return oauth2Client;
+}
 
-### Enterprise Features
+// Generate authentication URL
+async function getAuthUrl() {
+  const oauth2Client = await createOAuth2Client();
 
-- **High Availability**: Automatic failover and replication
-- **Automatic Backups**: Point-in-time recovery capabilities
-- **Security**: Encryption, VPC, and advanced security features
-- **Scaling**: Automatic scaling based on workload demands
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: ['https://www.googleapis.com/auth/cloud-platform']
+  });
 
-## Vertex AI Integration
+  return authUrl;
+}
+```
 
-### AI/ML Services
+### Application Default Credentials
 
-Access Google's AI and machine learning platform:
+For environments with automatic credential discovery:
 
-- **Pre-trained Models**: Use Google's pre-trained AI models
-- **Custom Models**: Deploy and manage custom ML models
-- **AutoML**: Automated machine learning model training
-- **Model Endpoints**: Real-time and batch prediction services
+```typescript
+import { GoogleAuth } from 'google-auth-library';
 
-### Capabilities
+async function getDefaultCredentials() {
+  const auth = new GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/cloud-platform']
+  });
 
-- **Text Analysis**: Natural language processing and understanding
-- **Image Recognition**: Computer vision and image analysis
-- **Video Analysis**: Video content analysis and extraction
-- **Recommendation Systems**: Personalized recommendation engines
-- **Forecasting**: Time series analysis and prediction
+  // Automatically discovers credentials from:
+  // 1. GOOGLE_APPLICATION_CREDENTIALS environment variable
+  // 2. User credentials from gcloud SDK
+  // 3. Service account from compute metadata (on GCP)
+  const authClient = await auth.getClient();
 
-### Integration Benefits
+  return authClient;
+}
+```
 
-- **Scalability**: Handle large-scale AI workloads
-- **Performance**: Optimized for high-throughput operations
-- **Cost Efficiency**: Pay-per-use pricing model
-- **Enterprise Support**: Enterprise-grade SLAs and support
+## Creating Google Cloud Tools
 
-## BigQuery Integration
+### Basic Google Cloud Tool Pattern
 
-### Data Analytics
+Create custom tools for specific Google Cloud services:
 
-Connect agents to Google's data warehouse platform:
+```typescript
+import { BaseTool } from '@iqai/adk';
+import { GoogleAuth } from 'google-auth-library';
 
-- **SQL Analytics**: Run complex analytical queries on large datasets
-- **Real-time Analysis**: Stream processing and real-time analytics
-- **Data Science**: Integration with ML and data science workflows
-- **Business Intelligence**: Power dashboards and reporting tools
+interface GoogleCloudToolConfig {
+  serviceName: string;
+  apiVersion: string;
+  scopes: string[];
+}
 
-### Capabilities
+class GoogleCloudServiceTool extends BaseTool {
+  private auth: GoogleAuth;
+  private config: GoogleCloudToolConfig;
 
-- **Petabyte Scale**: Handle massive datasets efficiently
-- **Standard SQL**: Use familiar SQL syntax and functions
-- **Data Streaming**: Real-time data ingestion and processing
-- **Geographic Analysis**: Built-in GIS and location analytics
+  constructor(config: GoogleCloudToolConfig) {
+    super({
+      name: `google_${config.serviceName}`,
+      description: `Tool for Google Cloud ${config.serviceName} service`
+    });
 
-### Use Cases
+    this.config = config;
+    this.auth = new GoogleAuth({
+      scopes: config.scopes
+    });
+  }
 
-- **Data Reporting**: Generate business reports and insights
-- **Customer Analytics**: Analyze customer behavior and trends
-- **Performance Monitoring**: Track application and system metrics
-- **Research Analysis**: Support data science and research projects
+  async runAsync(args: {
+    operation: string;
+    parameters: Record<string, any>;
+  }) {
+    try {
+      const authClient = await this.auth.getClient();
 
-## Document AI Integration
+      // Build request URL
+      const baseUrl = `https://${this.config.serviceName}.googleapis.com`;
+      const url = `${baseUrl}/${this.config.apiVersion}/${args.operation}`;
 
-### Intelligent Processing
+      const response = await authClient.request({
+        url,
+        method: 'POST',
+        data: args.parameters
+      });
 
-Extract structured data from documents:
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Google Cloud API error: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
 
-- **Form Processing**: Extract data from forms and documents
-- **Invoice Processing**: Automated invoice data extraction
-- **Identity Verification**: Process ID documents and verification
-- **Contract Analysis**: Extract key terms and data from contracts
+  getDeclaration() {
+    return {
+      name: this.name,
+      description: this.description,
+      parameters: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            description: 'Google Cloud service operation to perform'
+          },
+          parameters: {
+            type: 'object',
+            description: 'Parameters for the operation'
+          }
+        },
+        required: ['operation']
+      }
+    };
+  }
+}
+```
 
-### Capabilities
+### Google Cloud Storage Example
 
-- **OCR**: Optical character recognition for text extraction
-- **Layout Analysis**: Understand document structure and layout
-- **Entity Extraction**: Identify and extract specific data entities
-- **Classification**: Categorize documents automatically
+Example implementation for Cloud Storage operations:
 
-### Business Applications
+```typescript
+import { BaseTool } from '@iqai/adk';
+import { Storage } from '@google-cloud/storage';
 
-- **Automation**: Automate document-heavy business processes
-- **Compliance**: Ensure consistent document processing standards
-- **Efficiency**: Reduce manual data entry and processing time
-- **Accuracy**: Improve data quality through automated extraction
+class CloudStorageTool extends BaseTool {
+  private storage: Storage;
 
-## Authentication and Security
+  constructor() {
+    super({
+      name: 'cloud_storage',
+      description: 'Tool for Google Cloud Storage operations'
+    });
 
-### Authentication Methods
+    this.storage = new Storage({
+      // Uses Application Default Credentials
+    });
+  }
+
+  async runAsync(args: {
+    operation: 'upload' | 'download' | 'list' | 'delete';
+    bucket: string;
+    fileName?: string;
+    localPath?: string;
+    prefix?: string;
+  }) {
+    try {
+      const bucket = this.storage.bucket(args.bucket);
+
+      switch (args.operation) {
+        case 'upload':
+          if (!args.fileName || !args.localPath) {
+            return { error: 'fileName and localPath required for upload' };
+          }
+          await bucket.upload(args.localPath, { destination: args.fileName });
+          return { success: true, message: `Uploaded ${args.fileName}` };
+
+        case 'download':
+          if (!args.fileName || !args.localPath) {
+            return { error: 'fileName and localPath required for download' };
+          }
+          await bucket.file(args.fileName).download({ destination: args.localPath });
+          return { success: true, message: `Downloaded ${args.fileName}` };
+
+        case 'list':
+          const [files] = await bucket.getFiles({ prefix: args.prefix });
+          return {
+            success: true,
+            files: files.map(file => ({ name: file.name, size: file.metadata.size }))
+          };
+
+        case 'delete':
+          if (!args.fileName) {
+            return { error: 'fileName required for delete' };
+          }
+          await bucket.file(args.fileName).delete();
+          return { success: true, message: `Deleted ${args.fileName}` };
+
+        default:
+          return { error: `Unknown operation: ${args.operation}` };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: `Cloud Storage error: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
+
+  getDeclaration() {
+    return {
+      name: this.name,
+      description: this.description,
+      parameters: {
+        type: 'object',
+        properties: {
+          operation: {
+            type: 'string',
+            description: 'Storage operation to perform',
+            enum: ['upload', 'download', 'list', 'delete']
+          },
+          bucket: {
+            type: 'string',
+            description: 'Cloud Storage bucket name'
+          },
+          fileName: {
+            type: 'string',
+            description: 'Name of the file in the bucket'
+          },
+          localPath: {
+            type: 'string',
+            description: 'Local file path for upload/download'
+          },
+          prefix: {
+            type: 'string',
+            description: 'Prefix filter for listing files'
+          }
+        },
+        required: ['operation', 'bucket']
+      }
+    };
+  }
+}
+```
+
+## Environment Configuration
+
+### Required Environment Variables
+
+```typescript
+// Service Account Authentication
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+
+// OAuth 2.0 Authentication
+GOOGLE_CLIENT_ID=your-client-id.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
+
+// Project Configuration
+GOOGLE_CLOUD_PROJECT=your-project-id
+GOOGLE_CLOUD_REGION=us-central1
+```
+
+### Credential Setup
+
+1. **Service Account**: Create and download service account key from Google Cloud Console
+2. **OAuth 2.0**: Configure OAuth 2.0 credentials for user authentication
+3. **Project Access**: Ensure proper IAM roles and permissions
+4. **API Enablement**: Enable required Google Cloud APIs
+
+## Security Best Practices
+
+### Authentication Security
 
 <Callout type="warn" title="Security Requirements">
-Google Cloud tools require proper authentication and IAM configuration for secure access to cloud resources.
+Always follow Google Cloud security best practices for credential management and access control.
 </Callout>
 
-- **Service Accounts**: Use service account credentials for server applications
-- **User Accounts**: OAuth 2.0 for user-based authentication
-- **Application Default Credentials**: Automatic credential discovery
-- **Workload Identity**: Secure authentication for containerized workloads
-
-### Security Best Practices
-
+- **Credential Protection**: Never commit credentials to source code
 - **Least Privilege**: Grant minimum required permissions
-- **Credential Rotation**: Regular rotation of service account keys
-- **Network Security**: Use VPC and firewall rules for network isolation
-- **Audit Logging**: Enable comprehensive audit logging for compliance
+- **Regular Rotation**: Rotate service account keys regularly
+- **Monitoring**: Monitor credential usage and access patterns
 
-### Compliance Features
+### Access Control
 
-- **SOC 2**: Compliance with SOC 2 Type II requirements
-- **ISO 27001**: International security management standards
-- **GDPR**: Data protection and privacy compliance
-- **HIPAA**: Healthcare data protection compliance
+```typescript
+// Example: Scoped authentication for specific services
+const scopedAuth = new GoogleAuth({
+  scopes: [
+    'https://www.googleapis.com/auth/devstorage.read_write', // Cloud Storage
+    'https://www.googleapis.com/auth/bigquery.readonly'     // BigQuery read-only
+  ]
+});
+```
 
-## Performance and Scaling
+### Error Handling
 
-### Optimization Strategies
+```typescript
+async function secureGoogleCloudCall(operation: () => Promise<any>) {
+  try {
+    return await operation();
+  } catch (error: any) {
+    // Log error details without exposing sensitive information
+    console.error('Google Cloud operation failed:', {
+      timestamp: new Date().toISOString(),
+      operation: operation.name,
+      error: error.message
+    });
 
-- **Connection Pooling**: Reuse database and API connections
-- **Caching**: Cache frequently accessed data and results
-- **Batch Operations**: Group operations for better throughput
-- **Async Processing**: Use asynchronous operations for better performance
+    // Return safe error message
+    return {
+      success: false,
+      error: 'Google Cloud service temporarily unavailable'
+    };
+  }
+}
+```
 
-### Monitoring and Observability
+## Future Roadmap
 
-- **Cloud Monitoring**: Built-in monitoring and alerting
-- **Performance Insights**: Database and application performance analytics
-- **Logging**: Centralized logging with Cloud Logging
-- **Tracing**: Distributed tracing for complex workflows
+<Callout type="info" title="Planned Google Cloud Tools">
+Future releases will include comprehensive tools for:
+- Cloud Storage (file operations and management)
+- Cloud SQL (database connectivity and operations)
+- Vertex AI (machine learning and AI services)
+- BigQuery (data analytics and querying)
+- Document AI (intelligent document processing)
+- Cloud Functions (serverless computing)
+</Callout>
 
-### Cost Optimization
+### Expected Features
 
-- **Usage Monitoring**: Track resource usage and costs
-- **Resource Optimization**: Right-size resources for workloads
-- **Automated Scaling**: Scale resources based on demand
-- **Budget Alerts**: Set up budget alerts and controls
+- **Pre-built Service Tools**: Ready-to-use tools for major Google Cloud services
+- **Automatic Configuration**: Simplified setup and configuration
+- **Advanced Authentication**: Enhanced security and credential management
+- **Multi-Service Workflows**: Orchestrated workflows across multiple services
+- **Performance Optimization**: Built-in caching and connection pooling
 
-## Integration Patterns
+## Integration Examples
 
-### Multi-Service Workflows
+### Custom Vertex AI Tool
 
-Combine multiple Google Cloud services:
+```typescript
+import { BaseTool } from '@iqai/adk';
+import { PredictionServiceClient } from '@google-cloud/aiplatform';
 
-- **Data Pipeline**: Storage → BigQuery → Vertex AI → Storage
-- **Document Processing**: Storage → Document AI → Cloud SQL
-- **ML Workflow**: BigQuery → Vertex AI → Cloud Storage
-- **Analytics Pipeline**: Cloud SQL → BigQuery → Vertex AI
+class VertexAIPredictionTool extends BaseTool {
+  private client: PredictionServiceClient;
 
-### Hybrid Integration
+  constructor() {
+    super({
+      name: 'vertex_ai_prediction',
+      description: 'Make predictions using Vertex AI models'
+    });
 
-Connect cloud and on-premises systems:
+    this.client = new PredictionServiceClient();
+  }
 
-- **Data Synchronization**: Sync between cloud and on-premises databases
-- **Hybrid Analytics**: Combine cloud and local data sources
-- **Gradual Migration**: Incremental migration to cloud services
-- **Backup Solutions**: Cloud backup for on-premises systems
+  async runAsync(args: {
+    endpoint: string;
+    instances: any[];
+  }) {
+    try {
+      const [response] = await this.client.predict({
+        endpoint: args.endpoint,
+        instances: args.instances
+      });
 
-## Best Practices
+      return {
+        success: true,
+        predictions: response.predictions
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Vertex AI prediction failed: ${error instanceof Error ? error.message : String(error)}`
+      };
+    }
+  }
 
-### Development
-
-- **Environment Separation**: Separate dev, staging, and production environments
-- **Resource Naming**: Use consistent naming conventions
-- **Configuration Management**: Externalize configuration and credentials
-- **Error Handling**: Implement robust error handling and retry logic
-
-### Production Deployment
-
-- **Infrastructure as Code**: Use Terraform or Cloud Deployment Manager
-- **CI/CD Integration**: Automate deployment pipelines
-- **Health Checks**: Implement comprehensive health monitoring
-- **Disaster Recovery**: Plan for backup and disaster recovery scenarios
-
-### Cost Management
-
-- **Resource Tagging**: Tag resources for cost tracking and allocation
-- **Budget Controls**: Set up budget alerts and spending limits
-- **Usage Optimization**: Regularly review and optimize resource usage
-- **Reserved Capacity**: Use committed use discounts for predictable workloads
+  getDeclaration() {
+    return {
+      name: this.name,
+      description: this.description,
+      parameters: {
+        type: 'object',
+        properties: {
+          endpoint: {
+            type: 'string',
+            description: 'Vertex AI model endpoint'
+          },
+          instances: {
+            type: 'array',
+            description: 'Input instances for prediction'
+          }
+        },
+        required: ['endpoint', 'instances']
+      }
+    };
+  }
+}
+```
 
 ## Related Topics
 
 <Cards>
   <Card
     title="🔐 Authentication"
-    description="Secure authentication for Google Cloud services"
+    description="Secure authentication patterns and credential management"
     href="/docs/tools/authentication"
   />
 
   <Card
-    title="📊 OpenAPI Tools"
-    description="Generate tools from Google Cloud API specifications"
-    href="/docs/tools/openapi-tools"
+    title="🔧 Function Tools"
+    description="Create custom tools for Google Cloud services"
+    href="/docs/tools/function-tools"
   />
 
   <Card

@@ -1,6 +1,6 @@
 ---
 title: Built-in Tools
-description: Ready-to-use tools for common tasks like search and code execution
+description: Ready-to-use tools for common tasks like search, file operations, and user interaction
 ---
 
 import { Cards, Card } from 'fumadocs-ui/components/card';
@@ -30,18 +30,28 @@ Most built-in tools require minimal or no configuration - just import and add to
   />
 
   <Card
-    title="💻 Code Execution"
-    description="Execute code for calculations and data manipulation"
-  />
-
-  <Card
-    title="🏢 Vertex AI Search"
-    description="Search private data stores and knowledge bases"
-  />
-
-  <Card
     title="📁 File Operations"
     description="Read, write, and manipulate files and documents"
+  />
+
+  <Card
+    title="🌐 HTTP Request"
+    description="Make HTTP requests to external APIs and web services"
+  />
+
+  <Card
+    title="👤 User Interaction"
+    description="Prompt users for input during agent execution"
+  />
+
+  <Card
+    title="💾 Load Memory"
+    description="Search and load relevant memories from conversation history"
+  />
+
+  <Card
+    title="📂 Load Artifacts"
+    description="Load uploaded files and documents into agent context"
   />
 </Cards>
 
@@ -52,9 +62,9 @@ Enables agents to perform web searches and retrieve real-time information from t
 ### Key Features
 
 - **Real-time Results**: Access current web information
-- **Gemini Integration**: Optimized for Gemini 2 models
+- **Gemini Integration**: Optimized for Gemini models
 - **Automatic Parsing**: Results formatted for LLM consumption
-- **No Setup Required**: Works immediately with proper API access
+- **Simple Integration**: Works with minimal configuration
 
 ### Use Cases
 
@@ -65,58 +75,15 @@ Enables agents to perform web searches and retrieve real-time information from t
 
 ### Configuration
 
-- **Zero Configuration**: Add directly to agent tools
-- **Authentication**: Uses Google AI credentials
-- **Rate Limiting**: Respects Google Search API limits
+```typescript
+import { GoogleSearch } from '@iqai/adk';
 
-## Code Execution Tool
+const searchTool = new GoogleSearch();
+```
 
-Allows agents to execute code for calculations, data processing, and problem-solving tasks.
-
-### Key Features
-
-- **Multi-Language Support**: Execute various programming languages
-- **Safe Execution**: Sandboxed environment for security
-- **Result Integration**: Code outputs integrated into agent responses
-- **Gemini Optimized**: Designed for Gemini 2 model capabilities
-
-### Use Cases
-
-- **Mathematical Calculations**: Complex computations and formulas
-- **Data Analysis**: Process and analyze datasets
-- **Algorithm Implementation**: Solve algorithmic problems
-- **Visualization**: Generate charts and graphs
-
-### Capabilities
-
-- **Numeric Computation**: Mathematical operations and statistics
-- **Data Manipulation**: Transform and process data structures
-- **Logic Implementation**: Complex conditional and iterative logic
-- **Result Formatting**: Present results in readable formats
-
-## Vertex AI Search Tool
-
-Provides access to Google Cloud's Vertex AI Search for querying private data stores and knowledge bases.
-
-### Key Features
-
-- **Private Data Access**: Search internal documents and knowledge bases
-- **Enterprise Security**: Secure access to sensitive information
-- **Structured Results**: Formatted results with relevance scoring
-- **Multi-Modal Search**: Support for text, images, and documents
-
-### Use Cases
-
-- **Internal Knowledge**: Search company policies and procedures
-- **Document Retrieval**: Find specific documents or information
-- **Customer Support**: Access support knowledge bases
-- **Compliance**: Search regulatory and compliance documents
-
-### Configuration
-
-- **Data Store ID**: Requires configured Vertex AI Search data store
-- **Authentication**: Google Cloud credentials required
-- **Permissions**: Proper IAM roles for data access
+<Callout type="info" title="Implementation Note">
+The current GoogleSearch implementation returns mock results. Integration with actual Google Search API requires additional configuration.
+</Callout>
 
 ## File Operations Tool
 
@@ -126,8 +93,8 @@ Enables agents to interact with files and documents for reading, writing, and ma
 
 - **File I/O**: Read and write various file formats
 - **Format Support**: Text, JSON, CSV, and other common formats
-- **Safe Operations**: Controlled file system access
-- **Error Handling**: Graceful handling of file operation failures
+- **Safe Operations**: Controlled file system access with security validation
+- **Multiple Operations**: Read, write, append, delete, exists, list, mkdir
 
 ### Use Cases
 
@@ -136,12 +103,163 @@ Enables agents to interact with files and documents for reading, writing, and ma
 - **Configuration Management**: Read settings and configuration files
 - **Report Generation**: Create output files and reports
 
+### Configuration
+
+```typescript
+import { FileOperationsTool } from '@iqai/adk';
+
+const fileTool = new FileOperationsTool({
+  basePath: '/path/to/working/directory' // Optional, defaults to cwd
+});
+```
+
 ### Security Considerations
 
 - **Sandboxed Access**: Limited to authorized directories
-- **File Validation**: Input validation and sanitization
+- **Path Validation**: Prevents access outside base directory
 - **Permission Checks**: Proper file system permissions
 - **Error Recovery**: Graceful handling of access failures
+
+## HTTP Request Tool
+
+Make HTTP requests to external APIs and web services for data integration and communication.
+
+### Key Features
+
+- **Multiple Methods**: Support for GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
+- **Header Management**: Custom headers and authentication
+- **Request Body**: JSON and form data support
+- **Query Parameters**: URL parameter handling
+- **Timeout Control**: Configurable request timeouts
+
+### Use Cases
+
+- **API Integration**: Connect to REST APIs and web services
+- **Data Fetching**: Retrieve information from external sources
+- **Webhook Communication**: Send data to external systems
+- **Service Integration**: Connect with third-party platforms
+
+### Configuration
+
+```typescript
+import { HttpRequestTool } from '@iqai/adk';
+
+const httpTool = new HttpRequestTool();
+```
+
+## User Interaction Tool
+
+Prompt users for input during agent execution for human-in-the-loop workflows.
+
+### Key Features
+
+- **Interactive Prompts**: Request user input with custom messages
+- **Choice Options**: Present multiple choice selections
+- **Default Values**: Pre-populate input fields
+- **Long Running**: Supports asynchronous user response patterns
+
+### Use Cases
+
+- **Decision Making**: Get user approval for actions
+- **Data Collection**: Gather additional information from users
+- **Confirmation**: Verify critical operations before execution
+- **Preference Setting**: Allow users to specify preferences
+
+### Configuration
+
+```typescript
+import { UserInteractionTool } from '@iqai/adk';
+
+const userTool = new UserInteractionTool();
+```
+
+<Callout type="warn" title="Environment Dependency">
+User interaction requires a compatible environment that supports user prompting. May not work in all deployment scenarios.
+</Callout>
+
+## Load Memory Tool
+
+Search and load relevant memories from conversation history for context-aware interactions.
+
+### Key Features
+
+- **Memory Search**: Query past conversations and interactions
+- **Contextual Retrieval**: Find relevant information based on current needs
+- **Automatic Integration**: Seamlessly integrate memory results
+- **Efficient Querying**: Optimized search across conversation history
+
+### Use Cases
+
+- **Context Continuity**: Maintain conversation context across sessions
+- **Information Recall**: Reference past discussions and decisions
+- **Personalization**: Access user preferences and history
+- **Knowledge Building**: Build on previous interactions and learning
+
+### Configuration
+
+```typescript
+import { LoadMemoryTool } from '@iqai/adk';
+
+const memoryTool = new LoadMemoryTool();
+```
+
+## Load Artifacts Tool
+
+Load uploaded files and documents into agent context for processing and analysis.
+
+### Key Features
+
+- **File Management**: Access uploaded documents and media
+- **Context Integration**: Automatically add artifacts to LLM requests
+- **Dynamic Loading**: Load artifacts based on agent needs
+- **Content Processing**: Handle various file types and formats
+
+### Use Cases
+
+- **Document Analysis**: Process uploaded documents and files
+- **Content Review**: Analyze images, PDFs, and text files
+- **Data Processing**: Work with uploaded datasets and spreadsheets
+- **Media Handling**: Process images and multimedia content
+
+### Configuration
+
+```typescript
+import { LoadArtifactsTool } from '@iqai/adk';
+
+const artifactsTool = new LoadArtifactsTool();
+```
+
+## Additional Built-in Tools
+
+### Get User Choice Tool
+
+Present options to users and collect their selection for decision-making workflows.
+
+```typescript
+import { GetUserChoiceTool } from '@iqai/adk';
+
+const choiceTool = new GetUserChoiceTool();
+```
+
+### Transfer to Agent Tool
+
+Transfer control to another agent for specialized processing or workflow delegation.
+
+```typescript
+import { TransferToAgentTool } from '@iqai/adk';
+
+const transferTool = new TransferToAgentTool();
+```
+
+### Exit Loop Tool
+
+Exit execution loops in workflow agents when completion conditions are met.
+
+```typescript
+import { ExitLoopTool } from '@iqai/adk';
+
+const exitTool = new ExitLoopTool();
+```
 
 ## Tool Integration Patterns
 
@@ -150,16 +268,16 @@ Enables agents to interact with files and documents for reading, writing, and ma
 Use individual tools for specific capabilities:
 
 - **Search Only**: Agents focused on information retrieval
-- **Code Only**: Computational and analytical agents
 - **Files Only**: Document processing specialists
+- **Memory Only**: Context-aware conversation agents
 
 ### Multi-Tool Combinations
 
 Combine tools for complex workflows:
 
-- **Search + Code**: Research with analysis and calculation
-- **Files + Code**: Data processing and report generation
 - **Search + Files**: Research with document storage
+- **Memory + User Interaction**: Personalized interactive agents
+- **Files + HTTP**: Data processing with external API integration
 - **All Tools**: Comprehensive capability agents
 
 ### Conditional Tool Selection
@@ -174,14 +292,14 @@ Agents choose tools based on task requirements:
 
 ### Rate Limiting
 
-<Callout type="warn" title="API Limits">
-Built-in tools are subject to external API rate limits. Design your agents to handle rate limiting gracefully.
+<Callout type="warn" title="External Dependencies">
+Tools that interact with external services are subject to API rate limits and network constraints. Design your agents to handle these limitations gracefully.
 </Callout>
 
-- **Google Search**: Subject to Google API quotas
-- **Code Execution**: Processing time and resource limits
-- **Vertex AI Search**: Query rate and data access limits
+- **Google Search**: Subject to API quotas and service availability
+- **HTTP Requests**: Limited by target service rate limits
 - **File Operations**: File system and storage limits
+- **User Interaction**: Depends on user response time
 
 ### Error Handling
 
@@ -194,17 +312,17 @@ Built-in tools include robust error handling:
 
 ### Performance Optimization
 
-- **Caching**: Some tools cache results for efficiency
 - **Async Operations**: Non-blocking execution where possible
 - **Resource Management**: Efficient use of system resources
-- **Result Streaming**: Progressive result delivery for large operations
+- **Error Recovery**: Automatic retry logic for transient failures
+- **Timeout Handling**: Configurable timeouts for external operations
 
 ## Best Practices
 
 ### Tool Selection
 
 - **Match Capabilities**: Choose tools that match your use case requirements
-- **Consider Limits**: Account for rate limits and quotas in your design
+- **Consider Environment**: Ensure tools work in your deployment environment
 - **Plan Fallbacks**: Design alternative approaches for tool failures
 - **Monitor Usage**: Track tool usage patterns and performance
 
@@ -244,8 +362,8 @@ Built-in tools include robust error handling:
   />
 
   <Card
-    title="📊 Examples"
-    description="See working examples of built-in tool usage"
-    href="/docs/examples"
+    title="🌐 Third-Party Tools"
+    description="Integrate tools from external frameworks"
+    href="/docs/tools/third-party-tools"
   />
 </Cards>
