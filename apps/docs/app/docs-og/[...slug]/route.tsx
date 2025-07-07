@@ -51,6 +51,7 @@ export async function GET(
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '10px 80px',
+            marginBottom: '90px',
             position: 'relative',
             zIndex: 1,
           }}
@@ -59,7 +60,6 @@ export async function GET(
           <div
             style={{
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'flex-start',
               gap: '24px',
             }}
@@ -83,8 +83,8 @@ export async function GET(
                 <img
                   src={`${baseUrl}/adk.png`}
                   alt="ADK Logo"
-                  width="160"
-                  height="160"
+                  width="180"
+                  height="180"
                 />
               </div>
             </div>
@@ -95,9 +95,10 @@ export async function GET(
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px',
-                fontSize: '36px',
+                fontSize: '48px',
                 fontWeight: 'bold',
                 color: 'white',
+                width: '40px',
                 fontFamily: 'system-ui, -apple-system, sans-serif',
                 lineHeight: 1.1,
               }}
@@ -110,7 +111,8 @@ export async function GET(
                 style={{
                   background: '#3b82f6',
                   padding: '6px 12px',
-                  width: '205px',
+                  width: '256px',
+                  transform: 'rotate(-6deg) translateY(-25px) translateX(-80px)',
                 }}
               >
                 TypeScript
@@ -130,7 +132,7 @@ export async function GET(
           >
             <div
               style={{
-                fontSize: '52px',
+                fontSize: '68px',
                 fontWeight: 'bold',
                 color: 'white',
                 marginBottom: '16px',
@@ -143,7 +145,7 @@ export async function GET(
             {description && (
               <div
                 style={{
-                  fontSize: '22px',
+                  fontSize: '28px',
                   color: '#cbd5e1',
                   lineHeight: 1.4,
                   fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -161,7 +163,7 @@ export async function GET(
             position: 'absolute',
             bottom: '0px',
             width: '100%',
-            height: '100px',
+            height: '90px',
             borderTop: '4px solid #FF5BAA',
             background: '#18202C',
             display: 'flex',
@@ -169,7 +171,7 @@ export async function GET(
             alignItems: 'center',
             gap: '12px',
             zIndex: 2,
-            fontSize: '34px',
+            fontSize: '36px',
             fontWeight: 'extrabold',
             color: '#e2e8f0',
             fontFamily: 'system-ui, -apple-system, sans-serif',
