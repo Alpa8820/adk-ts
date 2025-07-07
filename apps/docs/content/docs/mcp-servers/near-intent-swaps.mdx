@@ -1,393 +1,203 @@
 ---
-title: NEAR Intent Swaps
+title: NEAR Intent
 description: MCP server for NEAR intent-based cross-chain swaps
 ---
 
-# NEAR Intent Swaps MCP Server
 
-The NEAR Intent Swaps MCP server enables AI agents to perform sophisticated cross-chain swaps using NEAR's intent-based transaction layer. It provides access to multi-chain liquidity and automated swap execution across Web2, Web3, and traditional markets.
+An MCP server for NEAR intent swaps using the [Defuse Protocol one-click SDK](https://github.com/defuse-protocol/one-click-sdk-typescript). This server provides tools for cross-chain token swaps through NEAR's intent-based architecture.
 
 ## Features
 
-- **Intent-Based Swaps**: Express desired outcomes, let solvers handle execution
-- **Cross-Chain Trading**: Swap tokens across multiple blockchains seamlessly
-- **Multi-Market Access**: Access DEXs, CEXs, and traditional market liquidity
-- **AI-Native Interface**: Natural language swap requests and execution
-- **Automatic Routing**: Optimal path finding across chains and markets
-- **Fast Settlement**: 2-3 second settlement times via Chain Signatures
-- **Slippage Protection**: Built-in MEV protection and optimal pricing
+- **GET_NEAR_SWAP_TOKENS**: Discover available tokens for swaps
+- **GET_NEAR_SWAP_SIMPLE_QUOTE**: Get basic swap quotes without addresses
+- **GET_NEAR_SWAP_FULL_QUOTE**: Get complete quotes with deposit addresses
+- **EXECUTE_NEAR_SWAP**: Execute swaps by submitting deposit transactions
+- **CHECK_NEAR_SWAP_STATUS**: Check the status of swap executions
 
-## Installation
+## User Flow
 
-```bash
-npx @iqai/mcp-near-intent-swaps
-```
+This server supports a complete 5-step user flow:
 
-## Quick Start
+1. **[DISCOVERY]** Use `GET_NEAR_SWAP_TOKENS` to discover available tokens
+2. **[STEP 1]** Use `GET_NEAR_SWAP_SIMPLE_QUOTE` to check swap rates without addresses
+3. **[STEP 2]** Use `GET_NEAR_SWAP_FULL_QUOTE` to get deposit address when ready to swap
+4. **[STEP 3]** User sends funds to the deposit address (external action)
+5. **[STEP 4]** Use `EXECUTE_NEAR_SWAP` to submit deposit transaction hash
+6. **[STEP 5]** Use `CHECK_NEAR_SWAP_STATUS` to monitor swap progress until completion
 
-```typescript
-import { McpNearIntentSwaps } from "@iqai/adk";
+## Prerequisites
 
-const intentSwaps = McpNearIntentSwaps({
-  env: {
-    ACCOUNT_ID: "your-account.testnet",
-    ACCOUNT_KEY: "ed25519:your-private-key-here",
-    NEAR_NETWORK_ID: "testnet"
-  },
-  debug: true
-});
-```
+- Node.js >= 16
+- pnpm >= 8
+- A JWT token from the Defuse Protocol (for authentication)
 
 ## Configuration
 
-### Required Environment Variables
+Set the following environment variables:
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `ACCOUNT_ID` | Your NEAR account identifier | `alice.testnet` |
-| `ACCOUNT_KEY` | Private key for the NEAR account | `ed25519:...` |
+```bash
+# Optional: Custom API endpoint (defaults to https://1click.chaindefuser.com)
+export NEAR_SWAP_API_URL="https://1click.chaindefuser.com"
 
-### Optional Environment Variables
-
-| Variable | Description | Default | Options |
-|----------|-------------|---------|---------|
-| `NEAR_NETWORK_ID` | NEAR network to connect to | `mainnet` | `mainnet`, `testnet` |
-| `SLIPPAGE_TOLERANCE` | Maximum acceptable slippage | `0.5` | `0.1-5.0` (percentage) |
-| `MAX_GAS_PRICE` | Maximum gas price for swaps | `auto` | Gas price in Gwei |
-| `INTENT_TIMEOUT` | Timeout for intent resolution | `60` | Seconds |
-
-## Supported Chains & Tokens
-
-### Supported Blockchains
-- **Bitcoin** (BTC)
-- **Ethereum** (ETH)
-- **Solana** (SOL)
-- **Dogecoin** (DOGE)
-- **XRP** (Ripple)
-- **Zcash** (ZEC)
-- **NEAR Protocol** (NEAR)
-
-### Popular Token Pairs
-- BTC ↔ ETH
-- ETH ↔ SOL
-- DOGE ↔ NEAR
-- USDC ↔ USDT (cross-chain)
-- And 6000+ other tokens
-
-## Usage Examples
-
-### Basic Token Swap
-
-```typescript
-// Simple ETH to BTC swap
-const swap = await intentSwaps.tools.swapTokens({
-  fromToken: "ETH",
-  toToken: "BTC",
-  amount: "1.5",
-  slippageTolerance: 0.5
-});
-
-console.log(`Swap completed: ${swap.transactionHash}`);
+# Required: JWT token for authentication
+export NEAR_SWAP_JWT_TOKEN="your-jwt-token-here"
 ```
 
-### Cross-Chain Swap with Intent
+## Usage
 
-```typescript
-// Express intent: "I want 100 USDC on Solana"
-const intent = await intentSwaps.tools.createSwapIntent({
-  intent: "Get 100 USDC on Solana using my ETH",
-  fromChain: "ethereum",
-  toChain: "solana",
-  outputAmount: "100",
-  outputToken: "USDC"
-});
+### Running the Server
 
-// Monitor intent execution
-const status = await intentSwaps.tools.getIntentStatus({
-  intentId: intent.id
-});
+```bash
+# Start the MCP server
+pnpm start
+
+# Or run directly
+node dist/index.js
 ```
 
-### Multi-Step Arbitrage
+### Available Tools
 
-```typescript
-// Complex arbitrage across multiple chains
-const arbitrage = await intentSwaps.tools.executeArbitrage({
-  strategy: [
-    { chain: "ethereum", action: "buy", token: "ETH", amount: "10" },
-    { chain: "solana", action: "sell", token: "ETH", minReceive: "10.1" },
-    { chain: "near", action: "swap", from: "SOL", to: "NEAR" }
-  ],
-  maxSlippage: 0.3
-});
+#### 1. GET_NEAR_SWAP_TOKENS
+
+Discover available tokens for swaps. Returns token metadata including blockchain, contract address, current USD price, symbol, decimals, and price update timestamp.
+
+**Parameters:** None
+
+#### 2. GET_NEAR_SWAP_SIMPLE_QUOTE
+
+Get a basic quote for a cross-chain token swap without requiring addresses. Perfect for checking swap rates and fees before committing.
+
+**Parameters:**
+- `originAsset`: string - Origin asset identifier (e.g., 'nep141:arb-0xaf88d065e77c8cc2239327c5edb3a432268e5831.omft.near')
+- `destinationAsset`: string - Destination asset identifier
+- `amount`: string - Amount to swap (in base units)
+- `swapType?`: "EXACT_INPUT" | "EXACT_OUTPUT" - Type of swap (default: "EXACT_INPUT")
+- `slippageTolerance?`: number - Slippage tolerance in basis points (default: 100 = 1%)
+- `quoteWaitingTimeMs?`: number - Time to wait for quote in milliseconds (default: 3000)
+
+#### 3. GET_NEAR_SWAP_FULL_QUOTE
+
+Get a complete quote with deposit address for a cross-chain token swap. Requires recipient and refund addresses.
+
+**Parameters:**
+- `originAsset`: string - Origin asset identifier
+- `destinationAsset`: string - Destination asset identifier
+- `amount`: string - Amount to swap (in base units)
+- `recipient`: string - Recipient address
+- `swapType?`: "EXACT_INPUT" | "EXACT_OUTPUT" - Type of swap (default: "EXACT_INPUT")
+- `recipientType?`: "DESTINATION_CHAIN" | "INTENTS" - Recipient address type (default: "DESTINATION_CHAIN")
+- `refundTo?`: string - Refund address (optional)
+- `refundType?`: "ORIGIN_CHAIN" | "INTENTS" - Refund address type (default: "ORIGIN_CHAIN")
+- `slippageTolerance?`: number - Slippage tolerance in basis points (default: 100 = 1%)
+- `dry?`: boolean - Whether this is a dry run (default: false)
+- `depositType?`: "ORIGIN_CHAIN" | "INTENTS" - Deposit type (default: "ORIGIN_CHAIN")
+- `deadline?`: string - Deadline in ISO format (default: 1 hour from now)
+- `referral?`: string - Referral identifier (optional)
+- `quoteWaitingTimeMs?`: number - Time to wait for quote in milliseconds (default: 3000)
+
+#### 4. EXECUTE_NEAR_SWAP
+
+Execute a swap by submitting a deposit transaction hash after sending funds to the deposit address.
+
+**Parameters:**
+- `txHash`: string - Transaction hash of the deposit transaction
+- `depositAddress`: string - Deposit address for the swap
+
+#### 5. CHECK_NEAR_SWAP_STATUS
+
+Check the execution status of a swap. Returns swap state and detailed transaction information.
+
+**Parameters:**
+- `depositAddress`: string - Deposit address to check status for
+
+## Example Usage
+
+### 1. Discovering Available Tokens
+
+```json
+{}
 ```
 
-### AI-Powered Swap Requests
+### 2. Getting a Simple Quote
 
-```typescript
-// Natural language swap processing
-const naturalSwap = await intentSwaps.tools.processNaturalLanguage({
-  request: "Swap half my Bitcoin for Ethereum at the best available rate",
-  userAccount: "alice.testnet"
-});
-
-// AI determines optimal execution path
-console.log(`Executing: ${naturalSwap.executionPlan}`);
-```
-
-## Available Tools
-
-### Swap Operations
-- `swapTokens` - Execute direct token swaps
-- `createSwapIntent` - Create intent-based swap orders
-- `getSwapQuote` - Get pricing for potential swaps
-- `cancelSwapIntent` - Cancel pending intent orders
-
-### Market Data
-- `getTokenPrice` - Get current token prices
-- `getMarketDepth` - Check liquidity across markets
-- `getOptimalRoute` - Find best swap path
-- `getHistoricalRates` - Historical price data
-
-### Intent Management
-- `createIntent` - Create custom swap intents
-- `getIntentStatus` - Monitor intent execution
-- `listActiveIntents` - View pending intents
-- `updateIntentParams` - Modify intent parameters
-
-### Portfolio Tools
-- `getPortfolioValue` - Calculate total portfolio value
-- `getTokenBalances` - Check balances across chains
-- `getSwapHistory` - View transaction history
-- `calculatePnL` - Profit/loss analysis
-
-### Advanced Features
-- `executeArbitrage` - Multi-chain arbitrage strategies
-- `createLimitOrder` - Set price-triggered swaps
-- `setupDCA` - Dollar-cost averaging setup
-- `processNaturalLanguage` - AI-powered swap interpretation
-
-## Intent-Based Trading
-
-### How Intents Work
-
-1. **Express**: Define desired outcome (e.g., "I want 100 USDC")
-2. **Solve**: Network of solvers competes for best execution
-3. **Settle**: Fastest solver executes via Chain Signatures
-
-```typescript
-// Intent example: Get best NEAR price for Bitcoin
-const intent = await intentSwaps.tools.createIntent({
-  type: "swap",
-  input: { token: "BTC", amount: "0.1" },
-  output: { token: "NEAR", minAmount: "1000" },
-  constraints: {
-    maxSlippage: 0.5,
-    timeout: 300,
-    preferredDEXs: ["ref-finance", "jumbo-exchange"]
-  }
-});
-```
-
-### Intent Parameters
-
-| Parameter | Description | Example |
-|-----------|-------------|---------|
-| `type` | Intent operation type | `swap`, `bridge`, `arbitrage` |
-| `input` | Source token and amount | `{token: "ETH", amount: "1.0"}` |
-| `output` | Target token and constraints | `{token: "BTC", minAmount: "0.05"}` |
-| `constraints` | Execution preferences | `{maxSlippage: 0.5, timeout: 300}` |
-
-## Cross-Chain Architecture
-
-### Chain Signatures Integration
-
-NEAR's Chain Signatures enable secure cross-chain operations:
-
-```typescript
-// Cross-chain swap with automatic bridging
-const crossChainSwap = await intentSwaps.tools.crossChainSwap({
-  sourceChain: "ethereum",
-  targetChain: "solana",
-  fromToken: "USDC",
-  toToken: "SOL",
-  amount: "1000",
-  bridgeProtocol: "near-rainbow-bridge"
-});
-```
-
-### Supported Bridges
-- **Rainbow Bridge** (Ethereum ↔ NEAR)
-- **Wormhole** (Multi-chain)
-- **LayerZero** (Omnichain)
-- **Allbridge** (Cross-chain)
-
-## Error Handling & Retries
-
-```typescript
-try {
-  const swap = await intentSwaps.tools.swapTokens({
-    fromToken: "ETH",
-    toToken: "BTC",
-    amount: "1.0"
-  });
-} catch (error) {
-  switch (error.code) {
-    case "INSUFFICIENT_LIQUIDITY":
-      console.log("Not enough liquidity for this swap size");
-      break;
-    case "SLIPPAGE_EXCEEDED":
-      console.log("Price moved beyond acceptable slippage");
-      break;
-    case "INTENT_TIMEOUT":
-      console.log("No solver executed intent within timeout");
-      break;
-    case "BRIDGE_UNAVAILABLE":
-      console.log("Cross-chain bridge is temporarily down");
-      break;
-  }
+```json
+{
+  "originAsset": "nep141:arb-0xaf88d065e77c8cc2239327c5edb3a432268e5831.omft.near",
+  "destinationAsset": "nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
+  "amount": "1000000000000000000",
+  "swapType": "EXACT_INPUT",
+  "slippageTolerance": 100
 }
 ```
 
-## Advanced Trading Strategies
+### 3. Getting a Full Quote with Deposit Address
 
-### Dollar-Cost Averaging (DCA)
-
-```typescript
-// Setup recurring BTC purchases
-const dcaStrategy = await intentSwaps.tools.setupDCA({
-  inputToken: "USDC",
-  outputToken: "BTC",
-  amountPerPeriod: "100",
-  frequency: "weekly",
-  duration: "52weeks" // 1 year
-});
+```json
+{
+  "originAsset": "nep141:arb-0xaf88d065e77c8cc2239327c5edb3a432268e5831.omft.near",
+  "destinationAsset": "nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near",
+  "amount": "1000000000000000000",
+  "recipient": "13QkxhNMrTPxoCkRdYdJ65tFuwXPhL5gLS2Z5Nr6gjRK",
+  "recipientType": "DESTINATION_CHAIN",
+  "refundTo": "0x2527D02599Ba641c19FEa793cD0F167589a0f10D",
+  "refundType": "ORIGIN_CHAIN",
+  "slippageTolerance": 100,
+  "dry": false
+}
 ```
 
-### Limit Orders
+### 4. Executing a Swap
 
-```typescript
-// Buy ETH when price drops below $3000
-const limitOrder = await intentSwaps.tools.createLimitOrder({
-  type: "buy",
-  token: "ETH",
-  triggerPrice: "3000",
-  amount: "1.0",
-  paymentToken: "USDC"
-});
+```json
+{
+  "txHash": "0x1234567890abcdef...",
+  "depositAddress": "0xabcdef1234567890..."
+}
 ```
 
-### Portfolio Rebalancing
+### 5. Checking Status
 
-```typescript
-// Rebalance to 50% BTC, 30% ETH, 20% SOL
-const rebalance = await intentSwaps.tools.rebalancePortfolio({
-  targetAllocation: {
-    "BTC": 50,
-    "ETH": 30,
-    "SOL": 20
-  },
-  tolerance: 5 // 5% deviation before rebalancing
-});
+```json
+{
+  "depositAddress": "0xabcdef1234567890..."
+}
 ```
 
-## Integration with AI Agents
+## Token Names vs Token IDs
 
-### Natural Language Processing
+When users provide simple token names (e.g., 'ETH', 'USDC'), use `GET_NEAR_SWAP_TOKENS` first to discover the exact token IDs required by the API. The API expects full token identifiers like `'nep141:arb-0xaf88d065e77c8cc2239327c5edb3a432268e5831.omft.near'`.
 
-```typescript
-// AI agent processes complex trading requests
-const tradingAgent = {
-  async processRequest(userInput: string) {
-    const parsed = await intentSwaps.tools.parseNaturalLanguage({
-      input: userInput,
-      context: "trading"
-    });
+## Authentication
 
-    return await intentSwaps.tools.executeStrategy(parsed.strategy);
-  }
-};
+This server requires a JWT token for authentication with the Defuse Protocol API. Make sure to set the `NEAR_SWAP_JWT_TOKEN` environment variable before running the server.
 
-// Example usage
-await tradingAgent.processRequest(
-  "Sell 25% of my portfolio and buy more Bitcoin if it drops below $50k"
-);
+## Error Handling
+
+The server provides detailed error messages for common issues:
+- Missing JWT token
+- Invalid request parameters
+- API connection errors
+- Invalid asset identifiers
+
+## Development
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd mcp-near-intent-swaps
+
+# Watch for changes during development
+pnpm watch
+
+# Format code
+pnpm format
+
+# Lint code
+pnpm lint
 ```
 
-## Security & Best Practices
+## Related Resources
 
-### Transaction Security
-- All swaps are executed through NEAR's secure MPC network
-- Private keys never leave your environment
-- Intent-based execution reduces MEV attacks
-- Automatic slippage protection
-
-### Best Practices
-1. **Always verify swap parameters** before execution
-2. **Use reasonable slippage tolerances** (0.5-2%)
-3. **Monitor intent execution** for large trades
-4. **Test with small amounts** on testnet first
-5. **Keep private keys secure** in environment variables
-
-## Monitoring & Analytics
-
-### Real-Time Monitoring
-
-```typescript
-// Monitor all active intents
-const monitor = await intentSwaps.tools.createMonitor({
-  events: ["intent_created", "intent_solved", "swap_executed"],
-  callback: (event) => {
-    console.log(`Event: ${event.type}, Status: ${event.status}`);
-  }
-});
-```
-
-### Performance Analytics
-
-```typescript
-// Get detailed swap analytics
-const analytics = await intentSwaps.tools.getAnalytics({
-  timeframe: "30d",
-  metrics: ["total_volume", "avg_slippage", "success_rate"]
-});
-```
-
-## Troubleshooting
-
-### Common Issues
-
-**Intent Not Executing**
-- Check if slippage tolerance is too low
-- Verify sufficient balance for the swap
-- Ensure target token has adequate liquidity
-
-**High Slippage**
-- Reduce swap amount for better pricing
-- Use multiple smaller swaps instead
-- Check market conditions for volatility
-
-**Cross-Chain Delays**
-- Bridge congestion may cause delays
-- Check bridge status and estimated times
-- Consider alternative bridge protocols
-
-### Debug Mode
-
-```typescript
-const intentSwaps = McpNearIntentSwaps({
-  env: {
-    ACCOUNT_ID: "your-account.testnet",
-    ACCOUNT_KEY: "ed25519:...",
-    NEAR_NETWORK_ID: "testnet"
-  },
-  debug: true  // Detailed logging
-});
-```
-
-## Resources
-
-- [NEAR Intents Documentation](https://near.org/intents)
-- [Chain Signatures Guide](https://docs.near.org/build/chain-abstraction/chain-signatures)
-- [NEAR Intent Swaps Interface](https://app.intents.near.org)
-- [Cross-Chain Bridge Status](https://rainbowbridge.app/explore)
+- [Defuse Protocol one-click SDK](https://github.com/defuse-protocol/one-click-sdk-typescript)
+- [MCP Specification](https://modelcontextprotocol.io)
+- [FastMCP Documentation](https://github.com/jlowin/fastmcp)
