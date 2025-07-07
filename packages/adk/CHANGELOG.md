@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.3
+
+### Patch Changes
+
+- f1cb8d4: Allow mcp interface to allow parameters optional
+
 ## 0.1.2
 
 ### Patch Changes
