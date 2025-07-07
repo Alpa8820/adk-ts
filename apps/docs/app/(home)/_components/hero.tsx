@@ -37,7 +37,7 @@ export function Hero() {
               Build Sophisticated
             </span>
             <br />
-            <span className="text-primary text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium bg-gradient-to-r from-primary to-chart-1 bg-clip-text text-transparent">
+            <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium bg-gradient-to-r from-primary to-chart-1 bg-clip-text text-transparent">
               Multi-Agent AI Systems
             </span>
           </h1>
