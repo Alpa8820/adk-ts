@@ -53,6 +53,97 @@ The `MCPToolset` class serves as the bridge between ADK agents and MCP servers:
 - **Call Proxying**: Forward tool calls to MCP servers and return results
 - **Lifecycle Management**: Handle connection cleanup and resource management
 
+### Basic Integration
+
+Here's how to integrate MCP servers with ADK TypeScript agents:
+
+```typescript
+import { McpToolset, LlmAgent, type McpConfig } from "@iqai/adk";
+
+// Configure MCP connection
+const mcpConfig: McpConfig = {
+  name: "Filesystem MCP Client",
+  description: "Client for filesystem operations",
+  debug: process.env.NODE_ENV === "development",
+  retryOptions: {
+    maxRetries: 3,
+    initialDelay: 200,
+  },
+  cacheConfig: {
+    enabled: true,
+  },
+  transport: {
+    mode: "stdio",
+    command: "npx",
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/directory"],
+    env: {
+      PATH: process.env.PATH || "",
+    },
+  },
+};
+
+// Initialize MCP toolset
+const mcpToolset = new McpToolset(mcpConfig);
+
+// Discover available tools
+const mcpTools = await mcpToolset.getTools();
+console.log(`Found ${mcpTools.length} MCP tools`);
+
+// Create agent with MCP tools
+const agent = new LlmAgent({
+  name: "filesystem_agent",
+  model: "gemini-2.5-flash",
+  description: "An agent that can perform filesystem operations",
+  instruction: "You can read, write, and manage files using MCP tools.",
+  tools: mcpTools,
+});
+
+// Use the agent
+const response = await agent.run("List all .ts files in the src directory");
+
+// Clean up when done
+await mcpToolset.close();
+```
+
+### IQAI MCP Servers Integration
+
+IQAI provides specialized MCP servers for blockchain and AI operations:
+
+```typescript
+import { McpToolset, LlmAgent } from "@iqai/adk";
+
+// Connect to IQAI ATP server
+const atpToolset = new McpToolset({
+  name: "ATP MCP Client",
+  description: "Client for AI Agent Tokenization Platform",
+  transport: {
+    mode: "stdio",
+    command: "pnpm",
+    args: ["dlx", "@iqai/mcp-atp"],
+    env: {
+      WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+      ATP_API_KEY: process.env.ATP_API_KEY,
+      PATH: process.env.PATH || "",
+    },
+  },
+});
+
+// Get ATP tools
+const atpTools = await atpToolset.getTools();
+
+// Create specialized blockchain agent
+const blockchainAgent = new LlmAgent({
+  name: "blockchain_agent",
+  model: "gemini-2.5-flash",
+  description: "Agent for blockchain and DeFi operations",
+  instruction: "You can interact with blockchain protocols, manage tokens, and access DeFi platforms.",
+  tools: atpTools,
+});
+
+// Example usage
+const stats = await blockchainAgent.run("Get statistics for agent token 0x123...");
+```
+
 ### Connection Types
 
 <Cards>
@@ -66,6 +157,43 @@ The `MCPToolset` class serves as the bridge between ADK agents and MCP servers:
     description="Connect to remote MCP servers via Server-Sent Events"
   />
 </Cards>
+
+### Stdio Connection Example
+
+Most MCP servers use stdio transport for local connections:
+
+```typescript
+const mcpConfig: McpConfig = {
+  name: "Local MCP Server",
+  transport: {
+    mode: "stdio",
+    command: "node", // or "python", "pnpm", etc.
+    args: ["path/to/server.js"],
+    env: {
+      // Server-specific environment variables
+      API_KEY: process.env.API_KEY,
+      PATH: process.env.PATH || "",
+    },
+  },
+};
+```
+
+### SSE Connection Example
+
+For remote MCP servers accessible via HTTP:
+
+```typescript
+const mcpConfig: McpConfig = {
+  name: "Remote MCP Server",
+  transport: {
+    mode: "sse",
+    url: "https://api.example.com/mcp",
+    headers: {
+      Authorization: `Bearer ${process.env.API_TOKEN}`,
+    },
+  },
+};
+```
 
 ### Common MCP Servers
 
@@ -85,6 +213,29 @@ Popular MCP servers you can integrate with:
 4. **Tool Registration**: Add MCP tools to your agent's tool list
 5. **Agent Execution**: Use tools automatically based on agent logic
 6. **Cleanup Management**: Properly close connections and clean up resources
+
+### Error Handling
+
+```typescript
+import { McpError } from "@iqai/adk";
+
+try {
+  const toolset = new McpToolset(mcpConfig);
+  const tools = await toolset.getTools();
+  // Use tools...
+} catch (error) {
+  if (error instanceof McpError) {
+    console.error(`MCP Error (${error.type}): ${error.message}`);
+    if (error.originalError) {
+      console.error("Original error:", error.originalError);
+    }
+  } else {
+    console.error("Unexpected error:", error);
+  }
+} finally {
+  await toolset?.close();
+}
+```
 
 ## ADK as MCP Server
 
@@ -255,5 +406,11 @@ Always properly close MCP connections and clean up resources to prevent memory l
     title="🤖 Agents"
     description="Learn how agents coordinate MCP tools"
     href="/docs/agents"
+  />
+
+  <Card
+    title="🖥️ MCP Servers"
+    description="Explore IQAI-built MCP servers"
+    href="/docs/mcp-servers"
   />
 </Cards>
