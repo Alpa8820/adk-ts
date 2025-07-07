@@ -95,7 +95,7 @@ export interface McpServerConfig {
 function createMcpConfig(
 	name: string,
 	packageName: string,
-	config: McpServerConfig,
+	config: McpServerConfig = {},
 ): McpConfig {
 	const { debug, description, retryOptions, env: envVars = {} } = config;
 
@@ -132,7 +132,7 @@ function createMcpConfig(
  * Required env vars: CONTRACT_ABI, CONTRACT_ADDRESS
  * Optional env vars: CONTRACT_NAME, CHAIN_ID, RPC_URL, WALLET_PRIVATE_KEY
  */
-export function McpAbi(config: McpServerConfig): McpToolset {
+export function McpAbi(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig("ABI MCP Client", "@iqai/mcp-abi", config);
 	return new McpToolset(mcpConfig);
 }
@@ -142,7 +142,7 @@ export function McpAbi(config: McpServerConfig): McpToolset {
  *
  * Required env vars: ATP_WALLET_PRIVATE_KEY, ATP_API_KEY
  */
-export function McpAtp(config: McpServerConfig): McpToolset {
+export function McpAtp(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig("ATP MCP Client", "@iqai/mcp-atp", config);
 	return new McpToolset(mcpConfig);
 }
@@ -152,7 +152,7 @@ export function McpAtp(config: McpServerConfig): McpToolset {
  *
  * Required env vars: WALLET_PRIVATE_KEY
  */
-export function McpBamm(config: McpServerConfig): McpToolset {
+export function McpBamm(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
 		"BAMM MCP Client",
 		"@iqai/mcp-bamm",
@@ -166,7 +166,7 @@ export function McpBamm(config: McpServerConfig): McpToolset {
  *
  * Required env vars: WALLET_PRIVATE_KEY
  */
-export function McpFraxlend(config: McpServerConfig): McpToolset {
+export function McpFraxlend(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
 		"Fraxlend MCP Client",
 		"@iqai/mcp-fraxlend",
@@ -195,7 +195,7 @@ export function McpIqWiki(config: McpServerConfig = {}): McpToolset {
  * Required env vars: ACCOUNT_ID, ACCOUNT_KEY
  * Optional env vars: NEAR_NETWORK_ID, NEAR_NODE_URL, NEAR_GAS_LIMIT
  */
-export function McpNearAgent(config: McpServerConfig): McpToolset {
+export function McpNearAgent(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
 		"NEAR Agent MCP Client",
 		"@iqai/mcp-near-agent",
@@ -210,7 +210,7 @@ export function McpNearAgent(config: McpServerConfig): McpToolset {
  * Required env vars: ACCOUNT_ID, ACCOUNT_KEY
  * Optional env vars: NEAR_NETWORK_ID, NEAR_NODE_URL, NEAR_GAS_LIMIT
  */
-export function McpNearIntentSwaps(config: McpServerConfig): McpToolset {
+export function McpNearIntentSwaps(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
 		"NEAR Intent Swaps MCP Client",
 		"@iqai/mcp-near-intent-swaps",
@@ -224,7 +224,7 @@ export function McpNearIntentSwaps(config: McpServerConfig): McpToolset {
  *
  * Required env vars: WALLET_PRIVATE_KEY
  */
-export function McpOdos(config: McpServerConfig): McpToolset {
+export function McpOdos(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
 		"ODOS MCP Client",
 		"@iqai/mcp-odos",
@@ -238,7 +238,7 @@ export function McpOdos(config: McpServerConfig): McpToolset {
  *
  * Required env vars: TELEGRAM_BOT_TOKEN
  */
-export function McpTelegram(config: McpServerConfig): McpToolset {
+export function McpTelegram(config: McpServerConfig = {}): McpToolset {
 	const mcpConfig = createMcpConfig(
 		"Telegram MCP Client",
 		"@iqai/mcp-telegram",
