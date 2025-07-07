@@ -6,11 +6,11 @@ description: Model Context Protocol tools for standardized integrations
 import { Cards, Card } from 'fumadocs-ui/components/card';
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Model Context Protocol (MCP) tools provide standardized interfaces for connecting LLMs with external applications, data sources, and services. ADK TypeScript supports both consuming MCP servers and exposing ADK tools as MCP servers.
+Model Context Protocol (Mcp) tools provide standardized interfaces for connecting LLMs with external applications, data sources, and services. ADK TypeScript supports both consuming Mcp servers and exposing ADK tools as Mcp servers.
 
 ## What is Model Context Protocol?
 
-MCP is an open standard that standardizes how Large Language Models communicate with external systems. It acts as a universal connection mechanism that simplifies context sharing, action execution, and system interaction.
+Mcp is an open standard that standardizes how Large Language Models communicate with external systems. It acts as a universal connection mechanism that simplifies context sharing, action execution, and system interaction.
 
 ### Key Components
 
@@ -20,49 +20,88 @@ MCP is an open standard that standardizes how Large Language Models communicate 
 - **Client-Server Architecture**: Standardized communication patterns
 
 <Callout type="info" title="Universal Standard">
-MCP enables any LLM to work with any MCP-compatible service, creating a universal ecosystem of AI-enabled tools and data sources.
+Mcp enables any LLM to work with any Mcp-compatible service, creating a universal ecosystem of AI-enabled tools and data sources.
 </Callout>
 
 ## Integration Patterns
 
-ADK TypeScript supports two primary MCP integration patterns:
+ADK TypeScript supports two primary Mcp integration patterns:
 
 <Cards>
   <Card
-    title="🔌 MCP Client"
-    description="Use existing MCP servers within ADK agents"
+    title="🔌 Mcp Client"
+    description="Use existing Mcp servers within ADK agents"
   />
 
   <Card
-    title="🖥️ MCP Server"
-    description="Expose ADK tools via MCP server for other clients"
+    title="🖥️ Mcp Server"
+    description="Expose ADK tools via Mcp server for other clients"
   />
 </Cards>
 
-## ADK as MCP Client
+## ADK as Mcp Client
 
-Connect your ADK agents to existing MCP servers to leverage external tools and data sources.
+Connect your ADK agents to existing Mcp servers to leverage external tools and data sources.
 
-### MCPToolset Class
+### Integration Options
 
-The `MCPToolset` class serves as the bridge between ADK agents and MCP servers:
+ADK TypeScript provides two ways to integrate with MCP servers:
 
-- **Connection Management**: Establish connections to local or remote MCP servers
+1. **Simplified Wrapper Functions** (Recommended) - Use dedicated functions like `McpAtp()`, `McpNearAgent()` for IQAI servers
+2. **McpToolset Class** (Legacy) - Direct `McpToolset` usage for any MCP server
+
+### McpToolset Class
+
+The `McpToolset` class serves as the bridge between ADK agents and Mcp servers:
+
+- **Connection Management**: Establish connections to local or remote Mcp servers
 - **Tool Discovery**: Query servers for available tools and capabilities
-- **Schema Adaptation**: Convert MCP schemas to ADK-compatible tools
-- **Call Proxying**: Forward tool calls to MCP servers and return results
+- **Schema Adaptation**: Convert Mcp schemas to ADK-compatible tools
+- **Call Proxying**: Forward tool calls to Mcp servers and return results
 - **Lifecycle Management**: Handle connection cleanup and resource management
 
-### Basic Integration
+### New Simplified Integration (Recommended)
 
-Here's how to integrate MCP servers with ADK TypeScript agents:
+For IQAI MCP servers, use the simplified wrapper functions:
+
+```typescript
+import { McpAtp, McpNearAgent, LlmAgent } from "@iqai/adk";
+
+// Create ATP toolset with simplified syntax
+const atpToolset = McpAtp({
+  env: {
+    ATP_WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+    ATP_API_KEY: process.env.ATP_API_KEY,
+  },
+  debug: process.env.NODE_ENV === "development",
+});
+
+// Get tools and create agent
+const atpTools = await atpToolset.getTools();
+const agent = new LlmAgent({
+  name: "blockchain_agent",
+  model: "gemini-2.5-flash",
+  description: "Agent for blockchain and DeFi operations",
+  tools: atpTools,
+});
+
+// Use the agent
+const response = await agent.run("Get ATP statistics for token 0x123...");
+
+// Clean up when done
+await atpToolset.close();
+```
+
+### Legacy Integration (McpToolset)
+
+Here's how to integrate Mcp servers using the traditional approach:
 
 ```typescript
 import { McpToolset, LlmAgent, type McpConfig } from "@iqai/adk";
 
-// Configure MCP connection
+// Configure Mcp connection
 const mcpConfig: McpConfig = {
-  name: "Filesystem MCP Client",
+  name: "Filesystem Mcp Client",
   description: "Client for filesystem operations",
   debug: process.env.NODE_ENV === "development",
   retryOptions: {
@@ -82,19 +121,19 @@ const mcpConfig: McpConfig = {
   },
 };
 
-// Initialize MCP toolset
+// Initialize Mcp toolset
 const mcpToolset = new McpToolset(mcpConfig);
 
 // Discover available tools
 const mcpTools = await mcpToolset.getTools();
-console.log(`Found ${mcpTools.length} MCP tools`);
+console.log(`Found ${mcpTools.length} Mcp tools`);
 
-// Create agent with MCP tools
+// Create agent with Mcp tools
 const agent = new LlmAgent({
   name: "filesystem_agent",
   model: "gemini-2.5-flash",
   description: "An agent that can perform filesystem operations",
-  instruction: "You can read, write, and manage files using MCP tools.",
+  instruction: "You can read, write, and manage files using Mcp tools.",
   tools: mcpTools,
 });
 
