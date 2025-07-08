@@ -1,5 +1,5 @@
 import { McpToolset } from "./index";
-import type { McpConfig } from "./types";
+import type { McpConfig, SamplingHandler } from "./types";
 
 /**
  * Simplified MCP Server Wrappers
@@ -70,6 +70,38 @@ import type { McpConfig } from "./types";
  *   tools: [...atpTools, ...fraxlendTools],
  * });
  * ```
+ *
+ * @example
+ * ```typescript
+ * // Using MCP servers with sampling handlers:
+ * import { createSamplingHandler, LlmResponse } from "@iqai/adk";
+ *
+ * const samplingHandler = createSamplingHandler(async (request) => {
+ *   // Handle MCP sampling requests
+ *   return new LlmResponse({
+ *     content: {
+ *       role: "model",
+ *       parts: [{ text: "Response from sampling handler" }],
+ *     },
+ *   });
+ * });
+ *
+ * const nearTools = await McpNearAgent({
+ *   env: {
+ *     ACCOUNT_ID: env.ACCOUNT_ID,
+ *     ACCOUNT_KEY: env.ACCOUNT_KEY,
+ *     NEAR_NETWORK_ID: "testnet",
+ *     PATH: env.PATH
+ *   },
+ *   samplingHandler
+ * }).getTools();
+ *
+ * const agent = new LlmAgent({
+ *   name: "near_assistant",
+ *   model: "gemini-2.5-flash",
+ *   tools: nearTools,
+ * });
+ * ```
  */
 
 /**
@@ -87,6 +119,8 @@ export interface McpServerConfig {
 		maxRetries?: number;
 		initialDelay?: number;
 	};
+	/** Sampling handler for processing MCP sampling requests */
+	samplingHandler?: SamplingHandler;
 }
 
 /**
@@ -97,7 +131,13 @@ function createMcpConfig(
 	packageName: string,
 	config: McpServerConfig = {},
 ): McpConfig {
-	const { debug, description, retryOptions, env: envVars = {} } = config;
+	const {
+		debug,
+		description,
+		retryOptions,
+		env: envVars = {},
+		samplingHandler,
+	} = config;
 
 	// Convert all environment values to strings
 	const env: Record<string, string> = {};
@@ -123,6 +163,7 @@ function createMcpConfig(
 			args: ["-y", packageName],
 			env,
 		},
+		samplingHandler,
 	};
 }
 
@@ -284,7 +325,7 @@ export function McpMemory(config: McpServerConfig = {}): McpToolset {
  * Generic MCP server function for any package
  *
  * @param packageName The npm package name of the MCP server
- * @param config Configuration object with environment variables
+ * @param config Configuration object with environment variables and optional sampling handler
  * @param name Optional custom name for the client
  */
 export function McpGeneric(
