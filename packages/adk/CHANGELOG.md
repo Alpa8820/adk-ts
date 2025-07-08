@@ -1,5 +1,11 @@
 # @iqai/adk
 
+## 0.1.4
+
+### Patch Changes
+
+- 5e68c31: Adds sampling handler for mcp-simplified-syntax
+
 ## 0.1.3
 
 ### Patch Changes
