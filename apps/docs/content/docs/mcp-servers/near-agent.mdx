@@ -1,0 +1,247 @@
+---
+title: NEAR Agent
+description: MCP server for NEAR blockchain agent operations
+---
+
+
+The NEAR Agent MCP server provides AI agents with comprehensive access to NEAR Protocol functionality, enabling blockchain operations, account management, and smart contract interactions.
+
+## Features
+
+- **Account Operations**: Create, manage, and query NEAR accounts
+- **Transaction Execution**: Send transactions and call smart contracts
+- **Balance Management**: Check NEAR token balances and transfers
+- **Smart Contract Interaction**: Deploy and interact with NEAR smart contracts
+- **Network Operations**: Support for mainnet, testnet, and custom networks
+- **Key Management**: Secure handling of NEAR account keys
+- **State Queries**: Read blockchain state and account information
+
+## Installation
+
+```bash
+npx @iqai/mcp-near-agent
+```
+
+## Quick Start
+
+```typescript
+import { McpNearAgent } from "@iqai/adk";
+
+const nearAgent = McpNearAgent({
+  env: {
+    ACCOUNT_ID: "your-account.testnet",
+    ACCOUNT_KEY: "ed25519:your-private-key-here",
+    NEAR_NETWORK_ID: "testnet"
+  },
+  debug: true
+});
+```
+
+## Configuration
+
+### Required Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `ACCOUNT_ID` | Your NEAR account identifier | `alice.testnet` |
+| `ACCOUNT_KEY` | Private key for the NEAR account | `ed25519:...` |
+
+### Optional Environment Variables
+
+| Variable | Description | Default | Options |
+|----------|-------------|---------|---------|
+| `NEAR_NETWORK_ID` | NEAR network to connect to | `mainnet` | `mainnet`, `testnet` |
+| `NEAR_RPC_URL` | Custom RPC endpoint | Network default | Any valid NEAR RPC URL |
+| `NEAR_WALLET_URL` | Wallet service URL | Network default | Custom wallet URL |
+| `NEAR_HELPER_URL` | Helper service URL | Network default | Custom helper URL |
+
+## Usage Examples
+
+### Basic Account Operations
+
+```typescript
+// Get account balance
+const balance = await nearAgent.tools.getAccountBalance({
+  accountId: "alice.testnet"
+});
+
+// Transfer NEAR tokens
+const transfer = await nearAgent.tools.transferNear({
+  receiverId: "bob.testnet",
+  amount: "1.5" // in NEAR
+});
+```
+
+### Smart Contract Interactions
+
+```typescript
+// Call a smart contract method
+const result = await nearAgent.tools.callContract({
+  contractId: "contract.testnet",
+  methodName: "get_greeting",
+  args: {},
+  attachedDeposit: "0"
+});
+
+// Deploy a smart contract
+const deployment = await nearAgent.tools.deployContract({
+  contractCode: wasmBinary,
+  initMethod: "init",
+  initArgs: { owner_id: "alice.testnet" }
+});
+```
+
+### Transaction Management
+
+```typescript
+// Send a complex transaction
+const transaction = await nearAgent.tools.sendTransaction({
+  receiverId: "contract.testnet",
+  actions: [
+    {
+      type: "FunctionCall",
+      method_name: "increment",
+      args: {},
+      gas: "30000000000000",
+      deposit: "0"
+    }
+  ]
+});
+```
+
+## Available Tools
+
+### Account Management
+- `getAccountBalance` - Check NEAR token balance
+- `getAccountInfo` - Get account details and state
+- `createSubAccount` - Create a new sub-account
+- `deleteAccount` - Delete an account and transfer remaining funds
+
+### Token Operations
+- `transferNear` - Send NEAR tokens to another account
+- `transferFt` - Transfer fungible tokens
+- `transferNft` - Transfer non-fungible tokens
+
+### Contract Interactions
+- `callContract` - Call a smart contract method
+- `deployContract` - Deploy a new smart contract
+- `upgradeContract` - Upgrade an existing contract
+- `getContractState` - Query contract storage
+
+### Transaction Tools
+- `sendTransaction` - Send custom transactions
+- `getTransaction` - Query transaction details
+- `getTransactionHistory` - Get account transaction history
+
+### Network Tools
+- `getNetworkInfo` - Get current network status
+- `getValidators` - List active validators
+- `getBlockInfo` - Get block information
+
+## Error Handling
+
+Common error scenarios and solutions:
+
+```typescript
+try {
+  const result = await nearAgent.tools.transferNear({
+    receiverId: "invalid.account",
+    amount: "1.0"
+  });
+} catch (error) {
+  if (error.type === "AccountNotFound") {
+    console.log("Recipient account does not exist");
+  } else if (error.type === "InsufficientFunds") {
+    console.log("Not enough NEAR tokens for transfer");
+  }
+}
+```
+
+## Security Best Practices
+
+1. **Key Management**: Store private keys securely using environment variables
+2. **Network Selection**: Always verify you're on the intended network
+3. **Amount Validation**: Double-check transaction amounts before sending
+4. **Gas Estimation**: Use appropriate gas limits for contract calls
+5. **Account Verification**: Verify recipient accounts exist before transfers
+
+## Network Configuration
+
+### Testnet Setup
+```typescript
+const testnetAgent = McpNearAgent({
+  env: {
+    ACCOUNT_ID: "your-account.testnet",
+    ACCOUNT_KEY: "ed25519:...",
+    NEAR_NETWORK_ID: "testnet"
+  }
+});
+```
+
+### Mainnet Setup
+```typescript
+const mainnetAgent = McpNearAgent({
+  env: {
+    ACCOUNT_ID: "your-account.near",
+    ACCOUNT_KEY: "ed25519:...",
+    NEAR_NETWORK_ID: "mainnet"
+  }
+});
+```
+
+## Integration with AI Agents
+
+The NEAR Agent MCP server is designed to work seamlessly with AI agents, providing natural language interfaces for blockchain operations:
+
+```typescript
+// AI agent can interpret: "Send 2 NEAR to bob.testnet"
+const response = await aiAgent.process(
+  "Transfer 2 NEAR tokens to bob.testnet from my account"
+);
+
+// AI agent can interpret: "What's my account balance?"
+const balance = await aiAgent.process(
+  "Check my NEAR account balance"
+);
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Connection Errors**
+- Verify `NEAR_NETWORK_ID` matches your account
+- Check if RPC endpoints are accessible
+- Ensure account credentials are correct
+
+**Transaction Failures**
+- Verify sufficient gas for operations
+- Check account has enough NEAR for transactions
+- Validate recipient account exists
+
+**Key Format Issues**
+- Ensure private key includes `ed25519:` prefix
+- Verify key corresponds to the specified account
+- Check key hasn't been rotated or changed
+
+### Debug Mode
+
+Enable debug logging for detailed operation information:
+
+```typescript
+const nearAgent = McpNearAgent({
+  env: {
+    ACCOUNT_ID: "your-account.testnet",
+    ACCOUNT_KEY: "ed25519:...",
+    NEAR_NETWORK_ID: "testnet"
+  },
+  debug: true  // Enable detailed logging
+});
+```
+
+## Resources
+
+- [NEAR Protocol Documentation](https://docs.near.org)
+- [NEAR Testnet Faucet](https://wallet.testnet.near.org)
+- [NEAR Explorer](https://explorer.near.org)
+- [NEAR CLI Tools](https://github.com/near/near-cli)

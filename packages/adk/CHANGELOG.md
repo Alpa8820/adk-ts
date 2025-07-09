@@ -1,5 +1,24 @@
 # @iqai/adk
 
+## 0.1.4
+
+### Patch Changes
+
+- 5e68c31: Adds sampling handler for mcp-simplified-syntax
+
+## 0.1.3
+
+### Patch Changes
+
+- f1cb8d4: Allow mcp interface to allow parameters optional
+
+## 0.1.2
+
+### Patch Changes
+
+- 17a5d3f: Fix MCP sampling
+- 0081ed9: Adds MCP simplified syntax for well known servers
+
 ## 0.1.1
 
 ### Patch Changes

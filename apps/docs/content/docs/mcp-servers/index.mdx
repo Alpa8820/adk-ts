@@ -1,0 +1,266 @@
+---
+title: Overview
+description: IQAI-built MCP servers for enhanced ADK TypeScript functionality
+---
+
+import { Cards, Card } from 'fumadocs-ui/components/card';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+IQAI has developed a collection of specialized Model Context Protocol (MCP) servers designed to enhance and extend the capabilities of ADK TypeScript agents. These servers provide seamless integration with various external services and data sources.
+
+## Available MCP Servers
+
+<Cards>
+  <Card
+    title="🔗 MCP ABI"
+    description="Smart contract ABI interactions for Ethereum-compatible blockchains"
+    href="/docs/mcp-servers/abi"
+  />
+  <Card
+    title="⚡ MCP ATP"
+    description="Interact with the IQ AI Agent Tokenization Platform"
+    href="/docs/mcp-servers/atp"
+  />
+  <Card
+    title="💰 MCP BAMM"
+    description="Borrow Automated Market Maker operations on Fraxtal"
+    href="/docs/mcp-servers/bamm"
+  />
+  <Card
+    title="💰 MCP FRAXLEND"
+    description="Interact with the Fraxlend lending platform"
+    href="/docs/mcp-servers/fraxlend"
+  />
+  <Card
+    title="📜 MCP IQWiki"
+    description="Access and manage IQ.wiki data and user activities"
+    href="/docs/mcp-servers/iqwiki"
+  />
+  <Card
+    title="🤖 MCP NEAR Agent"
+    description="NEAR Protocol blockchain integration with AI-driven event processing"
+    href="/docs/mcp-servers/near"
+  />
+  <Card
+    title="🔄 MCP ODOS"
+    description="Interact with decentralized exchanges through ODOS aggregation"
+    href="/docs/mcp-servers/odos"
+  />
+  <Card
+    title="📱 MCP Telegram"
+    description="Interact with Telegram bots and channels for messaging automation"
+    href="/docs/mcp-servers/telegram"
+  />
+</Cards>
+
+## Getting Started
+
+To use these MCP servers with your ADK TypeScript agents, you'll need to:
+
+1. **Install the MCP server** you want to use
+2. **Configure the connection** in your ADK agent
+3. **Add the tools** to your agent's toolset
+4. **Start using** the enhanced functionality
+
+<Callout type="info" title="Prerequisites">
+Make sure you have the basic MCP integration set up in your ADK TypeScript project. See the [MCP Tools](/docs/tools/mcp-tools) section for general MCP integration guidance.
+</Callout>
+
+## Integration Example
+
+Here's how to connect to an IQAI MCP server using ADK TypeScript:
+
+### Basic Setup (New Simplified Syntax)
+
+```typescript
+import { McpAtp, LlmAgent } from "@iqai/adk";
+
+// Create ATP toolset with simplified syntax
+const toolset = McpAtp({
+  env: {
+    ATP_WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+    ATP_API_KEY: process.env.ATP_API_KEY,
+  },
+  debug: false,
+  retryOptions: {
+    maxRetries: 2,
+    initialDelay: 200,
+  },
+});
+
+// Get available tools
+const mcpTools = await toolset.getTools();
+
+// Create agent with MCP tools
+const agent = new LlmAgent({
+  name: "mcp_assistant",
+  model: "gemini-2.5-flash",
+  description: "An assistant with MCP server capabilities",
+  tools: mcpTools,
+});
+```
+
+### Legacy Verbose Syntax (Still Supported)
+
+```typescript
+import { McpToolset, LlmAgent, type McpConfig } from "@iqai/adk";
+
+// Configure MCP connection (old way)
+const mcpConfig: McpConfig = {
+  name: "ATP Mcp Client",
+  description: "Client for the @iqai/mcp-atp server",
+  debug: false,
+  retryOptions: {
+    maxRetries: 2,
+    initialDelay: 200,
+  },
+  transport: {
+    mode: "stdio",
+    command: "pnpm",
+    args: ["dlx", "@iqai/mcp-atp"],
+    env: {
+      ATP_WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+      ATP_API_KEY: process.env.ATP_API_KEY,
+      PATH: process.env.PATH || "",
+    },
+  },
+};
+
+// Initialize toolset
+const toolset = new McpToolset(mcpConfig);
+
+// Get available tools
+const mcpTools = await toolset.getTools();
+
+// Create agent with Mcp tools
+const agent = new LlmAgent({
+  name: "mcp_assistant",
+  model: "gemini-2.5-flash",
+  description: "An assistant with Mcp server capabilities",
+  tools: mcpTools,
+});
+```
+
+### Multiple MCP Servers (New Simplified Syntax)
+
+You can connect to multiple IQAI MCP servers simultaneously:
+
+```typescript
+import { McpAtp, McpFraxlend, McpNearAgent, LlmAgent } from "@iqai/adk";
+
+// Connect to multiple servers with simplified syntax
+const atpToolset = McpAtp({
+  env: {
+    ATP_WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+    ATP_API_KEY: process.env.ATP_API_KEY,
+  },
+});
+
+const fraxlendToolset = McpFraxlend({
+  env: {
+    WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+  },
+});
+
+const nearToolset = McpNearAgent({
+  env: {
+    ACCOUNT_ID: process.env.NEAR_ACCOUNT_ID,
+    ACCOUNT_KEY: process.env.NEAR_ACCOUNT_KEY,
+    NEAR_NETWORK_ID: "testnet",
+  },
+});
+
+// Combine tools from multiple servers
+const atpTools = await atpToolset.getTools();
+const fraxlendTools = await fraxlendToolset.getTools();
+const nearTools = await nearToolset.getTools();
+const allTools = [...atpTools, ...fraxlendTools, ...nearTools];
+
+// Create agent with combined tools
+const agent = new LlmAgent({
+  name: "multi_mcp_assistant",
+  model: "gemini-2.5-flash",
+  tools: allTools,
+});
+```
+
+### Legacy Multiple Servers Syntax
+
+```typescript
+import { McpToolset } from "@iqai/adk";
+
+// Connect to multiple servers (old way)
+const atpToolset = new McpToolset({
+  name: "ATP Client",
+  transport: {
+    mode: "stdio",
+    command: "pnpm",
+    args: ["dlx", "@iqai/mcp-atp"],
+    env: {
+      ATP_WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+      ATP_API_KEY: process.env.ATP_API_KEY,
+    },
+  },
+});
+
+const fraxlendToolset = new McpToolset({
+  name: "Fraxlend Client",
+  transport: {
+    mode: "stdio",
+    command: "pnpm",
+    args: ["dlx", "@iqai/mcp-fraxlend"],
+    env: {
+      WALLET_PRIVATE_KEY: process.env.WALLET_PRIVATE_KEY,
+    },
+  },
+});
+
+// Combine tools from multiple servers
+const atpTools = await atpToolset.getTools();
+const fraxlendTools = await fraxlendToolset.getTools();
+const allTools = [...atpTools, ...fraxlendTools];
+
+// Create agent with combined tools
+const agent = new LlmAgent({
+  name: "multi_mcp_assistant",
+  model: "gemini-2.5-flash",
+  tools: allTools,
+});
+```
+
+### Resource Cleanup
+
+Always clean up MCP resources when done:
+
+```typescript
+try {
+  // Use your agent and tools
+  const response = await agent.run("Get ATP statistics for contract 0x123...");
+} finally {
+  // Clean up resources
+  await toolset.close();
+}
+```
+
+## Integration with ADK TypeScript
+
+All IQAI MCP servers are designed to work seamlessly with:
+- **New simplified syntax** using wrapper functions like `McpAtp()`, `McpNearAgent()`, etc.
+- **Legacy ADK TypeScript `McpToolset` class** for backward compatibility
+
+Both approaches provide:
+
+- **Automatic tool discovery** and registration
+- **Type-safe** tool usage
+- **Error handling** and retry logic
+- **Resource management** and cleanup
+
+## Support and Documentation
+
+Each MCP server includes comprehensive documentation covering:
+
+- Installation and setup instructions
+- Configuration options (both simplified and legacy syntax)
+- Available tools and their parameters
+- Usage examples and best practices
+- Troubleshooting and common issues

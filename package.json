@@ -3,6 +3,8 @@
 	"private": true,
 	"scripts": {
 		"build": "turbo build --concurrency 50",
+		"build:docs": "turbo build --filter=docs",
+		"start:docs": "turbo start --filter=docs",
 		"dev": "turbo dev --concurrency 50",
 		"clean": "turbo clean && rm -rf node_modules",
 		"clean-modules": "echo '🧹 Cleaning all node_modules directories...' && find . -name 'node_modules' -type d -exec rm -rf {} + && echo '✨ All node_modules directories have been removed!'",

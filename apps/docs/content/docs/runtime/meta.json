@@ -1,0 +1,10 @@
+{
+  "icon": "Cpu",
+  "pages": [
+    "index",
+    "event-loop",
+    "invocation-lifecycle",
+    "components",
+    "performance"
+  ]
+}

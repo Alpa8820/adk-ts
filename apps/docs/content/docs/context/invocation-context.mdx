@@ -1,0 +1,684 @@
+---
+title: InvocationContext
+description: Complete framework access for agent core implementation and invocation management
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+InvocationContext is the most comprehensive context object in ADK, providing complete access to the framework's capabilities. It's primarily used in agent core implementation and represents the full execution environment for a single invocation.
+
+## Overview
+
+InvocationContext contains all the information and services needed for a complete agent invocation lifecycle. Unlike other context types, it's standalone and doesn't extend from ReadonlyContext, providing direct access to all framework components.
+
+```typescript
+import { InvocationContext } from "@iqai/adk";
+```
+
+## Core Properties
+
+### Service References
+
+Direct access to all configured services:
+
+```typescript
+readonly artifactService?: BaseArtifactService;
+readonly sessionService: BaseSessionService;
+readonly memoryService?: BaseMemoryService;
+```
+
+### Invocation Identity
+
+Unique identification and tracking for the current invocation:
+
+```typescript
+readonly invocationId: string;
+readonly branch?: string;
+```
+
+### Agent and Session Management
+
+Current execution context and session information:
+
+```typescript
+agent: BaseAgent;
+readonly session: Session;
+readonly userContent?: Content;
+```
+
+### Execution Control
+
+Flags and controls for managing invocation lifecycle:
+
+```typescript
+endInvocation: boolean;
+liveRequestQueue?: LiveRequestQueue;
+activeStreamingTools?: Record<string, ActiveStreamingTool>;
+runConfig?: RunConfig;
+```
+
+### Convenience Properties
+
+Derived properties for common access patterns:
+
+```typescript
+get appName(): string;
+get userId(): string;
+```
+
+## Key Methods
+
+### incrementLlmCallCount()
+Tracks and enforces LLM call limits:
+
+```typescript
+incrementLlmCallCount(): void
+```
+
+Throws `LlmCallsLimitExceededError` if the configured limit is exceeded.
+
+### createChildContext()
+Creates a child context for sub-agent execution:
+
+```typescript
+createChildContext(agent: BaseAgent): InvocationContext
+```
+
+This maintains the same invocation ID while updating the branch and agent references.
+
+## Agent Implementation Patterns
+
+### Basic Agent Structure
+
+Most custom agents using InvocationContext follow this pattern:
+
+```typescript
+import { BaseAgent, InvocationContext, Event } from "@iqai/adk";
+
+export class CustomAgent extends BaseAgent {
+  protected async *runAsyncImpl(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    // Access full framework capabilities
+    const session = context.session;
+    const artifactService = context.artifactService;
+    const memoryService = context.memoryService;
+
+    // Your custom agent logic here
+    yield* this.processWithFullContext(context);
+  }
+
+  private async *processWithFullContext(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    // Use all available services and state
+    if (context.memoryService) {
+      const memories = await context.memoryService.searchMemory({
+        query: "relevant context",
+        appName: context.appName,
+        userId: context.userId
+      });
+
+      // Process memories and generate events
+    }
+
+    // Access session state
+    const currentState = context.session.state;
+
+    // Generate appropriate events
+    const event = new Event({
+      invocationId: context.invocationId,
+      author: this.name,
+      content: {
+        parts: [{ text: "Processing complete" }]
+      }
+    });
+
+    yield event;
+  }
+}
+```
+
+### Multi-Service Agent
+
+An agent that coordinates multiple services:
+
+```typescript
+export class MultiServiceAgent extends BaseAgent {
+  protected async *runAsyncImpl(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    try {
+      // Initialize processing state
+      const processingState = {
+        started: new Date().toISOString(),
+        invocationId: context.invocationId,
+        services: {
+          artifact: !!context.artifactService,
+          memory: !!context.memoryService,
+          session: !!context.sessionService
+        }
+      };
+
+      // Update session state
+      context.session.state.processing = processingState;
+
+      // Process with available services
+      if (context.memoryService && context.artifactService) {
+        yield* this.processWithMemoryAndArtifacts(context);
+      } else if (context.memoryService) {
+        yield* this.processWithMemoryOnly(context);
+      } else {
+        yield* this.processBasic(context);
+      }
+
+    } catch (error) {
+      // Handle errors with full context
+      yield this.createErrorEvent(context, error);
+    }
+  }
+
+  private async *processWithMemoryAndArtifacts(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    // Search memory for context
+    const memoryResults = await context.memoryService!.searchMemory({
+      query: "user preferences and history",
+      appName: context.appName,
+      userId: context.userId
+    });
+
+    // Load relevant artifacts
+    const artifacts = await context.artifactService!.listArtifactKeys({
+      appName: context.appName,
+      userId: context.userId,
+      sessionId: context.session.id
+    });
+
+    // Process and combine information
+    const combinedContext = {
+      memories: memoryResults.memories || [],
+      artifacts: artifacts,
+      sessionHistory: context.session.events?.length || 0
+    };
+
+    // Generate comprehensive response
+    yield new Event({
+      invocationId: context.invocationId,
+      author: this.name,
+      content: {
+        parts: [{
+          text: `Found ${combinedContext.memories.length} relevant memories and ${combinedContext.artifacts.length} artifacts`
+        }]
+      }
+    });
+  }
+
+  private createErrorEvent(context: InvocationContext, error: unknown): Event {
+    return new Event({
+      invocationId: context.invocationId,
+      author: this.name,
+      content: {
+        parts: [{
+          text: `Error in multi-service processing: ${error instanceof Error ? error.message : String(error)}`
+        }]
+      },
+      errorCode: "MULTI_SERVICE_ERROR",
+      errorMessage: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+```
+
+## Service Management Patterns
+
+### Conditional Service Usage
+
+Handle optional services gracefully:
+
+```typescript
+async function processWithAvailableServices(context: InvocationContext) {
+  const results = {
+    sessionData: context.session.state,
+    artifacts: [] as string[],
+    memories: [] as any[],
+    processing: {
+      timestamp: new Date().toISOString(),
+      invocationId: context.invocationId
+    }
+  };
+
+  // Use artifact service if available
+  if (context.artifactService) {
+    try {
+      results.artifacts = await context.artifactService.listArtifactKeys({
+        appName: context.appName,
+        userId: context.userId,
+        sessionId: context.session.id
+      });
+    } catch (error) {
+      console.warn("Artifact service error:", error);
+    }
+  }
+
+  // Use memory service if available
+  if (context.memoryService) {
+    try {
+      const memoryResponse = await context.memoryService.searchMemory({
+        query: "user context",
+        appName: context.appName,
+        userId: context.userId
+      });
+      results.memories = memoryResponse.memories || [];
+    } catch (error) {
+      console.warn("Memory service error:", error);
+    }
+  }
+
+  return results;
+}
+```
+
+## Branching and Child Contexts
+
+### Sub-Agent Delegation
+
+Use child contexts for sub-agent execution:
+
+```typescript
+export class DelegatingAgent extends BaseAgent {
+  protected async *runAsyncImpl(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    // Determine if delegation is needed
+    const userInput = context.userContent?.parts?.[0]?.text || "";
+
+    if (this.requiresSpecialization(userInput)) {
+      const specializedAgent = this.findSpecializedAgent(userInput);
+
+      if (specializedAgent) {
+        // Create child context for specialized agent
+        const childContext = context.createChildContext(specializedAgent);
+
+        // Update branch tracking
+        console.log(`Delegating to ${specializedAgent.name}, branch: ${childContext.branch}`);
+
+        // Execute specialized agent
+        yield* specializedAgent.runAsync(childContext);
+
+        // Post-delegation processing
+        yield this.createDelegationSummary(context, specializedAgent.name);
+      }
+    } else {
+      // Handle directly
+      yield* this.handleDirectly(context);
+    }
+  }
+
+  private requiresSpecialization(input: string): boolean {
+    return input.includes("code") || input.includes("math") || input.includes("research");
+  }
+
+  private findSpecializedAgent(input: string): BaseAgent | null {
+    // Return appropriate specialized agent based on input
+    return null; // Implementation depends on your agent architecture
+  }
+
+  private createDelegationSummary(context: InvocationContext, agentName: string): Event {
+    return new Event({
+      invocationId: context.invocationId,
+      author: this.name,
+      content: {
+        parts: [{
+          text: `Completed delegation to ${agentName} for specialized processing`
+        }]
+      }
+    });
+  }
+}
+```
+
+### Branch-Aware Processing
+
+Handle branch context for complex agent trees:
+
+```typescript
+function processBranchContext(context: InvocationContext) {
+  const branchInfo = {
+    current: context.branch || "root",
+    depth: context.branch?.split('.').length || 0,
+    parentAgents: context.branch?.split('.').slice(0, -1) || [],
+    currentAgent: context.agent.name
+  };
+
+  // Update session with branch tracking
+  context.session.state.branchHistory =
+    context.session.state.branchHistory || [];
+
+  context.session.state.branchHistory.push({
+    branch: branchInfo.current,
+    agent: branchInfo.currentAgent,
+    timestamp: new Date().toISOString(),
+    invocationId: context.invocationId
+  });
+
+  // Keep only recent branch history
+  context.session.state.branchHistory =
+    context.session.state.branchHistory.slice(-20);
+
+  return branchInfo;
+}
+```
+
+## Cost and Limit Management
+
+### LLM Call Tracking
+
+Monitor and enforce LLM usage limits:
+
+```typescript
+export class CostAwareAgent extends BaseAgent {
+  protected async *runAsyncImpl(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    try {
+      // Track LLM call
+      context.incrementLlmCallCount();
+
+      // Update cost tracking in state
+      const costTracking = context.session.state.costTracking || {
+        llmCalls: 0,
+        totalCost: 0
+      };
+
+      costTracking.llmCalls += 1;
+      context.session.state.costTracking = costTracking;
+
+      // Process with cost awareness
+      yield* this.processWithCostTracking(context);
+
+    } catch (error) {
+      if (error instanceof LlmCallsLimitExceededError) {
+        yield this.createLimitExceededEvent(context);
+        return;
+      }
+      throw error;
+    }
+  }
+
+  private createLimitExceededEvent(context: InvocationContext): Event {
+    return new Event({
+      invocationId: context.invocationId,
+      author: this.name,
+      content: {
+        parts: [{
+          text: "LLM call limit exceeded for this invocation. Please try again later."
+        }]
+      },
+      errorCode: "LLM_LIMIT_EXCEEDED"
+    });
+  }
+}
+```
+
+## Advanced Patterns
+
+### State Management Across Services
+
+Coordinate state changes across all services:
+
+```typescript
+async function synchronizeState(context: InvocationContext, updates: Record<string, any>) {
+  const syncId = `sync_${Date.now()}`;
+
+  try {
+    // Apply updates to session state
+    Object.assign(context.session.state, updates, {
+      lastSync: {
+        id: syncId,
+        timestamp: new Date().toISOString(),
+        invocationId: context.invocationId
+      }
+    });
+
+    // Persist session changes
+    await context.sessionService.updateSession(context.session);
+
+    // Save state snapshot to artifacts if artifact service available
+    if (context.artifactService) {
+      await context.artifactService.saveArtifact({
+        appName: context.appName,
+        userId: context.userId,
+        sessionId: context.session.id,
+        filename: `state_snapshot_${syncId}.json`,
+        artifact: {
+          text: JSON.stringify(context.session.state, null, 2)
+        }
+      });
+    }
+
+    // Update memory with state changes if memory service available
+    if (context.memoryService && updates.userPreferences) {
+      // Example: Store user preferences in memory for future sessions
+      await context.memoryService.saveMemory({
+        appName: context.appName,
+        userId: context.userId,
+        content: `User preferences updated: ${JSON.stringify(updates.userPreferences)}`,
+        metadata: {
+          type: "user_preferences",
+          syncId: syncId
+        }
+      });
+    }
+
+    return { success: true, syncId };
+
+  } catch (error) {
+    // Handle synchronization failure
+    context.session.state.lastSyncError = {
+      syncId,
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString()
+    };
+
+    throw error;
+  }
+}
+```
+
+### Invocation Lifecycle Management
+
+Manage the complete invocation lifecycle:
+
+```typescript
+export class LifecycleAwareAgent extends BaseAgent {
+  protected async *runAsyncImpl(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    // Initialize invocation
+    yield* this.initializeInvocation(context);
+
+    try {
+      // Main processing
+      yield* this.processMain(context);
+
+      // Check for early termination
+      if (context.endInvocation) {
+        yield* this.handleEarlyTermination(context);
+        return;
+      }
+
+      // Finalize invocation
+      yield* this.finalizeInvocation(context);
+
+    } catch (error) {
+      yield* this.handleInvocationError(context, error);
+    }
+  }
+
+  private async *initializeInvocation(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    // Set up invocation tracking
+    context.session.state.currentInvocation = {
+      id: context.invocationId,
+      started: new Date().toISOString(),
+      agent: this.name,
+      branch: context.branch
+    };
+
+    yield new Event({
+      invocationId: context.invocationId,
+      author: this.name,
+      content: {
+        parts: [{ text: "Invocation initialized" }]
+      }
+    });
+  }
+
+  private async *finalizeInvocation(
+    context: InvocationContext
+  ): AsyncGenerator<Event, void, unknown> {
+    // Clean up and finalize
+    if (context.session.state.currentInvocation) {
+      context.session.state.currentInvocation.completed = new Date().toISOString();
+    }
+
+    // Save final state if needed
+    if (context.artifactService) {
+      await context.artifactService.saveArtifact({
+        appName: context.appName,
+        userId: context.userId,
+        sessionId: context.session.id,
+        filename: `invocation_${context.invocationId}_final.json`,
+        artifact: {
+          text: JSON.stringify({
+            invocationId: context.invocationId,
+            finalState: context.session.state,
+            completed: new Date().toISOString()
+          }, null, 2)
+        }
+      });
+    }
+
+    yield new Event({
+      invocationId: context.invocationId,
+      author: this.name,
+      content: {
+        parts: [{ text: "Invocation completed successfully" }]
+      }
+    });
+  }
+}
+```
+
+## Best Practices
+
+### Service Error Handling
+
+```typescript
+async function robustServiceOperation(context: InvocationContext) {
+  const results = {
+    services: {
+      session: { available: true, success: false },
+      artifact: { available: !!context.artifactService, success: false },
+      memory: { available: !!context.memoryService, success: false }
+    },
+    errors: [] as string[]
+  };
+
+  // Session service (always available)
+  try {
+    await context.sessionService.updateSession(context.session);
+    results.services.session.success = true;
+  } catch (error) {
+    results.errors.push(`Session: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  // Artifact service (optional)
+  if (context.artifactService) {
+    try {
+      await context.artifactService.listArtifactKeys({
+        appName: context.appName,
+        userId: context.userId,
+        sessionId: context.session.id
+      });
+      results.services.artifact.success = true;
+    } catch (error) {
+      results.errors.push(`Artifact: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  // Memory service (optional)
+  if (context.memoryService) {
+    try {
+      await context.memoryService.searchMemory({
+        query: "test",
+        appName: context.appName,
+        userId: context.userId
+      });
+      results.services.memory.success = true;
+    } catch (error) {
+      results.errors.push(`Memory: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  return results;
+}
+```
+
+### Resource Cleanup
+
+```typescript
+async function cleanupInvocationResources(context: InvocationContext) {
+  // Clean up temporary state
+  delete context.session.state.temp;
+
+  // Clean up old tracking data
+  if (context.session.state.invocationHistory) {
+    // Keep only last 10 invocations
+    context.session.state.invocationHistory =
+      context.session.state.invocationHistory.slice(-10);
+  }
+
+  // Clean up old artifacts if artifact service available
+  if (context.artifactService) {
+    const artifacts = await context.artifactService.listArtifactKeys({
+      appName: context.appName,
+      userId: context.userId,
+      sessionId: context.session.id
+    });
+
+    // Remove temp artifacts
+    const tempArtifacts = artifacts.filter(name => name.startsWith('temp_'));
+    for (const tempArtifact of tempArtifacts) {
+      try {
+        await context.artifactService.deleteArtifact({
+          appName: context.appName,
+          userId: context.userId,
+          sessionId: context.session.id,
+          filename: tempArtifact
+        });
+      } catch (error) {
+        console.warn(`Failed to clean up ${tempArtifact}:`, error);
+      }
+    }
+  }
+
+  // Update session with cleanup info
+  context.session.state.lastCleanup = {
+    invocationId: context.invocationId,
+    timestamp: new Date().toISOString()
+  };
+}
+```
+
+## Related Contexts
+
+InvocationContext provides the foundation for all other context types:
+
+- **ReadonlyContext**: Provides safe read-only access to basic invocation information
+- **CallbackContext**: Extends ReadonlyContext with state management capabilities
+- **ToolContext**: Extends CallbackContext with memory search and enhanced tool features
+
+All other contexts can be derived from or work alongside InvocationContext in different execution scenarios.

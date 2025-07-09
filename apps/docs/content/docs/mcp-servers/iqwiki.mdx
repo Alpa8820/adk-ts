@@ -1,0 +1,139 @@
+---
+title: MCP IQWiki
+description: Model Context Protocol Server for IQ.wiki
+---
+
+**Package**: [`@iqai/mcp-iqwiki`](https://www.npmjs.com/package/@iqai/mcp-iqwiki)
+**Purpose**: Interacting with IQ.wiki data using the Model Context Protocol.
+
+## Features
+
+- Exposes tools to access wiki information such as specific wikis by ID, user-created wikis, user-edited wikis, and detailed wiki activities.
+- Allows MCP-compatible clients (like AI assistants, IDE extensions, or custom applications) to access IQ.wiki data.
+
+## Available Tools
+
+The server exposes the following tools that MCP clients can utilize:
+
+### `GET_WIKI`
+Get details about a specific wiki from the IQ.wiki platform.
+
+- Parameters: `id` (string) - The ID of the wiki to retrieve.
+
+### `GET_USER_CREATED_WIKIS`
+List wikis created by a specific user on IQ.wiki.
+
+- Parameters: `id` (string) - The Ethereum address of the user.
+- Parameters: `timeFrameSeconds` (number, optional) - Time frame in seconds to filter results.
+
+### `GET_USER_EDITED_WIKIS`
+List wikis edited by a specific user on IQ.wiki.
+
+- Parameters: `id` (string) - The Ethereum address of the user.
+- Parameters: `timeFrameSeconds` (number, optional) - Time frame in seconds to filter results.
+
+### `GET_USER_WIKI_ACTIVITIES`
+Get detailed wiki activities (creations or edits) for a user on IQ.wiki.
+
+- Parameters: `id` (string) - The Ethereum address of the user.
+- Parameters: `activityType` (enum: "CREATED" | "UPDATED", optional) - Type of activity to filter by.
+- Parameters: `timeFrameSeconds` (number, optional) - Time frame in seconds to filter results.
+
+## Environment Variables
+
+N/A - This server does not require environment variables.
+
+## Configuration Example
+
+```json
+{
+  "mcpServers": {
+    "iq-wiki-mcp-server": {
+      "command": "pnpm",
+      "args": ["dlx", "@iqai/mcp-iqwiki"]
+    }
+  }
+}
+```
+
+**Alternative if Globally Installed:**
+
+If you have installed `@iqai/mcp-iqwiki` globally, you can simplify the command:
+
+```json
+{
+  "mcpServers": {
+    "iq-wiki-mcp-server": {
+      "command": "mcp-iqwiki",
+      "args": []
+    }
+  }
+}
+```
+
+## Usage Examples
+
+### GET_WIKI
+
+```json
+{
+  "id": "bitcoin"
+}
+```
+
+### GET_USER_CREATED_WIKIS
+
+```json
+{
+  "id": "0x8AF7a19a26d8FBC48dEfB35AEfb15Ec8c407f889",
+  "timeFrameSeconds": 3600
+}
+```
+
+### GET_USER_EDITED_WIKIS
+
+```json
+{
+  "id": "0x8AF7a19a26d8FBC48dEfB35AEfb15Ec8c407f889"
+}
+```
+
+### GET_USER_WIKI_ACTIVITIES
+
+```json
+{
+  "id": "0x8AF7a19a26d8FBC48dEfB35AEfb15Ec8c407f889",
+  "activityType": "CREATED",
+  "timeFrameSeconds": 86400
+}
+```
+
+## Response Examples
+
+```
+📜 Wiki Edited
+- Title: Bitcoin
+- Summary: Bitcoin is a decentralized digital currency...
+- Edited: 5/6/2023, 1:26:58 AM
+- Changes: 52 words (21.36%)
+- Modified sections: content, tags
+
+🔗 Source: https://iq.wiki/revision/0f9ed751-f46a-40f7-af56-a54cc8951754
+🔗 Transaction: https://polygonscan.com/tx/0xabc...
+
+📜 Wiki Created
+- Title: Ethereum
+- Summary: Ethereum is a decentralized platform...
+- Created: 5/5/2023, 11:03:26 PM
+
+🔗 Source: https://iq.wiki/ethereum
+🔗 Transaction: https://polygonscan.com/tx/0x456...
+```
+
+## Error Handling
+
+```
+Error retrieving user wiki activities: User has no wiki activities
+Error retrieving user edited wikis: user does not exist
+Error retrieving wiki: Wiki Not found
+```

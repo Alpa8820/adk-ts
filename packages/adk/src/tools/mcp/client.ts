@@ -279,35 +279,48 @@ export class McpClientService {
 			return;
 		}
 
-		client.setRequestHandler(CreateMessageRequestSchema, async (request) => {
-			try {
-				this.logger.debug("Received sampling request:", request);
+		try {
+			// Use the official MCP SDK schema for sampling requests
+			client.setRequestHandler(
+				CreateMessageRequestSchema,
+				async (request: any) => {
+					try {
+						this.logger.debug("Received sampling request:", request);
 
-				const response =
-					await this.mcpSamplingHandler!.handleSamplingRequest(request);
+						const response =
+							await this.mcpSamplingHandler!.handleSamplingRequest(request);
 
-				if (this.config.debug) {
-					console.log("✅ Sampling request completed successfully");
-				}
+						if (this.config.debug) {
+							console.log("✅ Sampling request completed successfully");
+						}
 
-				return response;
-			} catch (error) {
-				console.error("❌ Error handling sampling request:", error);
+						return response;
+					} catch (error) {
+						console.error("❌ Error handling sampling request:", error);
 
-				if (error instanceof McpError) {
-					throw error;
-				}
+						if (error instanceof McpError) {
+							throw error;
+						}
 
-				throw new McpError(
-					`Sampling request failed: ${error instanceof Error ? error.message : String(error)}`,
-					McpErrorType.SAMPLING_ERROR,
-					error instanceof Error ? error : undefined,
+						throw new McpError(
+							`Sampling request failed: ${error instanceof Error ? error.message : String(error)}`,
+							McpErrorType.SAMPLING_ERROR,
+							error instanceof Error ? error : undefined,
+						);
+					}
+				},
+			);
+
+			if (this.config.debug) {
+				console.log("🎯 Sampling handler registered successfully");
+			}
+		} catch (error) {
+			console.error("Failed to setup sampling handler:", error);
+			if (this.config.debug) {
+				console.log(
+					"⚠️ Sampling handler registration failed, continuing without sampling support",
 				);
 			}
-		});
-
-		if (this.config.debug) {
-			console.log("🎯 Sampling handler registered successfully");
 		}
 	}
 

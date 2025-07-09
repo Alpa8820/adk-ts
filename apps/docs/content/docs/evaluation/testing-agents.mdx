@@ -1,0 +1,336 @@
+---
+title: Testing Agents
+description: Current approaches and future automated testing methods
+---
+import { Callout } from 'fumadocs-ui/components/callout';
+
+Agent testing involves validating behavior across multiple dimensions from tool usage to response quality. Currently, `@iqai/adk` supports manual testing approaches with automated frameworks coming soon.
+
+## Current Testing Approaches
+
+### Manual Testing with Examples
+
+The most immediate way to test agents is through the provided examples and custom test scripts:
+
+```typescript
+import { LlmAgent, Runner, InMemorySessionService } from '@iqai/adk';
+
+async function testAgent() {
+  const agent = new LlmAgent({
+    name: "test_agent",
+    model: "gemini-2.5-flash",
+    description: "Agent for testing",
+    instruction: "You are a helpful assistant",
+  });
+
+  const sessionService = new InMemorySessionService();
+  const session = await sessionService.createSession("test_app", "test_user");
+
+  const runner = new Runner({
+    appName: "test_app",
+    agent,
+    sessionService,
+  });
+
+  // Test specific scenarios
+  await testScenario(runner, session.id, "What is 2 + 2?");
+  await testScenario(runner, session.id, "Help me plan a meeting");
+}
+
+async function testScenario(runner: Runner, sessionId: string, query: string) {
+  console.log(`Testing: ${query}`);
+
+  const events = [];
+  for await (const event of runner.runAsync({
+    userId: "test_user",
+    sessionId,
+    newMessage: { parts: [{ text: query }] },
+  })) {
+    events.push(event);
+    if (event.content?.parts && !event.partial) {
+      console.log(`Response: ${event.content.parts.map(p => p.text).join('')}`);
+    }
+  }
+
+  // Manual validation
+  validateResponse(events, query);
+}
+
+function validateResponse(events: Event[], query: string) {
+  // Custom validation logic
+  const finalEvents = events.filter(e => e.isFinalResponse());
+  console.log(`Generated ${finalEvents.length} final responses`);
+
+  // Check for specific criteria
+  if (query.includes("plan")) {
+    // Verify planning behavior
+  }
+
+  if (query.includes("calculate")) {
+    // Verify calculation accuracy
+  }
+}
+```
+
+### Session-Based Testing
+
+Use session services to test multi-turn conversations:
+
+```typescript
+async function testConversationFlow() {
+  const sessionService = new InMemorySessionService();
+  const session = await sessionService.createSession("test_app", "user_123");
+
+  const testTurns = [
+    "Hello, I need help with my project",
+    "It's a web development project using React",
+    "What are the best practices for state management?",
+    "Can you provide specific examples?"
+  ];
+
+  for (const turn of testTurns) {
+    console.log(`\n--- Turn: ${turn} ---`);
+    await testScenario(runner, session.id, turn);
+
+    // Analyze session state
+    const updatedSession = await sessionService.getSession("test_app", "user_123", session.id);
+    console.log(`Session has ${updatedSession?.events?.length || 0} events`);
+  }
+}
+```
+
+### Tool Usage Validation
+
+Test agent tool interactions by monitoring function calls:
+
+```typescript
+function validateToolUsage(events: Event[]) {
+  const functionCalls = events
+    .flatMap(e => e.getFunctionCalls())
+    .map(fc => ({ name: fc.name, args: fc.args }));
+
+  console.log('Function calls made:', functionCalls);
+
+  // Validate expected tool usage
+  const expectedTools = ['search_tool', 'calculator_tool'];
+  const usedTools = functionCalls.map(fc => fc.name);
+
+  for (const tool of expectedTools) {
+    if (usedTools.includes(tool)) {
+      console.log(`✅ Expected tool '${tool}' was used`);
+    } else {
+      console.log(`❌ Expected tool '${tool}' was NOT used`);
+    }
+  }
+}
+```
+
+## Testing Strategies
+
+### Unit Testing Patterns
+
+Test individual agent capabilities in isolation:
+
+```typescript
+describe('Agent Capabilities', () => {
+  test('should handle basic calculations', async () => {
+    const response = await runSingleQuery(agent, "What is 15 * 7?");
+    expect(response).toContain('105');
+  });
+
+  test('should use search tool for information queries', async () => {
+    const events = await runAndCollectEvents(agent, "What is the weather in Paris?");
+    const toolCalls = events.flatMap(e => e.getFunctionCalls());
+    expect(toolCalls.some(fc => fc.name === 'search_tool')).toBe(true);
+  });
+
+  test('should maintain context across turns', async () => {
+    const session = await createTestSession();
+    await runQuery(session, "My name is Alice");
+    const response = await runQuery(session, "What is my name?");
+    expect(response.toLowerCase()).toContain('alice');
+  });
+});
+```
+
+### Integration Testing
+
+Test complete workflows and agent interactions:
+
+```typescript
+async function testWorkflowIntegration() {
+  // Test end-to-end workflow
+  const workflow = [
+    { query: "I need to book a flight", expectedTools: ['search_flights'] },
+    { query: "From New York to London on March 15", expectedTools: ['book_flight'] },
+    { query: "Send confirmation to my email", expectedTools: ['send_email'] }
+  ];
+
+  for (const step of workflow) {
+    const events = await runAndCollectEvents(agent, step.query);
+    validateToolUsage(events, step.expectedTools);
+  }
+}
+```
+
+### Performance Testing
+
+Monitor response times and resource usage:
+
+```typescript
+async function testPerformance() {
+  const queries = [
+    "Simple question",
+    "Complex multi-step query with calculations",
+    "Query requiring multiple tool calls"
+  ];
+
+  for (const query of queries) {
+    const startTime = Date.now();
+    await runSingleQuery(agent, query);
+    const duration = Date.now() - startTime;
+
+    console.log(`Query: "${query}" took ${duration}ms`);
+
+    // Set performance expectations
+    if (duration > 10000) {
+      console.warn(`⚠️  Query took longer than expected: ${duration}ms`);
+    }
+  }
+}
+```
+
+## Coming Soon: Automated Evaluation
+
+<Callout type="info" title="Future Framework">
+The comprehensive automated evaluation framework is under development and will provide structured testing capabilities.
+</Callout>
+
+### Unit Testing with Test Files
+
+Rapid evaluation during active development:
+
+**Planned Features:**
+- Individual JSON test files with expected behaviors
+- Fast execution for quick feedback loops
+- Integration with development workflows
+- Automated regression detection
+
+**Test File Structure (Coming Soon):**
+```json
+{
+  "name": "basic_calculation_test",
+  "agent_config": {
+    "name": "calculator_agent",
+    "tools": ["calculator_tool"]
+  },
+  "test_cases": [
+    {
+      "user_query": "What is 42 + 17?",
+      "expected_tools": ["calculator_tool"],
+      "expected_response_contains": ["59"],
+      "max_response_time_ms": 5000
+    }
+  ]
+}
+```
+
+### Integration Testing with EvalSets
+
+Comprehensive evaluation of complex agent behaviors:
+
+**Planned Features:**
+- Multi-turn conversation scenarios
+- Complex workflow validation
+- Batch processing of evaluation scenarios
+- Statistical analysis of results
+
+**EvalSet Structure (Coming Soon):**
+```json
+{
+  "evalset_name": "customer_support_scenarios",
+  "sessions": [
+    {
+      "initial_state": { "user_type": "premium" },
+      "conversation_turns": [
+        {
+          "user_message": "I have an issue with my account",
+          "expected_agent_behavior": {
+            "should_escalate": false,
+            "should_use_tools": ["account_lookup"],
+            "response_tone": "helpful"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Automated Evaluation Classes
+
+**AgentEvaluator (Coming Soon):**
+- Comprehensive agent performance assessment
+- Configurable evaluation criteria
+- Integration with CI/CD pipelines
+- Performance trend analysis
+
+**TrajectoryEvaluator (Coming Soon):**
+- Tool usage pattern analysis
+- Decision path optimization
+- Efficiency measurement
+- Strategy consistency validation
+
+**ResponseEvaluator (Coming Soon):**
+- Semantic similarity scoring
+- Quality assessment metrics
+- Reference comparison
+- Automated scoring algorithms
+
+## Best Practices
+
+### Test Design
+
+**Representative Scenarios:**
+- Cover typical user journeys
+- Include edge cases and error conditions
+- Test various complexity levels
+- Validate cross-functional scenarios
+
+**Clear Success Criteria:**
+- Define specific, measurable expectations
+- Set appropriate performance thresholds
+- Balance automation with human judgment
+- Document evaluation rationale
+
+### Test Maintenance
+
+**Version Control:**
+- Track test scenarios and expected outcomes
+- Maintain test data consistency
+- Document evaluation methodology
+- Regular review and updates
+
+**Continuous Improvement:**
+- Analyze test failures systematically
+- Update tests based on production feedback
+- Expand coverage as agents evolve
+- Balance comprehensive testing with execution speed
+
+### Integration Guidelines
+
+**Development Workflow:**
+- Run quick tests during development
+- Comprehensive tests before deployment
+- Automated regression testing
+- Performance monitoring in production
+
+**Team Collaboration:**
+- Share test scenarios across team members
+- Document testing conventions
+- Regular review of testing strategy
+- Clear escalation procedures for test failures
+
+<Callout type="info" title="Getting Started">
+  Start with manual testing using the examples, then gradually build custom test scripts as your agent functionality grows. This provides immediate validation while preparing for the upcoming automated framework.
+</Callout>
