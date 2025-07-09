@@ -41,22 +41,7 @@ async function demonstrateCodeExecution(
 	const mathRequest = {
 		parts: [
 			{
-				text: `tool_code
-# Data analysis example
-import pandas as pd
-import numpy as np
-
-# Create sample data
-data = {'name': ['Alice', 'Bob', 'Charlie'], 
-        'age': [25, 30, 35], 
-        'score': [85, 92, 78]}
-df = pd.DataFrame(data)
-
-print("Sample Data:")
-print(df)
-print(f"\nAverage age: {df['age'].mean()}")
-print(f"Average score: {df['score'].mean()}")
-`,
+				text: "Create a list of numbers from 1 to 5, square each number, and then find the sum of the squared numbers.",
 			},
 		],
 	};
@@ -67,11 +52,23 @@ print(f"Average score: {df['score'].mean()}")
 		newMessage: mathRequest,
 	})) {
 		if (event.author === "code_agent" && event.content?.parts) {
-			const content = event.content.parts
-				.map((part) => part.text || "")
-				.join("");
-			if (content) {
-				console.log(content);
+			for (const part of event.content.parts) {
+				if (part.executableCode) {
+					console.log("🐍 Generated Code:");
+					console.log("-------------------");
+					console.log(part.executableCode.code);
+					console.log("-------------------\n");
+				} else if (part.codeExecutionResult) {
+					console.log("✅ Execution Result:");
+					console.log("-------------------");
+					console.log(part.codeExecutionResult.output);
+					console.log("-------------------\n");
+				} else if (part.text) {
+					console.log("🤖 Agent Response:");
+					console.log("-------------------");
+					console.log(part.text);
+					console.log("-------------------\n");
+				}
 			}
 		}
 	}
