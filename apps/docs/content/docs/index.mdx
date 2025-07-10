@@ -94,20 +94,37 @@ ADK TypeScript stands out by combining a beautiful developer experience with pow
   />
 </Cards>
 
-## Quick Start
+## Architecture Patterns
 
-Get started in seconds with a simple agent:
+<Cards>
+  <Card
+    title="🟢 Simple Agents"
+    description="For straightforward Q&A or basic assistance. Use a one-liner agent with a model and a question."
+  />
+  <Card
+    title="🛠️ Tool-Enhanced Agents"
+    description="Equip agents with tools to interact with external systems, such as web search, file operations, or HTTP requests."
+  />
+  <Card
+    title="🤝 Multi-Agent Workflows"
+    description="Compose multiple agents into workflows—sequential, parallel, or looped—for specialization and orchestration."
+  />
+  <Card
+    title="💾 Persistent Applications"
+    description="Sessions and memory management allow for ongoing conversations and stateful applications, supporting both in-memory and database-backed storage."
+  />
+</Cards>
 
-```typescript title="simple-agent.ts"
-import { AgentBuilder } from "@iqai/adk";
+## Design Philosophy
 
-// The simplest possible usage - just model and ask!
-const response = await AgentBuilder
-  .withModel("gemini-2.5-flash")
-  .ask("What is the capital of France?");
+ADK TypeScript is designed with the following principles:
 
-console.log(response); // "The capital of France is Paris."
-```
+- **TypeScript-first developer experience**: Full type safety and intelligent autocomplete
+- **Simple APIs**: Common patterns should be one-liners
+- **Clear Examples**: Every feature has working example code
+- **Gradual Complexity**: Start simple, add complexity as needed
+- **Production Ready**: Error handling, observability, scalability, and extensibility
+- **Google Ecosystem Integration**: Optimized for Gemini models and Google Cloud services
 
 ---
 
@@ -121,19 +138,16 @@ Ready to dive deeper? Our documentation covers everything from basic concepts to
     description="Installation, quickstart, and your first agent"
     href="/docs/get-started"
   />
-
   <Card
     title="📚 Agents Guide"
     description="Learn about LLM agents, workflow agents, and custom agents"
     href="/docs/agents"
   />
-
   <Card
     title="🔧 Tools Reference"
     description="Built-in tools, custom functions, and third-party integrations"
     href="/docs/tools"
   />
-
   <Card
     title="🎯 Advanced Features"
     description="Sessions, memory, flows, and deployment strategies"
