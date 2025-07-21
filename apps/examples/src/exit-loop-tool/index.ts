@@ -17,7 +17,7 @@ const MAX_ITERATIONS = 5;
 /**
  * Exit Loop Tool Example
  *
- * This example demonstrates how to use the ExitLoopTool to allow an LLM agent
+ * This Example demonstrates how to use the ExitLoopTool to allow an LLM agent
  * to break out of a programmatic loop when certain conditions are met or when
  * explicitly requested by the user.
  *
@@ -44,7 +44,7 @@ const MAX_ITERATIONS = 5;
  */
 function createExitLoopAgent(): LlmAgent {
 	return new LlmAgent({
-		name: "exit_loop_demo",
+		name: "Exit_loop_demo",
 		model: env.LLM_MODEL || "gemini-2.5-flash",
 		description:
 			"An agent that demonstrates the exit loop tool using Google Gemini",
@@ -99,7 +99,7 @@ async function processLoopIteration(
 
 	try {
 		/**
-		 * Process agent response and monitor for exit tool calls
+		 * Process Agent response and monitor for exit tool calls
 		 * The agent will either continue the loop or call the exit tool
 		 */
 		for await (const event of runner.runAsync({
@@ -107,7 +107,7 @@ async function processLoopIteration(
 			sessionId,
 			newMessage,
 		})) {
-			// Collect agent responses
+			// Collect Agent responses
 			if (event.author === "exit_loop_demo" && event.content?.parts) {
 				const content = event.content.parts
 					.map((part) => part.text || "")
