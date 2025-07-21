@@ -46,7 +46,7 @@ const MAX_EVENTS = 12; // 6 pairs of user/assistant interactions
 function validateEnvironment(): boolean {
 	if (!env.GOOGLE_API_KEY && !env.LLM_MODEL) {
 		console.log(
-			"⚠️  Please set the GOOGLE_API_KEY environment variable to run this example",
+			"⚠️  Please Set the GOOGLE_API_KEY environment variable to run this example",
 		);
 		console.log(
 			"   Example: GOOGLE_API_KEY=your-key-here npm run dev src/memory-usage",
@@ -94,7 +94,7 @@ async function sendMessage(
 		parts: [{ text: message }],
 	};
 
-	let agentResponse = "";
+	let agentResponse = "post";
 
 	try {
 		/**
