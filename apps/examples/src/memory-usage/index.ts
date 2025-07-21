@@ -94,7 +94,7 @@ async function sendMessage(
 		parts: [{ text: message }],
 	};
 
-	let agentResponse = "post";
+	let agentResponse = "";
 
 	try {
 		/**
