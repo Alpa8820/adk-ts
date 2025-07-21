@@ -4,20 +4,7 @@ The Agent Development Kit (ADK) for TypeScript provides a comprehensive framewor
 
 This project is structured as a **Turborepo** monorepo, containing the core ADK package and comprehensive example applications demonstrating real-world usage patterns.
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/@iqai/adk">
-    <img src="https://img.shields.io/npm/v/@iqai/adk" alt="NPM Version" />
-  </a>
-  <a href="https://www.npmjs.com/package/@iqai/adk">
-    <img src="https://img.shields.io/npm/dm/@iqai/adk" alt="NPM Downloads" />
-  </a>
-  <a href="https://github.com/IQAIcom/adk-ts/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/npm/l/@iqai/adk" alt="License" />
-  </a>
-  <a href="https://github.com/IQAIcom/adk-ts">
-    <img src="https://img.shields.io/github/stars/IQAIcom/adk-ts?style=social" alt="GitHub Stars" />
-  </a>
-</p>
+
 
 ## 🚀 Core Capabilities
 
@@ -389,7 +376,6 @@ ADK TypeScript is actively developed and ready for production use. The framework
 *   ⬜ **Production Deployment** - Containerization, scaling, and monitoring solutions
 *   ⬜ **Enterprise Features** - Advanced security, audit logging, and compliance tools
 
-We encourage users to report issues, suggest features, and contribute to the project via the [GitHub issues page](https://github.com/IQAIcom/adk-ts/issues).
 
 ## 🤝 Contributing to ADK TypeScript
 
@@ -404,15 +390,6 @@ Contributions from the open-source community are highly welcome! Whether you're 
 *   **🧪 Testing** - Add test coverage and improve reliability
 *   **📝 Examples** - Create new example applications and use cases
 
-### Getting Started
-
-1. **Review Open Issues** - Check the [GitHub issues page](https://github.com/IQAIcom/adk-ts/issues) for existing tasks or ideas
-2. **Read the Contributing Guide** - See our comprehensive [Contributing Guide](CONTRIBUTION.md) for:
-   - Framework architecture and components
-   - Development setup and workflow
-   - Implementation examples and patterns
-   - Coding standards and best practices
-3. **Join the Community** - Engage with other contributors and maintainers
 
 ### Quick Start Workflow
 
